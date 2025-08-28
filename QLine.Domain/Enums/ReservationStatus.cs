@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace QLine.Domain.Abstractions
+namespace QLine.Domain.Enums
 {
-    public class IUnitOfWork
+    public enum ReservationStatus
     {
+        Active = 0,
+        Cancelled = 1,
+        Completed = 2
     }
 }

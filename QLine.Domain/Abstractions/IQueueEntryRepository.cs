@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace QLine.Domain.Abstractions
 {
-    public class IQueueEntryRepository
+    public interface IQueueEntryRepository
     {
     }
 }

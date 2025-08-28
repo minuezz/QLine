@@ -4,9 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace QLine.Infrastructure.Persistence
+namespace QLine.Domain.Enums
 {
-    public class UnitOfWork
+    public enum UserRole
     {
+        Client = 0,
+        Staff = 1,
+        Admin = 2
     }
 }

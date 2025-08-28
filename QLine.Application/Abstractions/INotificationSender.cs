@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace QLine.Application.Abstractions
 {
-    public class INotificationSender
+    public interface INotificationSender
     {
     }
 }

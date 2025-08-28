@@ -7,6 +7,7 @@ using QLine.Web.Hubs;
 using Serilog;
 using System;
 using MudBlazor.Services;
+using MediatR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,18 +20,20 @@ builder.Host.UseSerilog((ctx, lc) => lc
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-//builder.Services.AddDbContext<AppDbContext>(opt =>
-//    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+builder.Services.AddDbContext<AppDbContext>(opt =>
+    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
 
 builder.Services.AddAuthentication().AddIdentityCookies();
 builder.Services.AddAuthorization();
-//builder.Services
-//    .AddIdentityCore<AppUser>(o => { /* пароли/требования */ })
-//    .AddEntityFrameworkStores<AppDbContext>();
+builder.Services
+    .AddIdentityCore<AppUser>(o => { /* пароли/требования */ })
+    .AddEntityFrameworkStores<AppDbContext>();
 
 builder.Services.AddSignalR();
 
 builder.Services.AddMudServices();
+
+//builder.Services.AddMediatR(typeof(Program));
 
 var app = builder.Build();
 
@@ -58,6 +61,6 @@ app.UseAuthorization();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-//app.MapHub<QueueHub>("/hubs/queue");
+app.MapHub<QueueHub>("/hubs/queue");
 
 app.Run();
