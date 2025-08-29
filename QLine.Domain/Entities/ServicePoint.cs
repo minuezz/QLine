@@ -6,7 +6,7 @@ using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using QLine.Domain;
 
-namespace QLine.Infrastructure.Entities
+namespace QLine.Domain.Entities
 {
     public class ServicePoint
     {

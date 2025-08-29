@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using QLine.Domain;
 using QLine.Domain.Enums;
 
-namespace QLine.Infrastructure.Entities
+namespace QLine.Domain.Entities
 {
     public class Reservation
     {
