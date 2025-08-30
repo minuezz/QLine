@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace QLine.Application.DTO
 {
-    public class ServicePointDto
+    public sealed class ServicePointDto
     {
+        public Guid Id { get; init; }
+        public string Name { get; init; } = default!;
+        public string Address { get; init; } = default!;
     }
 }
