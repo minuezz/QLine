@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using QLine.Application.Abstractions;
 
-namespace QLine.Infrastructure.Persistence.Time
+namespace QLine.Infrastructure.Time
 {
     public class SystemDateTimeProvider : IDateTimeProvider
     {
