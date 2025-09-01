@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using QLine.Application.Abstractions;
 
 namespace QLine.Infrastructure.Persistence.Time
 {
-    public class SystemDateTimeProvider
+    public class SystemDateTimeProvider : IDateTimeProvider
     {
+        public DateTimeOffset UtcNow => DateTimeOffset.UtcNow;
     }
 }
