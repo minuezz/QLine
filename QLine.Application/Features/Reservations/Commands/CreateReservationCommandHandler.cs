@@ -44,10 +44,9 @@ namespace QLine.Application.Features.Reservations.Commands
                 id: Guid.NewGuid(),
                 tenantId: request.TenantId,
                 servicePointId: request.ServicePointId,
-                serviceId: request.ServicePointId,
+                serviceId: request.ServiceId,
                 userId: request.UserId,
                 startTime: request.StartTime,
-                status: ReservationStatus.Active,
                 createdAt: _clock.UtcNow
             );
 
@@ -61,7 +60,6 @@ namespace QLine.Application.Features.Reservations.Commands
                 reservationId: reservation.Id,
                 ticketNo: ticketNo,
                 priority: 0,
-                status: QueueStatus.Waiting,
                 createdAt: _clock.UtcNow
             );
 

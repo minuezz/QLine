@@ -22,7 +22,7 @@ namespace QLine.Domain.Entities
 
         private Reservation() { }
 
-        private Reservation(Guid id, Guid tenantId, Guid servicePointId, Guid serviceId, Guid userId, DateTimeOffset startTime, ReservationStatus status, DateTimeOffset createdAt)
+        private Reservation(Guid id, Guid tenantId, Guid servicePointId, Guid serviceId, Guid userId, DateTimeOffset startTime, DateTimeOffset createdAt)
         {
             if (id == Guid.Empty) throw new DomainException("Reservation Id cannot be empty.");
             if (tenantId == Guid.Empty) throw new DomainException("Reservation TenantId cannot be empty.");
@@ -42,8 +42,8 @@ namespace QLine.Domain.Entities
             Status = ReservationStatus.Active;
         }
 
-        public static Reservation Create(Guid id, Guid tenantId, Guid servicePointId, Guid serviceId, Guid userId, DateTimeOffset startTime, ReservationStatus status, DateTimeOffset createdAt) 
-            => new(id, tenantId, servicePointId, serviceId, userId, startTime, status, createdAt);
+        public static Reservation Create(Guid id, Guid tenantId, Guid servicePointId, Guid serviceId, Guid userId, DateTimeOffset startTime, DateTimeOffset createdAt) 
+            => new(id, tenantId, servicePointId, serviceId, userId, startTime, createdAt);
 
         public void Cancel()
         {

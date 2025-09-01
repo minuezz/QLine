@@ -23,7 +23,7 @@ namespace QLine.Domain.Entities
 
         private QueueEntry() { }
 
-        private QueueEntry(Guid id, Guid tenantId, Guid servicePointId, Guid reservationId, string ticketNo, int priority, QueueStatus status, DateTimeOffset createdAt)
+        private QueueEntry(Guid id, Guid tenantId, Guid servicePointId, Guid reservationId, string ticketNo, int priority, DateTimeOffset createdAt)
         {
             if (id == Guid.Empty) throw new DomainException("QueueEntry Id cannot be empty.");
             if (tenantId == Guid.Empty) throw new DomainException("QueueEntry TenantId cannot be empty.");
@@ -43,8 +43,8 @@ namespace QLine.Domain.Entities
             CreatedAt = createdAt;
         }
 
-        public static QueueEntry Create(Guid id, Guid tenantId, Guid servicePointId, Guid reservationId, string ticketNo, int priority, QueueStatus status, DateTimeOffset createdAt) 
-            => new(id, tenantId, servicePointId, reservationId, ticketNo, priority, status, createdAt);
+        public static QueueEntry Create(Guid id, Guid tenantId, Guid servicePointId, Guid reservationId, string ticketNo, int priority, DateTimeOffset createdAt) 
+            => new(id, tenantId, servicePointId, reservationId, ticketNo, priority, createdAt);
 
         public void MarkInService()
         {
