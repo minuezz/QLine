@@ -21,7 +21,7 @@ namespace QLine.Application
 
             services.AddValidatorsFromAssembly(assembly);
 
-            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(IPipelineBehavior<,>));
+            services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 
             return services;
         }

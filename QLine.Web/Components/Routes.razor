@@ -1,6 +1,12 @@
-﻿@* <Router AppAssembly="typeof(Program).Assembly">
+﻿@using QLine.Web.Layouts
+
+<Router AppAssembly="@typeof(Program).Assembly">
     <Found Context="routeData">
-        <RouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)" />
-        <FocusOnNavigate RouteData="routeData" Selector="h1" />
+        <RouteView RouteData="@routeData" DefaultLayout="@typeof(MainLayout)" />
     </Found>
-</Router> *@
+    <NotFound>
+        <LayoutView Layout="@typeof(MainLayout)">
+            <h3>Page not found.</h3>
+        </LayoutView>
+    </NotFound>
+</Router>

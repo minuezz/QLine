@@ -1,5 +1,73 @@
-﻿<h3>Reserve</h3>
+﻿@page "/reserve/{ServicePointId:guid}/{ServiceId:guid}"
+@using Microsoft.AspNetCore.Components.Forms
+@using MediatR
+@using QLine.Application.Features.Reservations.Commands
+@using QLine.Application.DTO
+@inject IMediator Mediator
+
+<h3>Create Reservation</h3>
+
+@if (_created is null)
+{
+	<EditForm Model="this" OnValidSubmit="CreateAsync" FormName="CreateReservationForm">
+		<DataAnnotationsValidator />
+		<div>
+			<label>Start time (local): </label>
+			<input type="datetime-local" @bind="_startLocal"/>
+		</div>
+		<div style="margin-top:8px;">
+			<button type="submit">Create</button>
+		</div>
+		@if (!string.IsNullOrWhiteSpace(_error))
+		{
+			<p class="text-danger">@_error</p>
+		}
+	</EditForm>
+}
+else
+{
+	<h4>Reservation created</h4>
+	<p><strong>Id:</strong>@_created.Id</p>
+	<p><strong>Ticket:</strong>@_created.TicketNo</p>
+	<p><strong>Start (UTC):</strong>@_created.StartTime.ToString("u")</p>
+}
 
 @code {
+	[Parameter] public Guid ServicePointId { get; set; }
+	[Parameter] public Guid ServiceId { get; set; }
 
+	//Seeded Id from DbInititalizer
+	private static readonly Guid TenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+	private static readonly Guid UserId = Guid.Parse("44444444-4444-4444-4444-444444444444");
+
+	private string _startLocal = DateTime.Now.AddHours(1).ToString("yyyy-MM-ddTHH:mm");
+	private ReservationDto? _created;
+	private string? _error;
+
+	private async Task CreateAsync()
+	{
+		try
+		{
+			_error = null;
+			var dto = await Mediator.Send(new CreateReservationCommand(
+				TenantId: TenantId,
+				ServicePointId: ServicePointId,
+				ServiceId: ServiceId,
+				UserId: UserId,
+				StartTime: ParseLocalToOffset(_startLocal)
+			));
+			_created = dto;
+		}
+		catch (Exception ex)
+		{
+			_error = ex.Message;
+		}
+	}
+
+	private static DateTimeOffset ParseLocalToOffset(string value)
+	{
+		// Parses the value from <input type="datetime-local> to DateTimeOffset in browser's local area
+		var local = DateTime.SpecifyKind(DateTime.Parse(value), DateTimeKind.Local).ToUniversalTime();
+		return new DateTimeOffset(local);
+	}
 }
