@@ -21,6 +21,7 @@ else if (_points.Count == 0)
 }
 else
 {
+	<button @onclick="TestFunc">CLICK ME!!!</button>
 	<ul>
 		@foreach (var sp in _points)
 		{
@@ -51,6 +52,11 @@ else
 			_error = ex.Message;
 		}
 		finally { _loading = false; }
+	}
+
+	private void TestFunc()
+	{
+		Console.WriteLine("CLICKED CLICKED");	
 	}
 
 	private void GoToServices(Guid servicePointId)
