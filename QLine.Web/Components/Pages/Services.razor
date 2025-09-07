@@ -2,6 +2,7 @@
 @using MediatR
 @using QLine.Application.Features.Admin.Queries
 @using QLine.Application.DTO
+@using QLine.Web.Utils
 @inject IMediator Mediator
 @inject NavigationManager Nav
 
@@ -11,9 +12,9 @@
 {
 	<p>Loading...</p>
 }
-else if (_error is not null)
+else if (_errorMessage is not null)
 {
-	<p class="text-danger">@_error</p>
+	<ErrorAlert Message="@_errorMessage" Details="_errorDetails" />
 }
 else if (_services.Count == 0)
 {
@@ -37,19 +38,25 @@ else
 	[Parameter] public Guid ServicePointId { get; set; }
 
 	private bool _loading = true;
-	private string? _error;
+	private string? _errorMessage;
+	private List<string>? _errorDetails;
 	private List<ServiceDto> _services = new();
 
 	protected override async Task OnParametersSetAsync()
 	{
 		_loading = true;
-		_error = null;
+		_errorMessage = null;
+		_errorDetails = null;
 		_services.Clear();
+
 		try
 		{
 			_services = (await Mediator.Send(new GetServicesForServicePointQuery(ServicePointId))).ToList();
 		}
-		catch (Exception ex) { _error = ex.Message; }
+		catch (Exception ex) 
+		{
+			(_errorMessage, _errorDetails) = ex.ToUserMessage();
+		}
 		finally { _loading = false; }
 	}
 

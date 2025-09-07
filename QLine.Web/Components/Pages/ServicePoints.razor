@@ -2,6 +2,8 @@
 @using MediatR
 @using QLine.Application.Features.Admin.Queries
 @using QLine.Application.DTO
+@using QLine.Web.Utils
+@inject IJSRuntime JS
 @inject IMediator Mediator
 @inject NavigationManager Nav
 
@@ -11,9 +13,9 @@
 {
 	<p>Loading...</p>
 }
-else if (_error is not null)
+else if (_errorMessage is not null)
 {
-	<p class="text-danger">@_error</p>
+	<ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
 }
 else if (_points.Count == 0)
 {
@@ -21,7 +23,6 @@ else if (_points.Count == 0)
 }
 else
 {
-	<button @onclick="TestFunc">CLICK ME!!!</button>
 	<ul>
 		@foreach (var sp in _points)
 		{
@@ -38,7 +39,8 @@ else
 	private static readonly Guid TenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
 	private bool _loading = true;
-	private string? _error;
+	private string? _errorMessage;
+	private List<string>? _errorDetails;
 	private List<ServicePointDto> _points = new();
 
 	protected override async Task OnInitializedAsync()
@@ -49,14 +51,9 @@ else
 		}
 		catch (Exception ex)
 		{
-			_error = ex.Message;
+			(_errorMessage, _errorDetails) = ex.ToUserMessage();
 		}
 		finally { _loading = false; }
-	}
-
-	private void TestFunc()
-	{
-		Console.WriteLine("CLICKED CLICKED");	
 	}
 
 	private void GoToServices(Guid servicePointId)

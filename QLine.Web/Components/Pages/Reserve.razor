@@ -1,17 +1,16 @@
 ﻿@page "/reserve/{ServicePointId:guid}/{ServiceId:guid}"
-
 @using Microsoft.AspNetCore.Components.Forms
 @using MediatR
 @using QLine.Application.Features.Reservations.Commands
 @using QLine.Application.DTO
-
+@using QLine.Web.Utils
 @inject IMediator Mediator
 
 <h3>Create Reservation</h3>
 
 @if (_created is null)
 {
-	<EditForm Model="this" OnValidSubmit="CreateAsync" FormName="C">
+	<EditForm Model="this" OnValidSubmit="CreateAsync">
 		<DataAnnotationsValidator />
 		<div>
 			<label>Start time (local): </label>
@@ -20,9 +19,9 @@
 		<div style="margin-top:8px;">
 			<button type="submit">Create</button>
 		</div>
-		@if (!string.IsNullOrWhiteSpace(_error))
+		@if (!string.IsNullOrWhiteSpace(_errorMessage))
 		{
-			<p class="text-danger">@_error</p>
+			<ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
 		}
 	</EditForm>
 }
@@ -31,7 +30,8 @@ else
 	<h4>Reservation created</h4>
 	<p><strong>Id:</strong>@_created.Id</p>
 	<p><strong>Ticket:</strong>@_created.TicketNo</p>
-	<p><strong>Start (UTC):</strong>@_created.StartTime.ToString("u")</p>
+	<p><strong>Start (local):</strong><UtcDate Value="@_created.StartTime" /></p>
+	<p><small>UTC: @_created.StartTime.ToString("u")</small></p>
 }
 
 @code {
@@ -44,32 +44,27 @@ else
 
 	private DateTime _startLocal = DateTime.Now.AddHours(1);
 	private ReservationDto? _created;
-	private string? _error;
+	private string? _errorMessage;
+	private List<string>? _errorDetails;
 
 	private async Task CreateAsync()
 	{
 		try
 		{
-			_error = null;
+			_errorMessage = null;
+			_errorDetails = null;
 			var dto = await Mediator.Send(new CreateReservationCommand(
 				TenantId: TenantId,
 				ServicePointId: ServicePointId,
 				ServiceId: ServiceId,
 				UserId: UserId,
-				StartTime: ParseLocalToOffset(_startLocal)
+				StartTime: new DateTimeOffset(_startLocal.ToUniversalTime())
 			));
 			_created = dto;
 		}
 		catch (Exception ex)
 		{
-			_error = ex.Message;
+			(_errorMessage, _errorDetails) = ex.ToUserMessage();
 		}
-	}
-
-	private static DateTimeOffset ParseLocalToOffset(DateTime value)
-	{
-		// Parses the value from <input type="datetime-local> to DateTimeOffset in browser's local area
-		var local = DateTime.SpecifyKind(value, DateTimeKind.Local).ToUniversalTime();
-		return new DateTimeOffset(local);
 	}
 }

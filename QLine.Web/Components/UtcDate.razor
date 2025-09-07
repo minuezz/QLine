@@ -1,0 +1,30 @@
+﻿@inject QLine.Web.Services.BrowserTimeService BrowserTime
+
+@if (Value.HasValue)
+{
+	if (Formatted is null)
+	{
+		<span>@Value.Value.ToString("u")</span>
+	}
+	else
+	{
+		<span>@Formatted</span>
+	}
+}
+else
+{
+	<span>-</span>
+}
+
+@code {
+	[Parameter] public DateTimeOffset? Value { get; set; }
+	[Parameter] public string Format { get; set; } = "yyyy-MM-dd HH:mm";
+
+	private string? Formatted;
+
+	protected override async Task OnParametersSetAsync()
+	{
+		if (Value.HasValue)
+			Formatted = await BrowserTime.FormatUtcAsync(Value.Value, Format);
+	}
+}
