@@ -1,4 +1,6 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">QLine</a>
     </div>
@@ -20,8 +22,33 @@
 
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="service-points">
-                <span class="bi bi-gear-fill-nav-menu" aria-hidden="true"></span> Service Points
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Service Points
             </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <AuthorizeView Roles="Staff, Admin">
+                <Authorized>
+					<NavLink class="nav-link" href="/staff/queue">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Queue
+                    </NavLink>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+
+        <div class="nav-item px-3">
+            <AuthorizeView>
+                <Authorized>
+                    <NavLink class="nav-link" href="/logout">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Logout
+                    </NavLink>
+                </Authorized>
+                <NotAuthorized>
+                    <NavLink class="nav-link" href="/login">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Login
+                    </NavLink>
+                </NotAuthorized>
+            </AuthorizeView>
         </div>
     </nav>
 </div>

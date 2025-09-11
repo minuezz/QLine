@@ -1,0 +1,25 @@
+﻿@page "/login"
+@inject NavigationManager Nav
+
+<h3>Login</h3>
+
+@if (ErrorCode is not null)
+{
+	<p class="text-danger">@(@ErrorCode == "notfound" ? "User not found" : "Sign-in failed")</p>
+}
+
+<form method="post" action="/auth/login">
+	<input type="hidden" name="returnUrl" value="@ReturnUrl" />
+	<input type="email" name="email" value="@_email" placeholder="email (e.g. staff@qline.local)" />
+	<button type="submit" style="margin-left:8px;">Sign in</button>
+</form>
+
+@code {
+	private string _email = "staff@qline.local";
+	private string? ErrorCode => new Uri(Nav.Uri).Query.Contains("error=")
+		? System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("error")
+		: null;
+
+	private string ReturnUrl =>
+		System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("returnUrl") ?? "/staff/queue";
+}

@@ -22,6 +22,7 @@ namespace QLine.Infrastructure.Persistence
             var spId = Guid.Parse("22222222-2222-2222-2222-222222222222");
             var svcId = Guid.Parse("33333333-3333-3333-3333-333333333333");
             var userId = Guid.Parse("44444444-4444-4444-4444-444444444444");
+            var staffId = Guid.Parse("55555555-5555-5555-5555-555555555555");
 
             var tenant = Tenant.Create(
                 id: tenantId,
@@ -58,10 +59,20 @@ namespace QLine.Infrastructure.Persistence
                 role: UserRole.Client
             );
 
+            var staff = AppUser.Create(
+                id: staffId,
+                tenantId: tenantId,
+                email: "staff@qline.local",
+                firstName: "Demo",
+                lastName: "Staff",
+                role: UserRole.Staff
+            );
+
             await db.Tenants.AddAsync(tenant, ct);
             await db.ServicePoints.AddAsync(sp, ct);
             await db.Services.AddAsync(svc, ct);
             await db.AppUsers.AddAsync(user, ct);
+            await db.AppUsers.AddAsync(staff, ct);
 
             await db.SaveChangesAsync(ct);
         }
