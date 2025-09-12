@@ -13,7 +13,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Behaviors\" />
     <Folder Include="Services\" />
   </ItemGroup>
 

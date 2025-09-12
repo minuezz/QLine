@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MediatR;
+using QLine.Application.DTO;
 
 namespace QLine.Application.Features.Queue.Commands
 {
-    public class CallNextCommand
-    {
-    }
+    public sealed record CallNextCommand(Guid ServicePointId) : IRequest<QueueEntryDto?>;
 }

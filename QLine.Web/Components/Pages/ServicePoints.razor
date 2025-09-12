@@ -1,0 +1,60 @@
+﻿@page "/service-points"
+@using MediatR
+@using QLine.Application.Features.Admin.Queries
+@using QLine.Application.DTO
+@inject IJSRuntime JS
+@inject IMediator Mediator
+@inject NavigationManager Nav
+
+<h3>Service Points</h3>
+
+@if (_loading)
+{
+	<p>Loading...</p>
+}
+else if (_errorMessage is not null)
+{
+	<ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+}
+else if (_points.Count == 0)
+{
+	<p>No service points.</p>
+}
+else
+{
+	<ul>
+		@foreach (var sp in _points)
+		{
+			<li>
+				<strong>@sp.Name</strong>
+				<div>@sp.Address</div>
+				<button @onclick="() => GoToServices(sp.Id)">View services</button>
+			</li>
+		}
+	</ul>
+}
+@code {
+	//Seeded Tenant (DbInititalizer)
+	private static readonly Guid TenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+
+	private bool _loading = true;
+	private string? _errorMessage;
+	private List<string>? _errorDetails;
+	private List<ServicePointDto> _points = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			_points = (await Mediator.Send(new GetServicePointsQuery(TenantId))).ToList();
+		}
+		catch (Exception ex)
+		{
+			(_errorMessage, _errorDetails) = ex.ToUserMessage();
+		}
+		finally { _loading = false; }
+	}
+
+	private void GoToServices(Guid servicePointId)
+	=> Nav.NavigateTo($"/services/{servicePointId}");
+}

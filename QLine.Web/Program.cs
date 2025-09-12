@@ -1,66 +1,79 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLine.Domain.Entities;
+using QLine.Domain.Abstractions;
+using QLine.Infrastructure;
 using QLine.Infrastructure.Persistence;
+using QLine.Application;
+using QLine.Application.Abstractions;
 using QLine.Web.Components;
 using QLine.Web.Hubs;
+using FluentValidation;
 using Serilog;
 using System;
+using System.Security.Claims;
 using MudBlazor.Services;
 using MediatR;
+using QLine.Web.Services;
+using QLine.Web.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
+var services = builder.Services;
 
-builder.Host.UseSerilog((ctx, lc) => lc
-    .ReadFrom.Configuration(ctx.Configuration)
-    .Enrich.FromLogContext()
-    .WriteTo.Console());
+services.AddInfrastructure(builder.Configuration);
+services.AddApplication();
 
-// Add services to the container.
-builder.Services.AddRazorComponents()
+services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie();
+
+services.AddAuthorization(options =>
+{
+    options.AddPolicy("StaffOnly", p => p.RequireRole("Staff", "Admin"));
+});
+
+services.AddHttpContextAccessor();
+services.AddScoped<ICurrentUser, CurrentUserAccessor>();
+
+services.AddScoped<BrowserTimeService>();
+
+services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddDbContext<AppDbContext>(opt =>
-    opt.UseNpgsql(builder.Configuration.GetConnectionString("Default")));
+services.AddServerSideBlazor().AddCircuitOptions(options =>
+{
+    options.DetailedErrors = true;
+});
 
-builder.Services.AddAuthentication().AddIdentityCookies();
-builder.Services.AddAuthorization();
-builder.Services
-    .AddIdentityCore<AppUser>(o => { /* пароли/требования */ })
-    .AddEntityFrameworkStores<AppDbContext>();
-
-builder.Services.AddSignalR();
-
-builder.Services.AddMudServices();
-
-//builder.Services.AddMediatR(typeof(Program));
+//builder.Services.AddMudServices();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.UseDeveloperExceptionPage();
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-    using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    //await db.Database.MigrateAsync();
-    //await DbSeed.SeedAsync(db);
+    await DbInitializer.InitializeAsync(db);
 }
 
-app.UseSerilogRequestLogging();
+// Configure pipeline
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseHsts();
+}
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
 app.UseAntiforgery();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapAuthEndpoints();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
-
-app.MapHub<QueueHub>("/hubs/queue");
 
 app.Run();

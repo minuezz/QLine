@@ -9,8 +9,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QLine.Application", "QLine.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QLine.Infrastructure", "QLine.Infrastructure\QLine.Infrastructure.csproj", "{EB5CCDC5-EA18-4F1D-B4A0-D20D59C076AD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QLine.Web", "QLine.Web\QLine.Web.csproj", "{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Элементы решения", "Элементы решения", "{754FC069-D67B-A9D7-50A1-8D1CA196D8F1}"
 	ProjectSection(SolutionItems) = preProject
 		docker-compose.yml = docker-compose.yml
@@ -23,6 +21,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QLine.Application.Tests", "tests\QLine.Application.Tests\QLine.Application.Tests.csproj", "{A038F386-727B-431E-8072-4E6221BA2B47}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QLine.Infrastructure.IntegrationTests", "tests\QLine.Infrastructure.IntegrationTests\QLine.Infrastructure.IntegrationTests.csproj", "{6DE969C1-A8E6-4383-BE73-D6EC2C922432}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QLine.Web", "QLine.Web\QLine.Web.csproj", "{52FD9B42-DC45-447C-94B6-36BBE926D8A6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -70,18 +70,6 @@ Global
 		{EB5CCDC5-EA18-4F1D-B4A0-D20D59C076AD}.Release|x64.Build.0 = Release|Any CPU
 		{EB5CCDC5-EA18-4F1D-B4A0-D20D59C076AD}.Release|x86.ActiveCfg = Release|Any CPU
 		{EB5CCDC5-EA18-4F1D-B4A0-D20D59C076AD}.Release|x86.Build.0 = Release|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Debug|x64.Build.0 = Debug|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Debug|x86.Build.0 = Debug|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Release|x64.ActiveCfg = Release|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Release|x64.Build.0 = Release|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Release|x86.ActiveCfg = Release|Any CPU
-		{1EA75B71-CDD8-43C9-B6F6-8BCDD6DE1965}.Release|x86.Build.0 = Release|Any CPU
 		{2B529158-F65C-4EC3-BB20-EB7D38729F7A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2B529158-F65C-4EC3-BB20-EB7D38729F7A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2B529158-F65C-4EC3-BB20-EB7D38729F7A}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -118,6 +106,18 @@ Global
 		{6DE969C1-A8E6-4383-BE73-D6EC2C922432}.Release|x64.Build.0 = Release|Any CPU
 		{6DE969C1-A8E6-4383-BE73-D6EC2C922432}.Release|x86.ActiveCfg = Release|Any CPU
 		{6DE969C1-A8E6-4383-BE73-D6EC2C922432}.Release|x86.Build.0 = Release|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Debug|x64.Build.0 = Debug|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Debug|x86.Build.0 = Debug|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Release|x64.ActiveCfg = Release|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Release|x64.Build.0 = Release|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Release|x86.ActiveCfg = Release|Any CPU
+		{52FD9B42-DC45-447C-94B6-36BBE926D8A6}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

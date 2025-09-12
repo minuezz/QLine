@@ -1,0 +1,30 @@
+﻿@if (!string.IsNullOrWhiteSpace(Message))
+{
+	<div class="alert error">
+		<strong>Error: </strong> @Message
+		@if (Details?.Count > 0)
+		{
+			<ul>
+				@foreach (var d in Details) {<li>@d</li>}
+			</ul>
+		}
+	</div>
+}
+
+@code {
+	[Parameter] public string? Message { get; set; }
+	[Parameter] public List<string>? Details { get; set; }
+}
+
+<style>
+	.alert.error {
+		background:#fdeaea;
+		border: 1px solid #f5c2c7;
+		color: #842029;
+		padding: 10px 12px;
+		border-radius: 6px;
+	}
+	.alert.error ul {
+		margin: 6px 0 0 18px;
+	}
+</style>

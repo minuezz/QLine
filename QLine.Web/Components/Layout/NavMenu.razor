@@ -1,0 +1,54 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+
+<div class="top-row ps-3 navbar navbar-dark">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="">QLine</a>
+    </div>
+</div>
+
+<div class="nav-scrollable">
+    <nav class="flex-column">
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="counter">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="service-points">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Service Points
+            </NavLink>
+        </div>
+
+        <div class="nav-item px-3">
+            <AuthorizeView Roles="Staff, Admin">
+                <Authorized>
+					<NavLink class="nav-link" href="/staff/queue">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Queue
+                    </NavLink>
+                </Authorized>
+            </AuthorizeView>
+        </div>
+
+        <div class="nav-item px-3">
+            <AuthorizeView>
+                <Authorized>
+                    <NavLink class="nav-link" href="/logout">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Logout
+                    </NavLink>
+                </Authorized>
+                <NotAuthorized>
+                    <NavLink class="nav-link" href="/login">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Login
+                    </NavLink>
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </nav>
+</div>
