@@ -6,7 +6,12 @@ using System.Threading.Tasks;
 
 namespace QLine.Application.DTO
 {
-    public class QueueEntryDto
+    public sealed class QueueEntryDto
     {
+        public Guid Id { get; init; }
+        public string TicketNo { get; init; } = default!;
+        public string Status { get; init; } = default!;
+        public int Priority { get; init; }
+        public DateTimeOffset CreatedAt { get; init; }
     }
 }

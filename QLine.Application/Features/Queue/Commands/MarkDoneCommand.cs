@@ -4,9 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MediatR;
-using QLine.Application.DTO;
 
 namespace QLine.Application.Features.Queue.Commands
 {
-    public sealed record CallNextCommand(Guid ServicePointId) : IRequest<QueueEntryDto?>;
+    public sealed record MarkDoneCommand(Guid QueueEntryId) : IRequest;
 }

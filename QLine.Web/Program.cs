@@ -37,10 +37,15 @@ services.AddAuthorization(options =>
 services.AddHttpContextAccessor();
 services.AddScoped<ICurrentUser, CurrentUserAccessor>();
 
-services.AddScoped<QLine.Web.Services.BrowserTimeService>();
+services.AddScoped<BrowserTimeService>();
 
 services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+services.AddServerSideBlazor().AddCircuitOptions(options =>
+{
+    options.DetailedErrors = true;
+});
 
 //builder.Services.AddMudServices();
 

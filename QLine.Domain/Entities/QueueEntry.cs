@@ -62,8 +62,8 @@ namespace QLine.Domain.Entities
 
         public void MarkNoShow()
         {
-            if (Status != QueueStatus.Waiting && Status != QueueStatus.Skipped)
-                throw new DomainException("Only waiting or skipped entries can be marked as NoShow.");
+            if (Status != QueueStatus.InService)
+                throw new DomainException("Only entries InService can be marked as NoShow.");
             Status = QueueStatus.NoShow;
         }
 

@@ -1,7 +1,94 @@
 ﻿@page "/staff/queue"
+@attribute [Authorize(Policy = "StaffOnly")]
+@using Microsoft.AspNetCore.Authorization
+@using MediatR
+@using QLine.Application.DTO
+@using QLine.Application.Features.Queue.Queries
+@using QLine.Application.Features.Queue.Commands
+@inject IMediator Mediator
 
-<h3>Queue</h3>
+<h3>Staff Queue</h3>
+
+<div style="margin:6px 0 12px 0;">
+	<label>ServicePoint Id:</label>
+	<input @bind="ServicePointIdString" style="width:360px" />
+	<button @onclick="RefreshAsync" style="margin-left:8px;">Refresh</button>
+	<button @onclick="CallNextAsync" style="margin-left: 8px;">Call Next</button>
+</div>
+
+@if (!Guid.TryParse(ServicePointIdString, out var _))
+{
+	<p class="text-danger">Enter valud ServicePointId (Guid).</p>
+}
+else if (_snapshot is null)
+{
+	<p>Loading...</p>
+}
+else
+{
+	<h4>In Service</h4>
+	@if (_snapshot.Current is null)
+	{
+		<p>(none)</p>
+	}
+	else
+	{
+		<div class="card">
+			<div><strong>@_snapshot.Current.TicketNo</strong></div>
+			<div><strong>Status: </strong>@_snapshot.Current.Status</div>
+			<div><strong>Priority: </strong>@_snapshot.Current.Priority</div>
+			<div>
+				<button @onclick="() => MarkDoneAsync(_snapshot.Current!.Id)">Done</button>
+				<button @onclick="() => MarkNoShowAsync(_snapshot.Current!.Id)" style="margin-left: 6px;">No-show</button>
+			</div>
+		</div>
+	}
+
+	<h4 style="margin:16px;">Waiting</h4>
+	@if (_snapshot.Waiting.Count == 0)
+	{
+		<p>(empty)</p>
+	}
+	else
+	{
+		<ul>
+			@foreach (var w in _snapshot.Waiting)
+			{
+				<li><strong>@w.TicketNo</strong> - created @w.CreatedAt.ToString("u") (prio @w.Priority)</li>
+			}
+		</ul>
+	}
+}
 
 @code {
+	private string ServicePointIdString = "22222222-2222-2222-2222-222222222222";
 
+	private QueueSnapshotDto? _snapshot;
+
+	protected override async Task OnInitializedAsync() => await RefreshAsync();
+
+	private async Task RefreshAsync()
+	{
+		if (!Guid.TryParse(ServicePointIdString, out var sp)) return;
+		_snapshot = await Mediator.Send(new GetQueueQuery(sp));
+	}
+
+	private async Task CallNextAsync()
+	{
+		if (!Guid.TryParse(ServicePointIdString, out var sp)) return;
+		await Mediator.Send(new CallNextCommand(sp));
+		await RefreshAsync();
+	}
+
+	private async Task MarkNoShowAsync(Guid id)
+	{
+		await Mediator.Send(new MarkNoShowCommand(id));
+		await RefreshAsync();
+	}
+
+	private async Task MarkDoneAsync(Guid id)
+	{
+		await Mediator.Send(new MarkDoneCommand(id));
+		await RefreshAsync();
+	}
 }

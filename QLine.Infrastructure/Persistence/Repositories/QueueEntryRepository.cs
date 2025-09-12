@@ -22,7 +22,16 @@ namespace QLine.Infrastructure.Persistence.Repositories
         }
 
         public Task<QueueEntry?> GetByIdAsync(Guid id, CancellationToken ct) =>
-            _db.QueueEntries.AsNoTracking().FirstOrDefaultAsync(q => q.Id == id, ct);
+            _db.QueueEntries.FirstOrDefaultAsync(q => q.Id == id, ct);
+
+        public Task<QueueEntry?> GetCurrentInServiceByServicePointAsync(Guid servicePointId, CancellationToken ct) =>
+            _db.QueueEntries.FirstOrDefaultAsync(q => q.ServicePointId == servicePointId && q.Status == QueueStatus.InService, ct);
+
+        public Task<QueueEntry?> GetFirstWaitingByServicePointAsync(Guid servicePointId, CancellationToken ct) =>
+            _db.QueueEntries
+                .Where(q => q.ServicePointId == servicePointId && q.Status == QueueStatus.Waiting)
+                .OrderByDescending(q => q.Priority).ThenBy(q => q.CreatedAt)
+                .FirstOrDefaultAsync(ct);
 
         public async Task<IReadOnlyList<QueueEntry>> GetWaitingByServicePointAsync(Guid servicePointId, CancellationToken ct) =>
             await _db.QueueEntries.AsNoTracking()
@@ -30,5 +39,11 @@ namespace QLine.Infrastructure.Persistence.Repositories
                 .OrderByDescending(q => q.Priority)
                 .ThenBy(q => q.CreatedAt)
                 .ToListAsync(ct);
+
+        public async Task UpdateAsync(QueueEntry entry, CancellationToken ct)
+        {
+            _db.QueueEntries.Update(entry);
+            await _db.SaveChangesAsync(ct);
+        }
     }
 }

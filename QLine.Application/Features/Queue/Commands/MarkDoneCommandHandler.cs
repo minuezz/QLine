@@ -9,17 +9,17 @@ using QLine.Domain.Abstractions;
 
 namespace QLine.Application.Features.Queue.Commands
 {
-    public sealed class MarkNoShowCommandHandler : IRequestHandler<MarkNoShowCommand>
+    public sealed class MarkDoneCommandHandler : IRequestHandler<MarkDoneCommand>
     {
         private readonly IQueueEntryRepository _repo;
 
-        public MarkNoShowCommandHandler(IQueueEntryRepository repo) => _repo = repo;
+        public MarkDoneCommandHandler(IQueueEntryRepository repo) => _repo = repo;
 
-        public async Task Handle(MarkNoShowCommand request, CancellationToken ct)
+        public async Task Handle(MarkDoneCommand request, CancellationToken ct)
         {
             var entry = await _repo.GetByIdAsync(request.QueueEntryId, ct)
                 ?? throw new DomainException("Queue entry not found.");
-            entry.MarkNoShow();
+            entry.MarkDone();
             await _repo.UpdateAsync(entry, ct);
         }
     }
