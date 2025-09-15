@@ -21,15 +21,18 @@ namespace QLine.Application.Features.Reservations.Commands
         private readonly IReservationRepository _reservations;
         private readonly IQueueEntryRepository _queueEntries;
         private readonly IDateTimeProvider _clock;
+        private readonly IRealtimeNotifier _realtime;
 
         public CreateReservationCommandHandler(
             IReservationRepository reservations,
             IQueueEntryRepository queueEntries,
-            IDateTimeProvider clock)
+            IDateTimeProvider clock,
+            IRealtimeNotifier realtime)
         {
             _reservations = reservations;
             _queueEntries = queueEntries;
             _clock = clock;
+            _realtime = realtime;
         }
 
         public async Task<ReservationDto> Handle(CreateReservationCommand request, CancellationToken ct)
@@ -64,6 +67,8 @@ namespace QLine.Application.Features.Reservations.Commands
             );
 
             await _queueEntries.AddAsync(entry, ct);
+
+            await _realtime.QueueUpdated(request.TenantId, request.ServicePointId, ct);
 
             return new ReservationDto
             {

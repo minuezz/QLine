@@ -1,0 +1,95 @@
+﻿@page "/display/{ServicePointId:guid}"
+@using MediatR
+@using Microsoft.JSInterop
+@using QLine.Application.Abstractions
+@using QLine.Application.DTO
+@using QLine.Application.Features.Queue.Queries
+@inject IMediator Mediator
+@inject IJSRuntime JS
+@inject ICurrentUser Current
+
+<h3>Now Serving</h3>
+
+@if (_snapshot is null)
+{
+	<p>Loading...</p>
+}
+else
+{
+	<div style="font-size:56px;font-weight:800;margin:10px 0;">
+		@(_snapshot.Current?.TicketNo ?? "—")
+	</div>
+
+	<div style="margin-top:16px;">
+		<h4>Up next</h4>
+		@if (_snapshot.Waiting.Count == 0)
+		{ 
+			<p>(empty)</p>
+		}
+		else
+		{
+			<ul>
+				@foreach(var w in _snapshot.Waiting.Take(5))
+				{
+					<li style="font-size:24px;">@w.TicketNo</li>
+				}
+			</ul>
+		}
+	</div>
+}
+
+@code {
+	[Parameter] public Guid ServicePointId { get; set; }
+
+	private readonly SemaphoreSlim _refreshGate = new(1, 1);
+	private bool _refreshPending;
+
+	private IJSObjectReference? _realtimeHandle;
+	private QueueSnapshotDto? _snapshot;
+
+	protected override async Task OnInitializedAsync() => await RefreshAsync();
+
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (firstRender)
+		{
+			var tenant = Current.TenantId ?? Guid.Parse("11111111-1111-1111-1111-111111111111");
+			_realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
+				"qlineRealtime.connect", ServicePointId, tenant, DotNetObjectReference.Create(this));
+		}
+	}
+
+	private async Task RefreshAsync()
+	{
+		if (!Guid.TryParse(ServicePointId.ToString(), out var sp)) return;
+
+		if(!await _refreshGate.WaitAsync(0))
+		{
+			_refreshPending = true;
+			return;
+		}
+
+		try 
+		{
+			do
+			{
+				_refreshPending = false;
+				_snapshot = await Mediator.Send(new GetQueueQuery(sp));
+				StateHasChanged();
+			} while (_refreshPending);
+		}
+		finally
+		{
+			_refreshGate.Release();
+		}
+	}
+
+	[JSInvokable]
+	public async Task OnQueueUpdated() => await RefreshAsync();
+
+	public async ValueTask DisposeAsync()
+	{
+		if (_realtimeHandle is not null)
+			await _realtimeHandle.InvokeVoidAsync("dispose");
+	}
+}

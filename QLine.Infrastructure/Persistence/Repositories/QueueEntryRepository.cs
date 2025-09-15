@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data;
 using Microsoft.EntityFrameworkCore;
 using QLine.Domain.Abstractions;
 using QLine.Domain.Entities;
@@ -39,6 +40,34 @@ namespace QLine.Infrastructure.Persistence.Repositories
                 .OrderByDescending(q => q.Priority)
                 .ThenBy(q => q.CreatedAt)
                 .ToListAsync(ct);
+
+        public async Task<QueueEntry?> TryStartNextInServiceAsync(Guid servicePointId, CancellationToken ct)
+        {
+            await using var tx = await _db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
+
+            var next = await _db.QueueEntries
+                .FromSqlInterpolated($@"
+                    SELECT * FROM ""QueueEntries""
+                    WHERE ""ServicePointId"" = {servicePointId} 
+                      AND ""Status"" = {(int)QueueStatus.Waiting}
+                    ORDER BY ""Priority"" DESC, ""CreatedAt""
+                    FOR UPDATE SKIP LOCKED
+                    LIMIT 1")
+                .FirstOrDefaultAsync(ct);
+
+            if (next is null)
+            {
+                await tx.CommitAsync(ct);
+                return null;
+            }
+
+            next.MarkInService();
+            _db.QueueEntries.Update(next);
+            await _db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+
+            return next;
+        }
 
         public async Task UpdateAsync(QueueEntry entry, CancellationToken ct)
         {

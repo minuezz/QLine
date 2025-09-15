@@ -14,6 +14,7 @@ namespace QLine.Domain.Abstractions
         Task<IReadOnlyList<QueueEntry>> GetWaitingByServicePointAsync(Guid servicePointId, CancellationToken ct);
         Task<QueueEntry?> GetCurrentInServiceByServicePointAsync(Guid servicePointId, CancellationToken ct);
         Task<QueueEntry?> GetFirstWaitingByServicePointAsync(Guid servicePointId, CancellationToken ct);
+        Task<QueueEntry?> TryStartNextInServiceAsync(Guid servicePointId, CancellationToken ct);
         Task UpdateAsync(QueueEntry entry, CancellationToken ct);
     }
 }

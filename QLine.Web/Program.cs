@@ -42,12 +42,13 @@ services.AddScoped<BrowserTimeService>();
 services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+services.AddSignalR();
+services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
+
 services.AddServerSideBlazor().AddCircuitOptions(options =>
 {
     options.DetailedErrors = true;
 });
-
-//builder.Services.AddMudServices();
 
 var app = builder.Build();
 
@@ -72,6 +73,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAuthEndpoints();
+
+app.MapHub<QueueHub>("/hubs/queue");
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

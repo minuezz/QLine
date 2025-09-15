@@ -8,5 +8,6 @@ namespace QLine.Application.Abstractions
 {
     public interface IRealtimeNotifier
     {
+        Task QueueUpdated(Guid tenantId, Guid servicePointId, CancellationToken ct = default);
     }
 }
