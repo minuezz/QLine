@@ -1,0 +1,240 @@
+﻿@using System.Text.Json
+@using System.Text.Json.Nodes
+
+<div class="oh-card">
+	<h4>OPENING HOURS</h4>
+
+	<table class="oh-table">
+		<thead>
+			<tr>
+				<th>Day</th>
+				<th>Open?</th>
+				<th>Opening Hrs</th>
+				<th>Closing Hrs</th>
+			</tr>
+		</thead>
+		<tbody>
+			@foreach (var row in Rows)
+			{
+				<tr>
+					<td class="oh-day">@row.Label</td>
+					<td class="oh-open">
+						<input type="checkbox" @bind="row.Open" @bind:after="() => OnRowChanged(row)" />
+					</td>
+					<td>
+						<input	type="time"
+								@bind="row.Opening"
+								@bind:after="() => OnRowChanged(row)"
+								disabled="@(!row.Open)" />
+					</td>
+					<td>
+						<input	type="time"
+								@bind="row.Closing"
+								@bind:after="() => OnRowChanged(row)"
+								disabled="@(!row.Open)" />
+						@if (!string.IsNullOrEmpty(row.Error))
+						{
+							<div class="oh-error">@row.Error</div>
+						}
+					</td>
+				</tr>
+			}
+		</tbody>
+	</table>
+</div>
+
+@code {
+	[Parameter] public string? Value { get; set; }
+	[Parameter] public EventCallback<string?> ValueChanged { get; set; }
+	[Parameter] public bool Valid { get; set; }
+	[Parameter] public EventCallback<bool> ValidChanged { get; set; }
+
+	private readonly (string key, string label)[] DayOrder =
+	[
+		("monday", "Monday"),
+		("tuesday", "Tuesday"),
+		("wednesday", "Wednesday"),
+		("thursday", "Thursday"),
+		("friday", "Friday"),
+		("saturday", "Saturday"),
+		("sunday", "Sunday")
+	];
+
+	private List<Row> Rows = new();
+
+	private sealed class Row
+	{
+		public string Key { get; init; } = default!;
+		public string Label { get; init; } = default!;
+		public bool Open { get; set; }
+		public TimeOnly Opening { get; set; } = new(7, 30);
+		public TimeOnly Closing { get; set; } = new(16, 0);
+		public string? Error { get; set; }
+	}
+
+	protected override void OnInitialized()
+	{
+		Rows = DayOrder.Select(d => new Row
+		{
+			Key = d.key,
+			Label = d.label,
+			Open = d.key is "saturday" or "sunday" ? false : true,
+			Opening = new TimeOnly(7, 30),
+			Closing = new TimeOnly(16, 0)
+		}).ToList();
+
+		TryLoadJson(Value);
+		ValidateAll();
+	}
+
+	protected override void OnParametersSet()
+	{
+		if (!string.IsNullOrWhiteSpace(Value)) 
+		{
+			TryLoadJson(Value);
+			ValidateAll();
+		}
+	}
+
+	private void TryLoadJson(string? json)
+	{
+		if (string.IsNullOrWhiteSpace(json)) return;
+
+		try
+		{
+			var root = JsonNode.Parse(json)?.AsObject();
+			if (root is null) return;
+
+			foreach (var r in Rows)
+			{
+				if (!root.TryGetPropertyValue(r.Key, out var node) || node is null)
+					continue;
+
+				if (node is JsonObject obj)
+				{
+					r.Open = obj["open"]?.GetValue<bool?>() ?? false;
+					r.Opening = ParseTime(obj["start"]?.GetValue<string>());
+					r.Closing = ParseTime(obj["end"]?.GetValue<string>());
+				}
+				else if (node is JsonArray arr && arr.Count > 0 && arr[0] is JsonObject first)
+				{
+					r.Open = true;
+					r.Opening = ParseTime(first["start"]?.GetValue<string>());
+					r.Closing = ParseTime(first["end"]?.GetValue<string>());
+				}
+			}
+		}
+		catch
+		{
+
+		}
+	}
+
+	private static TimeOnly RoundToNearestFiveMinutes(TimeOnly time)
+	{
+		var totalMinutes = time.Hour * 60 + time.Minute;
+		var roundedMinutes = ((totalMinutes + 2) / 5) * 5;
+
+		var hours = roundedMinutes / 60;
+		var minutes = roundedMinutes % 60;
+
+		if (hours >= 24)
+		{
+			hours = 23;
+			minutes = 55;
+		}
+
+		return new TimeOnly(hours, minutes);
+	}
+
+	private static TimeOnly ParseTime(string? s)
+	{
+		if (string.IsNullOrWhiteSpace(s)) return new TimeOnly(7, 30);
+
+		TimeOnly time;
+		if (TimeOnly.TryParse(s, out time))
+		{
+			return RoundToNearestFiveMinutes(time);
+		}
+
+		if (s?.Length == 4 && int.TryParse(s, out _) && 
+			TimeOnly.TryParseExact(s.Insert(2, ":"), "HH:mm", out time))
+		{
+			return RoundToNearestFiveMinutes(time);
+		}
+
+		return new TimeOnly(7, 30);
+	}
+
+	private async Task OnRowChanged(Row row)
+	{
+		row.Opening = RoundToNearestFiveMinutes(row.Opening);
+		row.Closing = RoundToNearestFiveMinutes(row.Closing);
+
+		ValidateRow(row);
+		ValidateAll();
+		await EmitAsync();
+		StateHasChanged();
+	}
+
+	private void ValidateRow(Row r)
+	{
+		r.Error = null;
+		if (!r.Open) return;
+		if (r.Opening >= r.Closing)
+			r.Error = "Opening must be earlier than closing.";
+	}
+
+	private void ValidateAll()
+	{
+		foreach (var r in Rows) ValidateRow(r);
+		var ok = Rows.All(r => string.IsNullOrEmpty(r.Error));
+		if (ok != Valid) ValidChanged.InvokeAsync(ok);
+		Valid = ok;
+	}
+
+	private async Task EmitAsync()
+	{
+		var obj = new JsonObject();
+		foreach (var r in Rows)
+		{
+			obj[r.Key] = new JsonObject
+			{
+				["open"] = r.Open,
+				["start"] = r.Opening.ToString("HH\\:mm"),
+				["end"] = r.Closing.ToString("HH\\:mm")
+			};
+		}
+		await ValueChanged.InvokeAsync(obj.ToJsonString());
+	}
+}
+
+<style>
+	.oh-card {
+		border: 1px solid #eee;
+		border-radius: 8px;
+		padding: 12px;
+		margin-bottom: 12px;
+		background: #fafafa;
+	}
+	.oh-table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+	.oh-table th, .oh-table td {
+		border: 1px solid #f0f0f0;
+		padding: 8px;
+		vertical-align: middle;
+	}
+	.oh-day {
+		font-weight: 600;
+	}
+	.oh-open {
+		text-align: center;
+	}
+	.oh-error {
+		color: #b3261e;
+		font-size: 16px;
+		margin-top: 4px;
+	}
+</style>

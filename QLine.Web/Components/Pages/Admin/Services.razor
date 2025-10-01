@@ -1,5 +1,102 @@
-﻿<h3>Services</h3>
+﻿@page "/admin/services/{ServicePointId:guid}"
+@attribute [Authorize(Roles = "Staff")]
+@using MediatR
+@using Microsoft.AspNetCore.Authorization
+@using QLine.Application.DTO
+@using QLine.Application.Features.Admin.Queries
+@using QLine.Application.Features.Admin.Services.Commands
+@inject IMediator Mediator
+
+<h3>Services (Admin)</h3>
+
+<p><a href="/admin/servicepoints">Back to Service Points</a></p>
+
+<div style="margin-bottom:12px; padding:10px; border:1px solid #eee; border-radius: 6px;">
+	<h4>@(_editingId is null ? "Create" : "Edit")</h4>
+	<div><label>Name</label><br /><input @bind="_name" /></div>
+	<div><label>Duration (min)</label><br /><input type="number" @bind="_dur" /></div>
+	<div><label>Buffer (min)</label><br /><input type="number" @bind="_buf" /></div>
+	<div><label>Max per day</label><br /><input type="number" @bind="_max" /></div>
+	<button @onclick="SaveAsync">Save</button>
+	@if (_editingId is not null)
+	{
+		<button @onclick="CancelEdit" style="margin-left:6px;">Cancel</button>
+	}
+</div>
+
+<table>
+	<thead>
+		<tr><th>Name</th><th>Duration</th><th>Buffer</th><th>Max/day</th><th></th></tr>
+	</thead>
+	<tbody>
+		@foreach (var s in _list)
+		{
+			<tr>
+				<td>@s.Name</td><td>@s.DurationMin</td><td>@s.BufferMin</td><td>@s.MaxPerDay</td>
+				<td>
+					<button @onclick="() => Edit(s)">Edit</button>
+					<button @onclick="() => DeleteAsync(s.Id)" style="margin-left:6px;">Delete</button>
+				</td>
+			</tr>
+		}
+	</tbody>
+</table>
 
 @code {
+	[Parameter] public Guid ServicePointId { get; set; }
+	private static readonly Guid TenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
 
+	private List<ServiceDto> _list = new();
+
+	private Guid? _editingId;
+	private string _name = "";
+	private int _dur = 15;
+	private int _buf = 5;
+	private int _max = 100;
+
+	protected override async Task OnInitializedAsync() => await LoadAsync();
+
+	private async Task LoadAsync()
+		=> _list = (await Mediator.Send(new GetServicesForServicePointQuery(ServicePointId))).ToList();
+
+	private void Edit(ServiceDto s)
+	{
+		_editingId = s.Id;
+		_name = s.Name;
+		_dur = s.DurationMin;
+		_buf = s.BufferMin;
+		_max = s.MaxPerDay;
+	}
+
+	private void CancelEdit()
+	{
+		_editingId = null;
+		_name = "";
+		_dur = 15;
+		_buf = 5;
+		_max = 100;
+	}
+
+	private async Task SaveAsync()
+	{
+		await Mediator.Send(new UpsertServiceCommand(
+			Id: _editingId,
+			TenantId: TenantId,
+			ServicePointId: ServicePointId,
+			Name: _name,
+			DurationMin: _dur,
+			BufferMin: _buf,
+			MaxPerDay: _max
+		));
+		CancelEdit();
+		await LoadAsync();
+		StateHasChanged();
+	}
+
+	private async Task DeleteAsync(Guid id)
+	{
+		await Mediator.Send(new DeleteServiceCommand(id));
+		await LoadAsync();
+		StateHasChanged();
+	}
 }

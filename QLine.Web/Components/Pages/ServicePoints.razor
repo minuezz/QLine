@@ -12,7 +12,7 @@
 {
 	<p>Loading...</p>
 }
-else if (_errorMessage is not null)
+else if (!string.IsNullOrWhiteSpace(_errorMessage))
 {
 	<ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
 }
@@ -44,6 +44,9 @@ else
 
 	protected override async Task OnInitializedAsync()
 	{
+		_errorMessage = null;
+		_errorDetails = null;
+
 		try
 		{
 			_points = (await Mediator.Send(new GetServicePointsQuery(TenantId))).ToList();

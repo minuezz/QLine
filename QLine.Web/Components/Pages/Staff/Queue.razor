@@ -4,6 +4,7 @@
 @using Microsoft.JSInterop
 @using MediatR
 @using QLine.Application.DTO
+@using QLine.Application.Features.Admin.Queries
 @using QLine.Application.Features.Queue.Queries
 @using QLine.Application.Features.Queue.Commands
 @inject IMediator Mediator
@@ -13,15 +14,20 @@
 <h3>Staff Queue</h3>
 
 <div style="margin:6px 0 12px 0;">
-	<label>ServicePoint Id:</label>
-	<input @bind="ServicePointIdString" style="width:360px" />
+	<label style="margin-right: 8px;">Service Point:</label>
+	<select @bind="SelectedServicePointIdString" @bind:after="OnServicePointChanged">
+		@foreach (var sp in _points)
+		{
+			<option value="@sp.Id.ToString()">@sp.Name</option>
+		}
+	</select>
 	<button @onclick="RefreshAsync" style="margin-left:8px;">Refresh</button>
 	<button @onclick="CallNextAsync" style="margin-left: 8px;">Call Next</button>
 </div>
 
-@if (!Guid.TryParse(ServicePointIdString, out var _))
+@if (string.IsNullOrWhiteSpace(SelectedServicePointIdString) || !Guid.TryParse(SelectedServicePointIdString, out var _))
 {
-	<p class="text-danger">Enter valud ServicePointId (Guid).</p>
+	<p class="text-danger">Select a Service Point.</p>
 }
 else if (_snapshot is null)
 {
@@ -67,29 +73,77 @@ else
 }
 
 @code {
-	private string ServicePointIdString = "22222222-2222-2222-2222-222222222222";
-	
+	private List<ServicePointDto> _points = new();
+
+	private string? SelectedServicePointIdString;
+
+	private IJSObjectReference? _realtimeHandle;
+	private Guid? _connectedSpId;
+	private bool _realtimeReady;
+
+	private QueueSnapshotDto? _snapshot;
+
 	private readonly SemaphoreSlim _refreshGate = new(1, 1);
 	private bool _refreshPending;
 
-	private IJSObjectReference? _realtimeHandle;
-	private QueueSnapshotDto? _snapshot;
+	protected override async Task OnInitializedAsync()
+	{
+		var tenant = Current.TenantId ?? Guid.Parse("11111111-1111-1111-1111-111111111111");
+		_points = (await Mediator.Send(new GetServicePointsQuery(tenant))).ToList();
 
-	protected override async Task OnInitializedAsync() => await RefreshAsync();
+		if (_points.Count > 0)
+			SelectedServicePointIdString = _points[0].Id.ToString();
+
+		await RefreshAsync();
+	}
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-		if (firstRender && Guid.TryParse(ServicePointIdString, out var sp))
+		if (firstRender)
 		{
-			var tenant = Current.TenantId ?? Guid.Parse("11111111-1111-1111-1111-111111111111");
-			_realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
-				"qlineRealtime.connect", sp, tenant, DotNetObjectReference.Create(this));
+			_realtimeReady = true;
+			await ConnectToRealtimeAsync();
 		}
+	}
+
+	private async Task OnServicePointChanged()
+	{
+		await ConnectToRealtimeAsync();
+		await RefreshAsync();
+	}
+
+	private async Task ConnectToRealtimeAsync()
+	{
+		if (!_realtimeReady) return;
+		if (string.IsNullOrWhiteSpace(SelectedServicePointIdString)) return;
+		if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
+
+		if (_connectedSpId == sp) return;
+
+		if (_realtimeHandle is not null)
+		{
+			try
+			{
+				await _realtimeHandle.InvokeVoidAsync("dispose");
+			}
+			catch
+			{
+
+			}
+			_realtimeHandle = null;
+			_connectedSpId = null;
+		}
+
+		var tenant = Current.TenantId ?? Guid.Parse("11111111-1111-1111-1111-111111111111");
+		_realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
+			"qlineRealtime.connect", sp, tenant, DotNetObjectReference.Create(this));
+		_connectedSpId = sp;
 	}
 
 	private async Task RefreshAsync()
 	{
-		if (!Guid.TryParse(ServicePointIdString, out var sp)) return;
+		if (string.IsNullOrWhiteSpace(SelectedServicePointIdString)) return;
+		if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
 
 		if (!await _refreshGate.WaitAsync(0))
 		{
@@ -113,7 +167,7 @@ else
 	}
 
 	[JSInvokable]
-	public async Task OnQueueUpdated() => await RefreshAsync();
+	public Task OnQueueUpdated() => RefreshAsync();
 
 	public async ValueTask DisposeAsync()
 	{
@@ -123,22 +177,17 @@ else
 
 	private async Task CallNextAsync()
 	{
-		if (!Guid.TryParse(ServicePointIdString, out var sp)) return;
+		if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
 		await Mediator.Send(new CallNextCommand(sp));
 	}
 
-	private async Task MarkNoShowAsync(Guid id)
-	{
-		await Mediator.Send(new MarkNoShowCommand(id));
-	}
+	private Task MarkNoShowAsync(Guid id) 
+		=> Mediator.Send(new MarkNoShowCommand(id));
 
-	private async Task MarkDoneAsync(Guid id)
-	{
-		await Mediator.Send(new MarkDoneCommand(id));
-	}
+	private Task MarkDoneAsync(Guid id)
+		=> Mediator.Send(new MarkDoneCommand(id));
+	
 
-	private async Task SkipAsync(Guid id)
-	{
-		await Mediator.Send(new SkipQueueEntryCommand(id));
-	}
+	private Task SkipAsync(Guid id)
+		=> Mediator.Send(new SkipQueueEntryCommand(id));
 }

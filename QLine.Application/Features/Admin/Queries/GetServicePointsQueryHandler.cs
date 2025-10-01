@@ -26,7 +26,8 @@ namespace QLine.Application.Features.Admin.Queries
                 {
                     Id = sp.Id,
                     Name = sp.Name,
-                    Address = sp.Address
+                    Address = sp.Address,
+                    OpenHoursJson = sp.OpenHoursJson
                 })
                 .ToList();
         }
