@@ -15,13 +15,16 @@ namespace QLine.Infrastructure.Persistence.Repositories
         private readonly AppDbContext _db;
         public ReservationRepository(AppDbContext db) => _db = db;
 
-        public Task<bool> IsSlotAvailableAsync(Guid servicePointId, DateTimeOffset startTime, CancellationToken ct) =>
-            _db.Reservations.AsNoTracking()
-                .Where(r => r.ServicePointId == servicePointId
-                        && r.StartTime == startTime
-                        && r.Status == ReservationStatus.Active)
-            .AnyAsync(ct)
-            .ContinueWith(t => !t.Result, ct);
+        public async Task<bool> IsSlotAvailableAsync(Guid servicePointId, DateTimeOffset startTime, CancellationToken ct)
+        {
+            var isTaken = await _db.Reservations.AsNoTracking()
+                .AnyAsync(r => r.ServicePointId == servicePointId
+                            && r.StartTime == startTime
+                            && r.Status == ReservationStatus.Active, ct);
+
+            return !isTaken;
+        }
+
         public async Task AddAsync(Reservation reservation, CancellationToken ct)
         {
             await _db.Reservations.AddAsync(reservation, ct);
@@ -31,5 +34,10 @@ namespace QLine.Infrastructure.Persistence.Repositories
         public Task<Reservation?> GetByIdAsync(Guid id, CancellationToken ct) =>
             _db.Reservations.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
 
+        public async Task<IReadOnlyList<Reservation>> GetByUserAsync(Guid userId, CancellationToken ct) =>
+            await _db.Reservations.AsNoTracking()
+                .Where(r => r.UserId == userId)
+                .OrderBy(r => r.StartTime)
+                .ToListAsync(ct);
     }
 }

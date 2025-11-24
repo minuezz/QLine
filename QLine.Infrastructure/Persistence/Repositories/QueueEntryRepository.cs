@@ -25,6 +25,9 @@ namespace QLine.Infrastructure.Persistence.Repositories
         public Task<QueueEntry?> GetByIdAsync(Guid id, CancellationToken ct) =>
             _db.QueueEntries.FirstOrDefaultAsync(q => q.Id == id, ct);
 
+        public Task<QueueEntry?> GetByReservationAsync(Guid reservationId, CancellationToken ct) =>
+            _db.QueueEntries.AsNoTracking().FirstOrDefaultAsync(q => q.ReservationId == reservationId, ct);
+
         public Task<QueueEntry?> GetCurrentInServiceByServicePointAsync(Guid servicePointId, CancellationToken ct) =>
             _db.QueueEntries.FirstOrDefaultAsync(q => q.ServicePointId == servicePointId && q.Status == QueueStatus.InService, ct);
 
@@ -48,7 +51,7 @@ namespace QLine.Infrastructure.Persistence.Repositories
             var next = await _db.QueueEntries
                 .FromSqlInterpolated($@"
                     SELECT * FROM ""QueueEntries""
-                    WHERE ""ServicePointId"" = {servicePointId} 
+                    WHERE ""ServicePointId"" = {servicePointId}
                       AND ""Status"" = {(int)QueueStatus.Waiting}
                     ORDER BY ""Priority"" DESC, ""CreatedAt""
                     FOR UPDATE SKIP LOCKED
