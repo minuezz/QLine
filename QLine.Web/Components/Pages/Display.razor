@@ -1,12 +1,10 @@
 ﻿@page "/display/{ServicePointId:guid}"
 @using MediatR
 @using Microsoft.JSInterop
-@using QLine.Application.Abstractions
 @using QLine.Application.DTO
 @using QLine.Application.Features.Queue.Queries
 @inject IMediator Mediator
 @inject IJSRuntime JS
-@inject ICurrentUser Current
 
 <h3>Now Serving</h3>
 
