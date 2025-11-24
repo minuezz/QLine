@@ -10,7 +10,6 @@ namespace QLine.Application.Features.Admin.Services.Commands
 {
     public sealed record UpsertServiceCommand(
         Guid? Id,
-        Guid TenantId,
         Guid ServicePointId,
         string Name,
         int DurationMin,

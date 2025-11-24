@@ -1,5 +1,5 @@
-﻿window.qlineRealtime = {
-    connect: function (servicePointId, tenantId, dotNetRef) {
+window.qlineRealtime = {
+    connect: function (servicePointId, dotNetRef) {
         const conn = new signalR.HubConnectionBuilder()
             .withUrl("/hubs/queue")
             .withAutomaticReconnect()
@@ -11,12 +11,12 @@
         });
 
         conn.start()
-            .then(() => conn.invoke("JoinServicePoint", tenantId, servicePointId))
+            .then(() => conn.invoke("JoinServicePoint", servicePointId))
             .catch(console.error);
 
         return {
             dispose: () => {
-                conn.invoke("LeaveServicePoint", tenantId, servicePointId)
+                conn.invoke("LeaveServicePoint", servicePointId)
                     .finally(() => conn.stop());
             }
         };

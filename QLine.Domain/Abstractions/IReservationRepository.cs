@@ -13,7 +13,7 @@ namespace QLine.Domain.Abstractions
         /// Checking slot availability, taking into account active reservations.
         /// </summary>
 
-        Task<bool> IsSlotAvailableAsync(Guid tenantId, Guid servicePointId, DateTimeOffset startTime, CancellationToken ct);
+        Task<bool> IsSlotAvailableAsync(Guid servicePointId, DateTimeOffset startTime, CancellationToken ct);
 
         Task AddAsync(Reservation reservation, CancellationToken ct);
         Task<Reservation?> GetByIdAsync(Guid id, CancellationToken ct);

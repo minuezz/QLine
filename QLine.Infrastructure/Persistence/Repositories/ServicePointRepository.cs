@@ -14,9 +14,8 @@ namespace QLine.Infrastructure.Persistence.Repositories
         private readonly AppDbContext _db;
         public ServicePointRepository(AppDbContext db) => _db = db;
 
-        public async Task<IReadOnlyList<ServicePoint>> GetByTenantAsync(Guid tenantId, CancellationToken ct) =>
+        public async Task<IReadOnlyList<ServicePoint>> GetAllAsync(CancellationToken ct) =>
             await _db.ServicePoints.AsNoTracking()
-                .Where(sp => sp.TenantId == tenantId)
                 .OrderBy(sp => sp.Name)
                 .ToListAsync(ct);
         

@@ -12,7 +12,6 @@ namespace QLine.Application.Validation
     {
         public UpsertServiceCommandValidator()
         {
-            RuleFor(x => x.TenantId).NotEmpty();
             RuleFor(x => x.ServicePointId).NotEmpty();
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.DurationMin).GreaterThan(0);

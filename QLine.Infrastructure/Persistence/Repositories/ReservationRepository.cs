@@ -15,10 +15,9 @@ namespace QLine.Infrastructure.Persistence.Repositories
         private readonly AppDbContext _db;
         public ReservationRepository(AppDbContext db) => _db = db;
 
-        public Task<bool> IsSlotAvailableAsync(Guid tenantId, Guid servicePointId, DateTimeOffset startTime, CancellationToken ct) =>
+        public Task<bool> IsSlotAvailableAsync(Guid servicePointId, DateTimeOffset startTime, CancellationToken ct) =>
             _db.Reservations.AsNoTracking()
-                .Where(r => r.TenantId == tenantId
-                        && r.ServicePointId == servicePointId
+                .Where(r => r.ServicePointId == servicePointId
                         && r.StartTime == startTime
                         && r.Status == ReservationStatus.Active)
             .AnyAsync(ct)
