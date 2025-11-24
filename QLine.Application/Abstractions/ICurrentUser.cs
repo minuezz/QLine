@@ -9,7 +9,6 @@ namespace QLine.Application.Abstractions
     public interface ICurrentUser
     {
         Guid? UserId { get; }
-        Guid? TenantId { get; }
         string? Email { get; }
         string? Role { get; }
     }

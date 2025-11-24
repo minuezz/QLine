@@ -9,7 +9,6 @@ namespace QLine.Application.DTO
     public sealed class ReservationDto
     {
         public Guid Id { get; init; }
-        public Guid TenantId {  get; init; }
         public Guid ServicePointId {  get; init; }
         public Guid ServiceId { get; init; }
         public Guid UserId {  get; init; }

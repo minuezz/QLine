@@ -43,10 +43,9 @@
 </table>
 
 @code {
-	[Parameter] public Guid ServicePointId { get; set; }
-	private static readonly Guid TenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+    [Parameter] public Guid ServicePointId { get; set; }
 
-	private List<ServiceDto> _list = new();
+    private List<ServiceDto> _list = new();
 
 	private Guid? _editingId;
 	private string _name = "";
@@ -77,14 +76,13 @@
 		_max = 100;
 	}
 
-	private async Task SaveAsync()
-	{
-		await Mediator.Send(new UpsertServiceCommand(
-			Id: _editingId,
-			TenantId: TenantId,
-			ServicePointId: ServicePointId,
-			Name: _name,
-			DurationMin: _dur,
+        private async Task SaveAsync()
+        {
+                await Mediator.Send(new UpsertServiceCommand(
+                        Id: _editingId,
+                        ServicePointId: ServicePointId,
+                        Name: _name,
+                        DurationMin: _dur,
 			BufferMin: _buf,
 			MaxPerDay: _max
 		));

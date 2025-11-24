@@ -15,7 +15,6 @@ namespace QLine.Infrastructure.Persistence.Configurations
         {
             b.HasKey(x => x.Id);
 
-            b.Property(x => x.TenantId).IsRequired();
             b.Property(x => x.ServicePointId).IsRequired();
             b.Property(x => x.Name).IsRequired().HasMaxLength(200);
             b.Property(x => x.DurationMin).IsRequired();

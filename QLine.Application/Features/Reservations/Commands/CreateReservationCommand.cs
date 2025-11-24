@@ -9,7 +9,6 @@ using QLine.Application.DTO;
 namespace QLine.Application.Features.Reservations.Commands
 {
     public sealed record CreateReservationCommand(
-        Guid TenantId,
         Guid ServicePointId,
         Guid ServiceId,
         Guid UserId,

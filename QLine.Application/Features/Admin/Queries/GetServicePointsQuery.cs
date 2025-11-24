@@ -8,5 +8,5 @@ using QLine.Application.DTO;
 
 namespace QLine.Application.Features.Admin.Queries
 {
-    public sealed record GetServicePointsQuery(Guid TenantId) : IRequest<IReadOnlyList<ServicePointDto>>;
+    public sealed record GetServicePointsQuery() : IRequest<IReadOnlyList<ServicePointDto>>;
 }

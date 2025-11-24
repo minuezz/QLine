@@ -31,7 +31,7 @@ namespace QLine.Application.Features.Queue.Commands
             var next = await _repo.TryStartNextInServiceAsync(request.ServicePointId, ct);
             if (next is null) return null;
 
-            await _realtime.QueueUpdated(next.TenantId, next.ServicePointId, ct);
+            await _realtime.QueueUpdated(next.ServicePointId, ct);
 
             return ToDto(next);
         }
