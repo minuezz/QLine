@@ -10,7 +10,7 @@ using QLine.Domain.Abstractions;
 
 namespace QLine.Application.Features.Reservations.Queries
 {
-    public sealed class GetReservationDetailsQueryHandler 
+    public sealed class GetReservationDetailsQueryHandler
         : IRequestHandler<GetReservationDetailsQuery, ReservationDto>
     {
         private readonly IReservationRepository _reservations;
@@ -29,11 +29,7 @@ namespace QLine.Application.Features.Reservations.Queries
             var res = await _reservations.GetByIdAsync(request.ReservationId, ct)
                 ?? throw new DomainException("Reservation not found.");
 
-            string? ticketNo = null;
-
-            var list = await _queueEntries.GetWaitingByServicePointAsync(res.ServicePointId, ct);
-            var linked = list.FirstOrDefault(q => q.ReservationId == res.Id);
-            ticketNo = linked?.TicketNo;
+            var linked = await _queueEntries.GetByReservationAsync(res.Id, ct);
 
             return new ReservationDto()
             {
@@ -43,7 +39,7 @@ namespace QLine.Application.Features.Reservations.Queries
                 UserId = res.UserId,
                 StartTime = res.StartTime,
                 Status = res.Status.ToString(),
-                TicketNo = ticketNo
+                TicketNo = linked?.TicketNo
             };
         }
     }
