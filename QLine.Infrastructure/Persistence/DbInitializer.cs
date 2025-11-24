@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using QLine.Domain.Entities;
 using QLine.Domain.Enums;
@@ -18,10 +14,10 @@ namespace QLine.Infrastructure.Persistence
             if (await db.ServicePoints.AnyAsync(ct))
                 return;
 
-            var spId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-            var svcId = Guid.Parse("33333333-3333-3333-3333-333333333333");
-            var userId = Guid.Parse("44444444-4444-4444-4444-444444444444");
-            var staffId = Guid.Parse("55555555-5555-5555-5555-555555555555");
+            var spId = Guid.NewGuid();
+            var svcId = Guid.NewGuid();
+            var userId = Guid.NewGuid();
+            var staffId = Guid.NewGuid();
 
             var sp = ServicePoint.Create(
                 id: spId,
@@ -43,7 +39,7 @@ namespace QLine.Infrastructure.Persistence
                 id: userId,
                 email: "test.client@qline.local",
                 firstName: "Test",
-                lastName: "Cleint",
+                lastName: "Client",
                 role: UserRole.Client
             );
 
