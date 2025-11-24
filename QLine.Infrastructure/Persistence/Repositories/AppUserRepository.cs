@@ -17,9 +17,9 @@ namespace QLine.Infrastructure.Persistence.Repositories
         public Task<AppUser?> GetByIdAsync(Guid id, CancellationToken ct) =>
             _db.AppUsers.AsNoTracking().FirstOrDefaultAsync(u => u.Id == id, ct);
 
-        public Task<AppUser?> GetByEmailAsync(Guid tenantId, string email, CancellationToken ct) =>
+        public Task<AppUser?> GetByEmailAsync(string email, CancellationToken ct) =>
             _db.AppUsers.AsNoTracking()
-                .FirstOrDefaultAsync(u => u.TenantId == tenantId && u.Email == email, ct);
+                .FirstOrDefaultAsync(u => u.Email == email, ct);
         
         public async Task AddAsync(AppUser user, CancellationToken ct)
         {

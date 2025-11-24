@@ -10,7 +10,7 @@ namespace QLine.Domain.Abstractions
     public interface IAppUserRepository
     {
         Task<AppUser?> GetByIdAsync(Guid id, CancellationToken ct);
-        Task<AppUser?> GetByEmailAsync(Guid tenantId, string email, CancellationToken ct);
+        Task<AppUser?> GetByEmailAsync(string email, CancellationToken ct);
         Task AddAsync (AppUser user, CancellationToken ct);
     }
 }

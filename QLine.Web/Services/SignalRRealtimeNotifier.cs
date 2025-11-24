@@ -9,8 +9,8 @@ namespace QLine.Web.Services
         private readonly IHubContext<QueueHub> _hub;
         public SignalRRealtimeNotifier(IHubContext<QueueHub> hub) => _hub = hub;
 
-        public Task QueueUpdated(Guid tenantId, Guid servicePointId, CancellationToken ct = default)
-            => _hub.Clients.Group(QueueHub.GroupName(tenantId, servicePointId))
-                .SendAsync("queueUpdated", new { tenantId, servicePointId }, ct);
+        public Task QueueUpdated(Guid servicePointId, CancellationToken ct = default)
+            => _hub.Clients.Group(QueueHub.GroupName(servicePointId))
+                .SendAsync("queueUpdated", new { servicePointId }, ct);
     }
 }

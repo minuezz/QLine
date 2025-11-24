@@ -30,7 +30,6 @@ namespace QLine.Application.Features.Admin.Services.Commands
             {
                 var svc = Service.Create(
                     Guid.NewGuid(),
-                    request.TenantId,
                     request.ServicePointId,
                     request.Name,
                     request.DurationMin,
@@ -39,7 +38,7 @@ namespace QLine.Application.Features.Admin.Services.Commands
                 );
                 await _repo.AddAsync(svc, ct);
 
-                await _realtime.QueueUpdated(request.TenantId, request.ServicePointId, ct);
+                await _realtime.QueueUpdated(request.ServicePointId, ct);
 
                 return new ServiceDto
                 {
@@ -56,9 +55,9 @@ namespace QLine.Application.Features.Admin.Services.Commands
                     ?? throw new DomainException("Service not found.");
 
                 existing.Update(request.Name, request.DurationMin, request.BufferMin, request.MaxPerDay);
-                
+
                 await _repo.UpdateAsync(existing, ct);
-                await _realtime.QueueUpdated(request.TenantId, request.ServicePointId, ct);
+                await _realtime.QueueUpdated(request.ServicePointId, ct);
 
                 return new ServiceDto
                 {
