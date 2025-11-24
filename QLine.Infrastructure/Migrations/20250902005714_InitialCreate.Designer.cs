@@ -49,12 +49,9 @@ namespace QLine.Infrastructure.Migrations
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "Email")
+                    b.HasIndex("Email")
                         .IsUnique();
 
                     b.ToTable("AppUsers");
@@ -81,9 +78,6 @@ namespace QLine.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("TicketNo")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -94,9 +88,9 @@ namespace QLine.Infrastructure.Migrations
                     b.HasIndex("ServicePointId", "Status")
                         .HasDatabaseName("IX_QueueEntry_Point_Status");
 
-                    b.HasIndex("TenantId", "TicketNo")
+                    b.HasIndex("TicketNo")
                         .IsUnique()
-                        .HasDatabaseName("UX_QueueEntry_Tenant_TicketNo");
+                        .HasDatabaseName("UX_QueueEntry_TicketNo");
 
                     b.ToTable("QueueEntries");
                 });
@@ -122,15 +116,12 @@ namespace QLine.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "ServicePointId", "StartTime")
+                    b.HasIndex("ServicePointId", "StartTime")
                         .IsUnique()
                         .HasDatabaseName("UX_Reservation_ActiveSlot")
                         .HasFilter("\"Status\" = 0");
@@ -161,9 +152,6 @@ namespace QLine.Infrastructure.Migrations
                     b.Property<Guid>("ServicePointId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ServicePointId", "Name");
@@ -191,48 +179,11 @@ namespace QLine.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "Name");
+                    b.HasIndex("Name");
 
                     b.ToTable("ServicePoints");
-                });
-
-            modelBuilder.Entity("QLine.Domain.Entities.Tenant", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("Timezone")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Slug")
-                        .IsUnique();
-
-                    b.ToTable("Tenants");
                 });
 #pragma warning restore 612, 618
         }

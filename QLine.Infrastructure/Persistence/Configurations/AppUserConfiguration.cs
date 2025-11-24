@@ -16,7 +16,6 @@ namespace QLine.Infrastructure.Persistence.Configurations
         {
             b.HasKey(x => x.Id);
 
-            b.Property(x => x.TenantId).IsRequired();
             b.Property(x => x.Email).IsRequired().HasMaxLength(256);
             b.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
             b.Property(x => x.LastName).IsRequired().HasMaxLength(100);
@@ -25,7 +24,7 @@ namespace QLine.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasConversion<int>();
 
-            b.HasIndex(x => new { x.TenantId, x.Email }).IsUnique();
+            b.HasIndex(x => x.Email).IsUnique();
         }
     }
 }

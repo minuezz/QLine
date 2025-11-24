@@ -38,7 +38,6 @@ namespace QLine.Application.Features.Reservations.Queries
             return new ReservationDto()
             {
                 Id = res.Id,
-                TenantId = res.TenantId,
                 ServicePointId = res.ServicePointId,
                 ServiceId = res.ServiceId,
                 UserId = res.UserId,

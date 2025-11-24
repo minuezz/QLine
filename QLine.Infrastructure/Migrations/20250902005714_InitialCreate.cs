@@ -16,7 +16,6 @@ namespace QLine.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: false),
                     FirstName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
                     LastName = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
@@ -32,7 +31,6 @@ namespace QLine.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     ServicePointId = table.Column<Guid>(type: "uuid", nullable: false),
                     ReservationId = table.Column<Guid>(type: "uuid", nullable: false),
                     TicketNo = table.Column<string>(type: "character varying(32)", maxLength: 32, nullable: false),
@@ -50,7 +48,6 @@ namespace QLine.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     ServicePointId = table.Column<Guid>(type: "uuid", nullable: false),
                     ServiceId = table.Column<Guid>(type: "uuid", nullable: false),
                     UserId = table.Column<Guid>(type: "uuid", nullable: false),
@@ -68,7 +65,6 @@ namespace QLine.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     Address = table.Column<string>(type: "character varying(500)", maxLength: 500, nullable: false),
                     OpenHoursJson = table.Column<string>(type: "jsonb", nullable: false)
@@ -83,7 +79,6 @@ namespace QLine.Infrastructure.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TenantId = table.Column<Guid>(type: "uuid", nullable: false),
                     ServicePointId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     DurationMin = table.Column<int>(type: "integer", nullable: false),
@@ -95,25 +90,10 @@ namespace QLine.Infrastructure.Migrations
                     table.PrimaryKey("PK_Services", x => x.Id);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "Tenants",
-                columns: table => new
-                {
-                    Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
-                    Slug = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Timezone = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    Language = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Tenants", x => x.Id);
-                });
-
             migrationBuilder.CreateIndex(
-                name: "IX_AppUsers_TenantId_Email",
+                name: "IX_AppUsers_Email",
                 table: "AppUsers",
-                columns: new[] { "TenantId", "Email" },
+                column: "Email",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -122,33 +102,28 @@ namespace QLine.Infrastructure.Migrations
                 columns: new[] { "ServicePointId", "Status" });
 
             migrationBuilder.CreateIndex(
-                name: "UX_QueueEntry_Tenant_TicketNo",
+                name: "UX_QueueEntry_TicketNo",
                 table: "QueueEntries",
-                columns: new[] { "TenantId", "TicketNo" },
+                column: "TicketNo",
                 unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "UX_Reservation_ActiveSlot",
                 table: "Reservations",
-                columns: new[] { "TenantId", "ServicePointId", "StartTime" },
+                columns: new[] { "ServicePointId", "StartTime" },
                 unique: true,
                 filter: "\"Status\" = 0");
 
             migrationBuilder.CreateIndex(
-                name: "IX_ServicePoints_TenantId_Name",
+                name: "IX_ServicePoints_Name",
                 table: "ServicePoints",
-                columns: new[] { "TenantId", "Name" });
+                column: "Name");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Services_ServicePointId_Name",
                 table: "Services",
                 columns: new[] { "ServicePointId", "Name" });
 
-            migrationBuilder.CreateIndex(
-                name: "IX_Tenants_Slug",
-                table: "Tenants",
-                column: "Slug",
-                unique: true);
         }
 
         /// <inheritdoc />
@@ -168,9 +143,6 @@ namespace QLine.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Services");
-
-            migrationBuilder.DropTable(
-                name: "Tenants");
         }
     }
 }

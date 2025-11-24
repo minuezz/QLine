@@ -37,9 +37,8 @@ else
 	[Parameter] public Guid ServicePointId { get; set; }
 	[Parameter] public Guid ServiceId { get; set; }
 
-	//Seeded Id from DbInititalizer
-	private static readonly Guid TenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-	private static readonly Guid UserId = Guid.Parse("44444444-4444-4444-4444-444444444444");
+    //Seeded Id from DbInititalizer
+    private static readonly Guid UserId = Guid.Parse("44444444-4444-4444-4444-444444444444");
 
 	private DateTime _startLocal = DateTime.Now.AddHours(1);
 	private ReservationDto? _created;
@@ -52,11 +51,10 @@ else
 		{
 			_errorMessage = null;
 			_errorDetails = null;
-			var dto = await Mediator.Send(new CreateReservationCommand(
-				TenantId: TenantId,
-				ServicePointId: ServicePointId,
-				ServiceId: ServiceId,
-				UserId: UserId,
+                    var dto = await Mediator.Send(new CreateReservationCommand(
+                            ServicePointId: ServicePointId,
+                            ServiceId: ServiceId,
+                            UserId: UserId,
 				StartTime: new DateTimeOffset(_startLocal.ToUniversalTime())
 			));
 			_created = dto;

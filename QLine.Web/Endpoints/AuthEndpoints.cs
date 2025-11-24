@@ -18,16 +18,13 @@ namespace QLine.Web.Endpoints
                 var email = form["email"].ToString();
                 var returnUrl = form["returnUrl"].ToString();
 
-                var tenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-
-                var user = await users.GetByEmailAsync(tenantId, email, http.RequestAborted);
+                var user = await users.GetByEmailAsync(email, http.RequestAborted);
                 if (user is null)
                     return Results.Redirect("/login?error=notfound");
 
                 var claims = new List<Claim>
                 {
                     new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new("tenant", user.TenantId.ToString()),
                     new(ClaimTypes.Email, user.Email),
                     new(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
                     new(ClaimTypes.Role, user.Role.ToString())

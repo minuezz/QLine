@@ -34,10 +34,7 @@ else
 	</ul>
 }
 @code {
-	//Seeded Tenant (DbInititalizer)
-	private static readonly Guid TenantId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-
-	private bool _loading = true;
+    private bool _loading = true;
 	private string? _errorMessage;
 	private List<string>? _errorDetails;
 	private List<ServicePointDto> _points = new();
@@ -47,10 +44,10 @@ else
 		_errorMessage = null;
 		_errorDetails = null;
 
-		try
-		{
-			_points = (await Mediator.Send(new GetServicePointsQuery(TenantId))).ToList();
-		}
+            try
+            {
+                    _points = (await Mediator.Send(new GetServicePointsQuery())).ToList();
+            }
 		catch (Exception ex)
 		{
 			(_errorMessage, _errorDetails) = ex.ToUserMessage();

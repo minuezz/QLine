@@ -27,7 +27,7 @@ namespace QLine.Application.Features.Queue.Commands
                 ?? throw new DomainException("Queue entry not found.");
             entry.MarkNoShow();
             await _repo.UpdateAsync(entry, ct);
-            await _realtime.QueueUpdated(entry.TenantId, entry.ServicePointId, ct);
+            await _realtime.QueueUpdated(entry.ServicePointId, ct);
         }
     }
 }

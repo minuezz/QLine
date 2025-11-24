@@ -30,7 +30,6 @@ namespace QLine.Infrastructure.Persistence
 
             services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
-            services.AddScoped<ITenantRepository, TenantRepository>();
             services.AddScoped<IServicePointRepository, ServicePointRepository>();
             services.AddScoped<IServiceRepository, ServiceRepository>();
             services.AddScoped<IReservationRepository, ReservationRepository>();

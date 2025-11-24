@@ -10,7 +10,6 @@ namespace QLine.Application.Features.Admin.ServicePoints.Commands
 {
     public sealed record UpsertServicePointCommand(
         Guid? Id,
-        Guid TenantId,
         string Name,
         string Address,
         string OpenHoursJson

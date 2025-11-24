@@ -38,14 +38,13 @@ namespace QLine.Application.Features.Reservations.Commands
         public async Task<ReservationDto> Handle(CreateReservationCommand request, CancellationToken ct)
         {
             var slotFree = await _reservations.IsSlotAvailableAsync(
-                request.TenantId, request.ServicePointId, request.StartTime, ct);
+                request.ServicePointId, request.StartTime, ct);
 
             if (!slotFree)
                 throw new DomainException("The selected slot is already occupied.");
 
             var reservation = Reservation.Create(
                 id: Guid.NewGuid(),
-                tenantId: request.TenantId,
                 servicePointId: request.ServicePointId,
                 serviceId: request.ServiceId,
                 userId: request.UserId,
@@ -58,7 +57,6 @@ namespace QLine.Application.Features.Reservations.Commands
             var ticketNo = GenerateTicketNo(request.ServicePointId);
             var entry = QueueEntry.Create(
                 id: Guid.NewGuid(),
-                tenantId: request.TenantId,
                 servicePointId: request.ServicePointId,
                 reservationId: reservation.Id,
                 ticketNo: ticketNo,
@@ -68,12 +66,11 @@ namespace QLine.Application.Features.Reservations.Commands
 
             await _queueEntries.AddAsync(entry, ct);
 
-            await _realtime.QueueUpdated(request.TenantId, request.ServicePointId, ct);
+            await _realtime.QueueUpdated(request.ServicePointId, ct);
 
             return new ReservationDto
             {
                 Id = reservation.Id,
-                TenantId = reservation.TenantId,
                 ServicePointId = reservation.ServicePointId,
                 ServiceId = reservation.ServiceId,
                 UserId = reservation.UserId,

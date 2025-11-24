@@ -24,7 +24,6 @@ namespace QLine.Application.Features.Admin.ServicePoints.Commands
             {
                 var sp = ServicePoint.Create(
                     Guid.NewGuid(),
-                    request.TenantId,
                     request.Name,
                     request.Address,
                     request.OpenHoursJson

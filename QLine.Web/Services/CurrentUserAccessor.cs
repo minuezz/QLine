@@ -9,11 +9,8 @@ namespace QLine.Web.Services
 
         public CurrentUserAccessor(IHttpContextAccessor http) => _http = http;
 
-        public Guid? UserId 
+        public Guid? UserId
             => Guid.TryParse(_http.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) ? id : null;
-
-        public Guid? TenantId
-            => Guid.TryParse(_http.HttpContext?.User.FindFirstValue("tenant"), out var id) ? id : null;
 
         public string? Email => _http.HttpContext?.User.FindFirstValue(ClaimTypes.Email);
 

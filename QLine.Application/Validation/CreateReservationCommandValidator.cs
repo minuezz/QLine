@@ -12,7 +12,6 @@ namespace QLine.Application.Validation
     {
         public CreateReservationCommandValidator()
         {
-            RuleFor(x => x.TenantId).NotEmpty();
             RuleFor(x => x.ServicePointId).NotEmpty();
             RuleFor(x => x.ServiceId).NotEmpty();
             RuleFor(x => x.UserId).NotEmpty();

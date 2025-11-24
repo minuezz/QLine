@@ -20,7 +20,7 @@ namespace QLine.Application.Features.Admin.Queries
             GetServicePointsQuery request, 
             CancellationToken ct)
         {
-            var list = await _servicePoints.GetByTenantAsync(request.TenantId, ct);
+            var list = await _servicePoints.GetAllAsync(ct);
             return list
                 .Select(sp => new ServicePointDto
                 {

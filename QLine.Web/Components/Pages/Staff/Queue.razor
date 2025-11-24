@@ -88,8 +88,7 @@ else
 
 	protected override async Task OnInitializedAsync()
 	{
-		var tenant = Current.TenantId ?? Guid.Parse("11111111-1111-1111-1111-111111111111");
-		_points = (await Mediator.Send(new GetServicePointsQuery(tenant))).ToList();
+            _points = (await Mediator.Send(new GetServicePointsQuery())).ToList();
 
 		if (_points.Count > 0)
 			SelectedServicePointIdString = _points[0].Id.ToString();
@@ -134,9 +133,8 @@ else
 			_connectedSpId = null;
 		}
 
-		var tenant = Current.TenantId ?? Guid.Parse("11111111-1111-1111-1111-111111111111");
-		_realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
-			"qlineRealtime.connect", sp, tenant, DotNetObjectReference.Create(this));
+            _realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
+                    "qlineRealtime.connect", sp, DotNetObjectReference.Create(this));
 		_connectedSpId = sp;
 	}
 

@@ -28,7 +28,7 @@ namespace QLine.Application.Features.Queue.Commands
             e.Skip();
             await _repo.UpdateAsync(e, ct);
 
-            await _realtime.QueueUpdated(e.TenantId, e.ServicePointId, ct);
+            await _realtime.QueueUpdated(e.ServicePointId, ct);
         }
     }
 }
