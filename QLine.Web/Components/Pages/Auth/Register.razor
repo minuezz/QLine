@@ -1,0 +1,35 @@
+@page "/register"
+@inject NavigationManager Nav
+
+<h3>Register</h3>
+
+@if (ErrorCode is not null)
+{
+        <p class="text-danger">@ErrorMessage</p>
+}
+
+<form method="post" action="/auth/register">
+        <input type="text" name="firstName" value="@_firstName" placeholder="First name" />
+        <input type="text" name="lastName" value="@_lastName" placeholder="Last name" style="margin-left:8px;" />
+        <input type="email" name="email" value="@_email" placeholder="email" style="margin-left:8px;" />
+        <input type="password" name="password" value="@_password" placeholder="password" style="margin-left:8px;" />
+        <button type="submit" style="margin-left:8px;">Create account</button>
+</form>
+
+@code {
+        private string _firstName = "";
+        private string _lastName = "";
+        private string _email = "";
+        private string _password = "";
+
+        private string? ErrorCode => new Uri(Nav.Uri).Query.Contains("error=")
+                ? System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("error")
+                : null;
+
+        private string ErrorMessage => ErrorCode switch
+        {
+                "exists" => "A user with this email already exists",
+                "invalid" => "Please complete all fields",
+                _ => "Registration failed"
+        };
+}

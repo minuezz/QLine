@@ -28,22 +28,29 @@ namespace QLine.Domain.Entities
             string email,
             string firstName,
             string lastName,
-            string passwordHash,
+            string? passwordHash,
             UserRole role)
         {
             if (id == Guid.Empty) throw new DomainException("AppUser Id cannot be empty.");
             if (string.IsNullOrWhiteSpace(email)) throw new DomainException("AppUser Email is required.");
             if (string.IsNullOrWhiteSpace(firstName)) throw new DomainException("AppUser FirstName is required.");
             if (string.IsNullOrWhiteSpace(lastName)) throw new DomainException("AppUser LastName is required.");
-            if (string.IsNullOrWhiteSpace(passwordHash)) throw new DomainException("AppUser PasswordHash is required.");
 
             Id = id;
             Email = email.Trim();
             FirstName = firstName.Trim();
             LastName = lastName.Trim();
-            PasswordHash = passwordHash.Trim();
+            PasswordHash = passwordHash?.Trim() ?? string.Empty;
             Role = role;
         }
+
+        public static AppUser Create(
+            Guid id,
+            string email,
+            string firstName,
+            string lastName,
+            UserRole role)
+            => new(id, email, firstName, lastName, null, role);
 
         public static AppUser Create(
             Guid id,
