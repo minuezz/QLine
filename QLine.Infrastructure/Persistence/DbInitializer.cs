@@ -46,18 +46,18 @@ namespace QLine.Infrastructure.Persistence
                 email: "test.client@qline.local",
                 firstName: "Test",
                 lastName: "Client",
-                passwordHash: passwordHasher.HashPassword(null!, demoPassword),
                 role: UserRole.Client
             );
+            user.UpdatePasswordHash(passwordHasher.HashPassword(user, demoPassword));
 
             var staff = AppUser.Create(
                 id: staffId,
                 email: "staff@qline.local",
                 firstName: "Demo",
                 lastName: "Staff",
-                passwordHash: passwordHasher.HashPassword(null!, demoPassword),
                 role: UserRole.Staff
             );
+            staff.UpdatePasswordHash(passwordHasher.HashPassword(staff, demoPassword));
 
             await db.ServicePoints.AddAsync(sp, ct);
             await db.Services.AddAsync(svc, ct);
