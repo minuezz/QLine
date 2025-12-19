@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using QLine.Domain.Abstractions;
+using QLine.Domain.Entities;
 using System.Security.Claims;
 
 namespace QLine.Web.Endpoints
@@ -12,15 +14,21 @@ namespace QLine.Web.Endpoints
         {
             app.MapPost("/auth/login", [IgnoreAntiforgeryToken] async (
                 HttpContext http,
-                IAppUserRepository users) =>
+                IAppUserRepository users,
+                IPasswordHasher<AppUser> passwordHasher) =>
             {
                 var form = await http.Request.ReadFormAsync();
                 var email = form["email"].ToString();
+                var password = form["password"].ToString();
                 var returnUrl = form["returnUrl"].ToString();
 
                 var user = await users.GetByEmailAsync(email, http.RequestAborted);
                 if (user is null)
                     return Results.Redirect("/login?error=notfound");
+
+                var verificationResult = passwordHasher.VerifyHashedPassword(user, user.PasswordHash, password);
+                if (verificationResult is not PasswordVerificationResult.Success and not PasswordVerificationResult.SuccessRehashNeeded)
+                    return Results.Redirect("/login?error=invalid");
 
                 var claims = new List<Claim>
                 {

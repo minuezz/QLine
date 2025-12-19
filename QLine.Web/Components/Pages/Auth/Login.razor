@@ -5,20 +5,29 @@
 
 @if (ErrorCode is not null)
 {
-	<p class="text-danger">@(@ErrorCode == "notfound" ? "User not found" : "Sign-in failed")</p>
+        <p class="text-danger">@ErrorMessage</p>
 }
 
 <form method="post" action="/auth/login">
-	<input type="hidden" name="returnUrl" value="@ReturnUrl" />
-	<input type="email" name="email" value="@_email" placeholder="email (e.g. staff@qline.local)" />
-	<button type="submit" style="margin-left:8px;">Sign in</button>
+        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+        <input type="email" name="email" value="@_email" placeholder="email (e.g. staff@qline.local)" />
+        <input type="password" name="password" value="@_password" placeholder="password (e.g. Pass@word1)" style="margin-left:8px;" />
+        <button type="submit" style="margin-left:8px;">Sign in</button>
 </form>
 
 @code {
-	private string _email = "staff@qline.local";
-	private string? ErrorCode => new Uri(Nav.Uri).Query.Contains("error=")
-		? System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("error")
-		: null;
+        private string _email = "staff@qline.local";
+        private string _password = "Pass@word1";
+        private string? ErrorCode => new Uri(Nav.Uri).Query.Contains("error=")
+                ? System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("error")
+                : null;
+
+        private string ErrorMessage => ErrorCode switch
+        {
+                "notfound" => "User not found",
+                "invalid" => "Invalid credentials",
+                _ => "Sign-in failed"
+        };
 
 	private string ReturnUrl =>
 		System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("returnUrl") ?? "/staff/queue";
