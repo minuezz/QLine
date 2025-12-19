@@ -82,12 +82,12 @@ namespace QLine.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ServicePointId", "Status")
-                        .HasDatabaseName("IX_QueueEntry_Point_Status");
-
                     b.HasIndex("TicketNo")
                         .IsUnique()
                         .HasDatabaseName("UX_QueueEntry_TicketNo");
+
+                    b.HasIndex("ServicePointId", "Status")
+                        .HasDatabaseName("IX_QueueEntry_Point_Status");
 
                     b.ToTable("QueueEntries");
                 });

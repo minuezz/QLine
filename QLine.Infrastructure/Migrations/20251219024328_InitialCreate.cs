@@ -123,7 +123,6 @@ namespace QLine.Infrastructure.Migrations
                 name: "IX_Services_ServicePointId_Name",
                 table: "Services",
                 columns: new[] { "ServicePointId", "Name" });
-
         }
 
         /// <inheritdoc />

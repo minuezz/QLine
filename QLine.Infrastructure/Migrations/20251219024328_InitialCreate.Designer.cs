@@ -12,7 +12,7 @@ using QLine.Infrastructure.Persistence;
 namespace QLine.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20250902005714_InitialCreate")]
+    [Migration("20251219024328_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -85,12 +85,12 @@ namespace QLine.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ServicePointId", "Status")
-                        .HasDatabaseName("IX_QueueEntry_Point_Status");
-
                     b.HasIndex("TicketNo")
                         .IsUnique()
                         .HasDatabaseName("UX_QueueEntry_TicketNo");
+
+                    b.HasIndex("ServicePointId", "Status")
+                        .HasDatabaseName("IX_QueueEntry_Point_Status");
 
                     b.ToTable("QueueEntries");
                 });
