@@ -19,6 +19,7 @@ namespace QLine.Infrastructure.Persistence.Configurations
             b.Property(x => x.Email).IsRequired().HasMaxLength(256);
             b.Property(x => x.FirstName).IsRequired().HasMaxLength(100);
             b.Property(x => x.LastName).IsRequired().HasMaxLength(100);
+            b.Property(x => x.PasswordHash).IsRequired().HasMaxLength(500);
 
             b.Property(x => x.Role)
                 .IsRequired()

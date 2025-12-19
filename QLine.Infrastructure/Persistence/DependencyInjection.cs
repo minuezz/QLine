@@ -6,8 +6,10 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Identity;
 using QLine.Application.Abstractions;
 using QLine.Domain.Abstractions;
+using QLine.Domain.Entities;
 using QLine.Infrastructure.Persistence.Repositories;
 using QLine.Infrastructure.Time;
 
@@ -29,6 +31,8 @@ namespace QLine.Infrastructure.Persistence
             });
 
             services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
+
+            services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 
             services.AddScoped<IServicePointRepository, ServicePointRepository>();
             services.AddScoped<IServiceRepository, ServiceRepository>();

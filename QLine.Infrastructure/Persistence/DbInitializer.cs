@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using QLine.Domain.Entities;
 using QLine.Domain.Enums;
@@ -7,7 +8,10 @@ namespace QLine.Infrastructure.Persistence
 {
     public static class DbInitializer
     {
-        public static async Task InitializeAsync(AppDbContext db, CancellationToken ct = default)
+        public static async Task InitializeAsync(
+            AppDbContext db,
+            IPasswordHasher<AppUser> passwordHasher,
+            CancellationToken ct = default)
         {
             await db.Database.MigrateAsync(ct);
 
@@ -35,11 +39,14 @@ namespace QLine.Infrastructure.Persistence
                 maxPerDay: 100
             );
 
+            var demoPassword = "Pass@word1";
+
             var user = AppUser.Create(
                 id: userId,
                 email: "test.client@qline.local",
                 firstName: "Test",
                 lastName: "Client",
+                passwordHash: passwordHasher.HashPassword(null!, demoPassword),
                 role: UserRole.Client
             );
 
@@ -48,6 +55,7 @@ namespace QLine.Infrastructure.Persistence
                 email: "staff@qline.local",
                 firstName: "Demo",
                 lastName: "Staff",
+                passwordHash: passwordHasher.HashPassword(null!, demoPassword),
                 role: UserRole.Staff
             );
 
