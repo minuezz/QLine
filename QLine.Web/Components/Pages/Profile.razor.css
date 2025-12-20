@@ -1,0 +1,62 @@
+.profile-card {
+    display: grid;
+    gap: 12px;
+    max-width: 360px;
+    margin-bottom: 16px;
+}
+
+.profile-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.password-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 320px;
+    margin-top: 8px;
+}
+
+.profile-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.danger {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+}
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    max-width: 400px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.delete-form {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
