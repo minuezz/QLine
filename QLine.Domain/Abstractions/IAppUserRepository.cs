@@ -13,5 +13,6 @@ namespace QLine.Domain.Abstractions
         Task<AppUser?> GetByEmailAsync(string email, CancellationToken ct);
         Task AddAsync (AppUser user, CancellationToken ct);
         Task UpdateAsync(AppUser user, CancellationToken ct);
+        Task DeleteWithRelatedDataAsync(AppUser user, CancellationToken ct);
     }
 }

@@ -1,8 +1,10 @@
 @page "/profile"
 @attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+@using QLine.Domain.Abstractions
+@using QLine.Domain.Entities
 @using System.Web
 @using QLine.Application.Abstractions
-@using QLine.Domain.Entities
 @inject IAppUserRepository Users
 @inject ICurrentUser CurrentUser
 @inject NavigationManager Nav
@@ -48,7 +50,7 @@ else
 
             @if (_showChangePassword)
             {
-                <form method="post" action="/account/change-password" class="password-form">
+                <form method="post" action="/account/change-password" class="password-form" data-enhance="false">
                     <label for="current-password">Password</label>
                     <input id="current-password" name="password" type="password" />
 
@@ -71,19 +73,31 @@ else
 
 @if (_showDeleteDialog)
 {
-    <div class="modal-backdrop">
-        <div class="modal">
-            <h4>Remove Account</h4>
-            <p class="text-danger">Это действие необратимо.</p>
-            <form method="post" action="/account/delete" class="delete-form">
-                <label for="delete-password">Password</label>
-                <input id="delete-password" name="password" type="password" />
+    <div class="modal-backdrop fade show" style="display: block; z-index: 1040;"></div>
 
-                <div class="modal-actions">
-                    <button type="submit" class="danger">Confirm Removal</button>
-                    <button type="button" @onclick="HideDeleteDialog">Cancel</button>
+    <div class="modal fade show" tabindex="-1" style="display: block; z-index: 1050;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Remove Account</h5>
+                    <button type="button" class="btn-close" @onclick="HideDeleteDialog"></button>
                 </div>
-            </form>
+                <div class="modal-body">
+                    <p class="text-danger">This action is irreversible.</p>
+
+                    <form method="post" action="/account/delete" data-enhance="false">
+                        <div class="mb-3">
+                            <label class="form-label">Password</label>
+                            <input name="password" type="password" class="form-control" />
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" @onclick="HideDeleteDialog">Cancel</button>
+                            <button type="submit" class="btn btn-danger">Confirm Removal</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 }

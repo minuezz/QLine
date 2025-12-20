@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using QLine.Domain.Abstractions;
+using QLine.Domain.Entities;
+using QLine.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using QLine.Domain.Abstractions;
-using QLine.Domain.Entities;
 
 namespace QLine.Infrastructure.Persistence.Repositories
 {
@@ -30,6 +31,32 @@ namespace QLine.Infrastructure.Persistence.Repositories
         public async Task UpdateAsync(AppUser user, CancellationToken ct)
         {
             _db.AppUsers.Update(user);
+            await _db.SaveChangesAsync(ct);
+        }
+
+        public async Task DeleteWithRelatedDataAsync(AppUser user, CancellationToken ct)
+        {
+            var reservations = await _db.Reservations
+                .Where(r => r.UserId == user.Id)
+                .ToListAsync(ct);
+
+            foreach (var reservation in reservations.Where(r => r.Status == ReservationStatus.Active))
+            {
+                reservation.Cancel();
+            }
+
+            var reservationIds = reservations.Select(r => r.Id).ToList();
+            if (reservationIds.Any())
+            {
+                var queueEntries = await _db.QueueEntries
+                    .Where(q => reservationIds.Contains(q.ReservationId))
+                    .ToListAsync(ct);
+                _db.QueueEntries.RemoveRange(queueEntries);
+            }
+
+            _db.Reservations.RemoveRange(reservations);
+            _db.AppUsers.Remove(user);
+
             await _db.SaveChangesAsync(ct);
         }
     }

@@ -1,7 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using QLine.Application.Features.Account.Commands;
 using QLine.Domain.Abstractions;
@@ -14,7 +13,7 @@ namespace QLine.Web.Endpoints
     {
         public static void MapAccountEndpoints(this IEndpointRouteBuilder app)
         {
-            app.MapPost("/account/change-password", [Authorize, IgnoreAntiforgeryToken] async (
+            app.MapPost("/account/change-password", async (
                 HttpContext http,
                 IAppUserRepository users,
                 IPasswordHasher<AppUser> passwordHasher) =>
@@ -51,9 +50,11 @@ namespace QLine.Web.Endpoints
                 await users.UpdateAsync(user, http.RequestAborted);
 
                 return Results.Redirect("/profile?pwdChanged=true");
-            }).RequireAuthorization();
+            })
+            .RequireAuthorization()
+            .DisableAntiforgery();
 
-            app.MapPost("/account/delete", [Authorize, IgnoreAntiforgeryToken] async (
+            app.MapPost("/account/delete", async (
                 HttpContext http,
                 IMediator mediator) =>
             {
@@ -73,14 +74,20 @@ namespace QLine.Web.Endpoints
                 {
                     await mediator.Send(new DeleteAccountCommand(userId, currentPassword), http.RequestAborted);
                 }
-                catch
+                catch (QLine.Domain.DomainException)
                 {
                     return Results.Redirect("/profile?deleteError=invalidPassword");
+                }
+                catch (Exception)
+                {
+                    return Results.Redirect("/profile?deleteError=serverError");
                 }
 
                 await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
                 return Results.Redirect("/login?accountRemoved=true");
-            }).RequireAuthorization();
+            })
+            .RequireAuthorization()
+            .DisableAntiforgery();
         }
     }
 }
