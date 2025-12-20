@@ -37,6 +37,11 @@ namespace QLine.Application.Features.Reservations.Commands
 
             var safeStartTime = request.StartTime.ToUniversalTime();
 
+            if (safeStartTime < _clock.UtcNow.AddMinutes(-1))
+            {
+                throw new DomainException("Cannot create a reservation in the past.");
+            }
+
             var slotFree = await _reservations.IsSlotAvailableAsync(
                 request.ServicePointId, safeStartTime, ct);
 

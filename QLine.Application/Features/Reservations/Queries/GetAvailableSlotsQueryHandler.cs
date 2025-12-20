@@ -1,9 +1,10 @@
-using System.Text.Json;
-using MediatR;
+﻿using MediatR;
 using QLine.Application.DTO;
+using QLine.Application.Abstractions;
 using QLine.Domain;
 using QLine.Domain.Abstractions;
 using QLine.Domain.Entities;
+using System.Text.Json;
 
 namespace QLine.Application.Features.Reservations.Queries
 {
@@ -13,15 +14,18 @@ namespace QLine.Application.Features.Reservations.Queries
         private readonly IServicePointRepository _servicePoints;
         private readonly IServiceRepository _services;
         private readonly IReservationRepository _reservations;
+        private readonly IDateTimeProvider _clock;
 
         public GetAvailableSlotsQueryHandler(
             IServicePointRepository servicePoints,
             IServiceRepository services,
-            IReservationRepository reservations)
+            IReservationRepository reservations,
+            IDateTimeProvider clock)
         {
             _servicePoints = servicePoints;
             _services = services;
             _reservations = reservations;
+            _clock = clock;
         }
 
         public async Task<IReadOnlyList<SlotDto>> Handle(GetAvailableSlotsQuery request, CancellationToken ct)
@@ -36,20 +40,30 @@ namespace QLine.Application.Features.Reservations.Queries
             if (openHours is null)
                 return Array.Empty<SlotDto>();
 
+            var nowUtc = _clock.UtcNow;
+            TimeSpan? minStartTime = null;
+
+            if (DateOnly.FromDateTime(nowUtc.UtcDateTime) == request.Date)
+            {
+                minStartTime = nowUtc.TimeOfDay;
+            }
+
             var duration = TimeSpan.FromMinutes(service.DurationMin);
+
             var reservations = await _reservations.GetByDayAsync(
                 request.ServicePointId,
                 request.Date,
                 ct);
 
             var takenSlots = reservations
-                .Select(r =>
-                {
-                    var reservationDuration = r.Service is not null
+                .Select(r => {
+                    var actualDuration = r.Service != null
                         ? TimeSpan.FromMinutes(r.Service.DurationMin)
                         : duration;
 
-                    return (Start: r.StartTime.TimeOfDay, End: r.StartTime.TimeOfDay + reservationDuration);
+                    var localStartTime = r.StartTime.ToLocalTime();
+
+                    return (Start: localStartTime.TimeOfDay, End: localStartTime.TimeOfDay + actualDuration);
                 })
                 .ToList();
 
@@ -58,16 +72,17 @@ namespace QLine.Application.Features.Reservations.Queries
             for (var start = openHours.Value.Opening; start + duration <= openHours.Value.Closing; start += duration)
             {
                 var end = start + duration;
-                var overlapsReservation = takenSlots.Any(t => start < t.End && t.Start < end);
 
-                if (overlapsReservation)
+                if (minStartTime.HasValue && start < minStartTime.Value)
                     continue;
+
+                var overlapsReservation = takenSlots.Any(t => start < t.End && t.Start < end);
 
                 slots.Add(new SlotDto
                 {
                     Start = start,
                     End = end,
-                    IsAvailable = true
+                    IsAvailable = !overlapsReservation
                 });
             }
 
@@ -82,20 +97,7 @@ namespace QLine.Application.Features.Reservations.Queries
             try
             {
                 using var doc = JsonDocument.Parse(servicePoint.OpenHoursJson);
-                var dayKey = date.DayOfWeek switch
-                {
-                    DayOfWeek.Monday => "monday",
-                    DayOfWeek.Tuesday => "tuesday",
-                    DayOfWeek.Wednesday => "wednesday",
-                    DayOfWeek.Thursday => "thursday",
-                    DayOfWeek.Friday => "friday",
-                    DayOfWeek.Saturday => "saturday",
-                    DayOfWeek.Sunday => "sunday",
-                    _ => string.Empty
-                };
-
-                if (string.IsNullOrWhiteSpace(dayKey))
-                    return null;
+                var dayKey = date.DayOfWeek.ToString().ToLower();
 
                 if (!doc.RootElement.TryGetProperty(dayKey, out var dayElement))
                     return null;

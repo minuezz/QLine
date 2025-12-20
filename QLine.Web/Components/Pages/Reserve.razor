@@ -15,8 +15,12 @@
         <EditForm Model="this" OnValidSubmit="CreateAsync">
                 <DataAnnotationsValidator />
                 <div>
-                        <label>Date (local): </label>
-                        <input type="date" @bind="_selectedDate" @bind:format="yyyy-MM-dd" @bind:after="OnDateChanged" />
+                    <label>Date (local): </label>
+                    <input type="date" 
+                           @bind="_selectedDate" 
+                           @bind:format="yyyy-MM-dd" 
+                           @bind:after="OnDateChanged" 
+                           min="@DateTime.Now.ToString("yyyy-MM-dd")" />
                 </div>
                 <div style="margin-top:8px;">
                         @if (_isLoadingSlots)
