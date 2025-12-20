@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using MediatR
 @using QLine.Application.Features.Reservations.Commands
+@using QLine.Application.Features.Reservations.Queries
 @using QLine.Application.DTO
 @inject IMediator Mediator
 
@@ -14,11 +15,35 @@
         <EditForm Model="this" OnValidSubmit="CreateAsync">
                 <DataAnnotationsValidator />
                 <div>
-                        <label>Start time (local): </label>
-                        <input type="datetime-local" @bind="_startLocal"/>
+                        <label>Date (local): </label>
+                        <input type="date" @bind="_selectedDate" @bind-format="yyyy-MM-dd" @onchange="OnDateChanged" />
                 </div>
                 <div style="margin-top:8px;">
-                        <button type="submit">Create</button>
+                        @if (_isLoadingSlots)
+                        {
+                                <p>Loading available slots...</p>
+                        }
+                        else if (_availableSlots.Count == 0)
+                        {
+                                <p>No available slots for the selected date.</p>
+                        }
+                        else
+                        {
+                                <div class="slots-grid">
+                                        @foreach (var slot in _availableSlots)
+                                        {
+                                                <button type="button"
+                                                        class="btn btn-sm @(slot.IsAvailable ? "btn-outline-primary" : "btn-secondary disabled") @(ReferenceEquals(_selectedSlot, slot) ? "active" : string.Empty)"
+                                                        disabled="@(!slot.IsAvailable)"
+                                                        @onclick="() => SelectSlot(slot)">
+                                                        @slot.Start.ToString("hh\\:mm")
+                                                </button>
+                                        }
+                                </div>
+                        }
+                </div>
+                <div style="margin-top:8px;">
+                        <button type="submit" disabled="@(_selectedSlot is null)">Create</button>
                 </div>
                 @if (!string.IsNullOrWhiteSpace(_errorMessage))
                 {
@@ -35,14 +60,72 @@ else
         <p><small>UTC: @_created.StartTime.ToString("u")</small></p>
 }
 
+<style>
+        .slots-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+                gap: 8px;
+                margin-top: 8px;
+        }
+</style>
+
 @code {
         [Parameter] public Guid ServicePointId { get; set; }
         [Parameter] public Guid ServiceId { get; set; }
 
-        private DateTime _startLocal = DateTime.Now.AddHours(1);
+        private DateTime _selectedDate = DateTime.Today;
+        private List<SlotDto> _availableSlots = new();
+        private SlotDto? _selectedSlot;
+        private bool _isLoadingSlots;
         private ReservationDto? _created;
         private string? _errorMessage;
         private List<string>? _errorDetails;
+
+        protected override async Task OnInitializedAsync()
+        {
+                await LoadSlotsAsync();
+        }
+
+        private async Task OnDateChanged(ChangeEventArgs _)
+        {
+                await LoadSlotsAsync();
+        }
+
+        private async Task LoadSlotsAsync()
+        {
+                _errorMessage = null;
+                _errorDetails = null;
+                _selectedSlot = null;
+                _isLoadingSlots = true;
+
+                try
+                {
+                        var dateOnly = DateOnly.FromDateTime(_selectedDate);
+                        var slots = await Mediator.Send(new GetAvailableSlotsQuery(
+                                ServicePointId: ServicePointId,
+                                ServiceId: ServiceId,
+                                Date: dateOnly));
+
+                        _availableSlots = slots.ToList();
+                }
+                catch (Exception ex)
+                {
+                        _availableSlots.Clear();
+                        (_errorMessage, _errorDetails) = ex.ToUserMessage();
+                }
+                finally
+                {
+                        _isLoadingSlots = false;
+                }
+        }
+
+        private void SelectSlot(SlotDto slot)
+        {
+                if (!slot.IsAvailable)
+                        return;
+
+                _selectedSlot = slot;
+        }
 
         private async Task CreateAsync()
         {
@@ -50,11 +133,20 @@ else
                 {
                         _errorMessage = null;
                         _errorDetails = null;
-                    var dto = await Mediator.Send(new CreateReservationCommand(
-                            ServicePointId: ServicePointId,
-                            ServiceId: ServiceId,
-                                StartTime: new DateTimeOffset(_startLocal.ToUniversalTime())
+                        if (_selectedSlot is null || !_selectedSlot.IsAvailable)
+                        {
+                                _errorMessage = "Please select an available time slot.";
+                                return;
+                        }
+
+                        var startLocal = DateTime.SpecifyKind(_selectedDate.Date + _selectedSlot.Start, DateTimeKind.Local);
+
+                        var dto = await Mediator.Send(new CreateReservationCommand(
+                                ServicePointId: ServicePointId,
+                                ServiceId: ServiceId,
+                                StartTime: new DateTimeOffset(startLocal)
                         ));
+
                         _created = dto;
                 }
                 catch (Exception ex)
