@@ -31,6 +31,24 @@ namespace QLine.Infrastructure.Persistence.Repositories
             await _db.SaveChangesAsync(ct);
         }
 
+        public async Task<IReadOnlyList<Reservation>> GetByDayAsync(
+            Guid servicePointId,
+            Guid serviceId,
+            DateOnly date,
+            CancellationToken ct)
+        {
+            var targetDate = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc).Date;
+
+            return await _db.Reservations.AsNoTracking()
+                .Include(r => r.Service)
+                .Where(r => r.ServicePointId == servicePointId
+                            && r.ServiceId == serviceId
+                            && r.Status == ReservationStatus.Active
+                            && r.StartTime.Date == targetDate)
+                .OrderBy(r => r.StartTime)
+                .ToListAsync(ct);
+        }
+
         public Task<Reservation?> GetByIdAsync(Guid id, CancellationToken ct) =>
             _db.Reservations.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
 

@@ -8,5 +8,8 @@ namespace QLine.Application.DTO
 {
     public class SlotDto
     {
+        public TimeSpan Start { get; init; }
+        public TimeSpan End { get; init; }
+        public bool IsAvailable { get; init; }
     }
 }

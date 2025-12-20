@@ -15,6 +15,12 @@ namespace QLine.Domain.Abstractions
 
         Task<bool> IsSlotAvailableAsync(Guid servicePointId, DateTimeOffset startTime, CancellationToken ct);
 
+        Task<IReadOnlyList<Reservation>> GetByDayAsync(
+            Guid servicePointId,
+            Guid serviceId,
+            DateOnly date,
+            CancellationToken ct);
+
         Task AddAsync(Reservation reservation, CancellationToken ct);
         Task<Reservation?> GetByIdAsync(Guid id, CancellationToken ct);
         Task<IReadOnlyList<Reservation>> GetByUserAsync(Guid userId, CancellationToken ct);
