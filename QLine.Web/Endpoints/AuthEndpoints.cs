@@ -43,7 +43,7 @@ namespace QLine.Web.Endpoints
 
                 await http.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
 
-                return Results.Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/staff/queue" : returnUrl);
+                return Results.Redirect(string.IsNullOrWhiteSpace(returnUrl) ? "/" : returnUrl);
             });
 
             app.MapPost("/auth/register", [IgnoreAntiforgeryToken] async (

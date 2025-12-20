@@ -30,5 +30,5 @@
         };
 
 	private string ReturnUrl =>
-		System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("returnUrl") ?? "/staff/queue";
+		System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("returnUrl") ?? "/";
 }
