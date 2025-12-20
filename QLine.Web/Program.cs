@@ -74,6 +74,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAuthEndpoints();
+app.MapAccountEndpoints();
 
 app.MapHub<QueueHub>("/hubs/queue");
 

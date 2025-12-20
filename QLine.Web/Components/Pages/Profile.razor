@@ -1,0 +1,158 @@
+@page "/profile"
+@attribute [Authorize]
+@using System.Web
+@using QLine.Application.Abstractions
+@using QLine.Domain.Entities
+@inject IAppUserRepository Users
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Nav
+
+<h3>Profile</h3>
+
+@if (!string.IsNullOrWhiteSpace(_successMessage))
+{
+    <p class="text-success">@_successMessage</p>
+}
+@if (_errorMessages.Count > 0)
+{
+    @foreach (var message in _errorMessages)
+    {
+        <p class="text-danger">@message</p>
+    }
+}
+
+@if (_user is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <div class="profile-card">
+        <div class="profile-field">
+            <label>First Name</label>
+            <input readonly value="@_user.FirstName" />
+        </div>
+        <div class="profile-field">
+            <label>Last Name</label>
+            <input readonly value="@_user.LastName" />
+        </div>
+        <div class="profile-field">
+            <label>Email</label>
+            <input readonly value="@_user.Email" />
+        </div>
+    </div>
+
+    <section class="profile-actions">
+        <div class="change-password">
+            <button type="button" @onclick="ToggleChangePassword">Change Password</button>
+
+            @if (_showChangePassword)
+            {
+                <form method="post" action="/account/change-password" class="password-form">
+                    <label for="current-password">Password</label>
+                    <input id="current-password" name="password" type="password" />
+
+                    <label for="new-password">New Password</label>
+                    <input id="new-password" name="newPassword" type="password" />
+
+                    <label for="confirm-password">Confirm New Password</label>
+                    <input id="confirm-password" name="confirmPassword" type="password" />
+
+                    <button type="submit">Save</button>
+                </form>
+            }
+        </div>
+
+        <div class="remove-account">
+            <button type="button" class="danger" @onclick="ShowDeleteDialog">Remove Account</button>
+        </div>
+    </section>
+}
+
+@if (_showDeleteDialog)
+{
+    <div class="modal-backdrop">
+        <div class="modal">
+            <h4>Remove Account</h4>
+            <p class="text-danger">Это действие необратимо.</p>
+            <form method="post" action="/account/delete" class="delete-form">
+                <label for="delete-password">Password</label>
+                <input id="delete-password" name="password" type="password" />
+
+                <div class="modal-actions">
+                    <button type="submit" class="danger">Confirm Removal</button>
+                    <button type="button" @onclick="HideDeleteDialog">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+@code {
+    private AppUser? _user;
+    private bool _showChangePassword;
+    private bool _showDeleteDialog;
+    private string? _successMessage;
+    private List<string> _errorMessages = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CurrentUser.UserId is Guid userId)
+        {
+            _user = await Users.GetByIdAsync(userId, CancellationToken.None);
+        }
+
+        ParseMessages();
+    }
+
+    protected override void OnParametersSet()
+    {
+        ParseMessages();
+    }
+
+    private void ParseMessages()
+    {
+        var query = HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query);
+
+        _successMessage = query.Get("pwdChanged") == "true"
+            ? "Password updated successfully."
+            : null;
+
+        _errorMessages = query.GetValues("pwdError") switch
+        {
+            null => new List<string>(),
+            var errors => errors
+                .Select(error => error switch
+                {
+                    "invalidCurrent" => "Current password is incorrect.",
+                    "invalid" => "Unable to change password. Please provide current, new, and confirmation passwords.",
+                    "confirmMismatch" => "New password and confirmation do not match.",
+                    _ => null
+                })
+                .Where(message => message is not null)
+                .Select(message => message!)
+                .ToList()
+        };
+
+        var deleteError = query.Get("deleteError") switch
+        {
+            "invalidPassword" => "Password is incorrect. Account not removed.",
+            "missingPassword" => "Please confirm removal by entering your password.",
+            _ => null
+        };
+
+        if (!string.IsNullOrWhiteSpace(deleteError))
+        {
+            _errorMessages.Add(deleteError);
+        }
+    }
+
+    private void ToggleChangePassword()
+    {
+        _showChangePassword = !_showChangePassword;
+    }
+
+    private void ShowDeleteDialog() => _showDeleteDialog = true;
+
+    private void HideDeleteDialog() => _showDeleteDialog = false;
+}
