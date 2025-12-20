@@ -1,17 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
 using MediatR;
 using QLine.Application.Abstractions;
 using QLine.Application.DTO;
-using QLine.Domain.Abstractions;
 using QLine.Domain;
-using QLine.Domain.Enums;
+using QLine.Domain.Abstractions;
 using QLine.Domain.Entities;
-using System.CodeDom.Compiler;
-using System.ComponentModel.DataAnnotations;
 
 namespace QLine.Application.Features.Reservations.Commands
 {
@@ -22,21 +15,26 @@ namespace QLine.Application.Features.Reservations.Commands
         private readonly IQueueEntryRepository _queueEntries;
         private readonly IDateTimeProvider _clock;
         private readonly IRealtimeNotifier _realtime;
+        private readonly ICurrentUser _currentUser;
 
         public CreateReservationCommandHandler(
             IReservationRepository reservations,
             IQueueEntryRepository queueEntries,
             IDateTimeProvider clock,
-            IRealtimeNotifier realtime)
+            IRealtimeNotifier realtime,
+            ICurrentUser currentUser)
         {
             _reservations = reservations;
             _queueEntries = queueEntries;
             _clock = clock;
             _realtime = realtime;
+            _currentUser = currentUser;
         }
 
         public async Task<ReservationDto> Handle(CreateReservationCommand request, CancellationToken ct)
         {
+            var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
+
             var slotFree = await _reservations.IsSlotAvailableAsync(
                 request.ServicePointId, request.StartTime, ct);
 
@@ -47,7 +45,7 @@ namespace QLine.Application.Features.Reservations.Commands
                 id: Guid.NewGuid(),
                 servicePointId: request.ServicePointId,
                 serviceId: request.ServiceId,
-                userId: request.UserId,
+                userId: userId,
                 startTime: request.StartTime,
                 createdAt: _clock.UtcNow
             );
