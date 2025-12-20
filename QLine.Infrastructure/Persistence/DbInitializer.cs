@@ -27,7 +27,7 @@ namespace QLine.Infrastructure.Persistence
                 id: spId,
                 name: "CityDesk Centrum",
                 address: "ul. Testowa 1, Warszawa",
-                openHoursJson: "{}"
+                openHoursJson: "{\r\n  \"monday\": { \"open\": true, \"start\": \"09:00\", \"end\": \"17:00\" },\r\n  \"tuesday\": { \"open\": true, \"start\": \"09:00\", \"end\": \"17:00\" },\r\n  \"wednesday\": { \"open\": true, \"start\": \"09:00\", \"end\": \"17:00\" },\r\n  \"thursday\": { \"open\": true, \"start\": \"09:00\", \"end\": \"17:00\" },\r\n  \"friday\": { \"open\": true, \"start\": \"09:00\", \"end\": \"17:00\" },\r\n  \"saturday\": { \"open\": false, \"start\": \"10:00\", \"end\": \"14:00\" },\r\n  \"sunday\": { \"open\": false, \"start\": \"00:00\", \"end\": \"00:00\" }\r\n}"
             );
 
             var svc = Service.Create(

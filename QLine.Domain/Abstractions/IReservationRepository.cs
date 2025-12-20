@@ -17,7 +17,6 @@ namespace QLine.Domain.Abstractions
 
         Task<IReadOnlyList<Reservation>> GetByDayAsync(
             Guid servicePointId,
-            Guid serviceId,
             DateOnly date,
             CancellationToken ct);
 

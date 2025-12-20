@@ -19,6 +19,8 @@ namespace QLine.Domain.Entities
         public ReservationStatus Status { get; private set; }
         public DateTimeOffset CreatedAt {  get; private set; }
 
+        public Service? Service { get; private set; }
+
         private Reservation() { }
 
         private Reservation(Guid id, Guid servicePointId, Guid serviceId, Guid userId, DateTimeOffset startTime, DateTimeOffset createdAt)

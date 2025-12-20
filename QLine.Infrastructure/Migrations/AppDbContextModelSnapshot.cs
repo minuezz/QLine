@@ -123,6 +123,8 @@ namespace QLine.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ServiceId");
+
                     b.HasIndex("ServicePointId", "StartTime")
                         .IsUnique()
                         .HasDatabaseName("UX_Reservation_ActiveSlot")
@@ -186,6 +188,17 @@ namespace QLine.Infrastructure.Migrations
                     b.HasIndex("Name");
 
                     b.ToTable("ServicePoints");
+                });
+
+            modelBuilder.Entity("QLine.Domain.Entities.Reservation", b =>
+                {
+                    b.HasOne("QLine.Domain.Entities.Service", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Service");
                 });
 #pragma warning restore 612, 618
         }

@@ -33,16 +33,14 @@ namespace QLine.Infrastructure.Persistence.Repositories
 
         public async Task<IReadOnlyList<Reservation>> GetByDayAsync(
             Guid servicePointId,
-            Guid serviceId,
             DateOnly date,
             CancellationToken ct)
         {
-            var targetDate = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc).Date;
+            var targetDate = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified).Date;
 
             return await _db.Reservations.AsNoTracking()
                 .Include(r => r.Service)
                 .Where(r => r.ServicePointId == servicePointId
-                            && r.ServiceId == serviceId
                             && r.Status == ReservationStatus.Active
                             && r.StartTime.Date == targetDate)
                 .OrderBy(r => r.StartTime)

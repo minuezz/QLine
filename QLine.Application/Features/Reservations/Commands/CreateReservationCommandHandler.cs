@@ -35,8 +35,10 @@ namespace QLine.Application.Features.Reservations.Commands
         {
             var userId = _currentUser.UserId ?? throw new UnauthorizedAccessException();
 
+            var safeStartTime = request.StartTime.ToUniversalTime();
+
             var slotFree = await _reservations.IsSlotAvailableAsync(
-                request.ServicePointId, request.StartTime, ct);
+                request.ServicePointId, safeStartTime, ct);
 
             if (!slotFree)
                 throw new DomainException("The selected slot is already occupied.");
@@ -46,7 +48,7 @@ namespace QLine.Application.Features.Reservations.Commands
                 servicePointId: request.ServicePointId,
                 serviceId: request.ServiceId,
                 userId: userId,
-                startTime: request.StartTime,
+                startTime: safeStartTime,
                 createdAt: _clock.UtcNow
             );
 

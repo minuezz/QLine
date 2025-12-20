@@ -39,7 +39,6 @@ namespace QLine.Application.Features.Reservations.Queries
             var duration = TimeSpan.FromMinutes(service.DurationMin);
             var reservations = await _reservations.GetByDayAsync(
                 request.ServicePointId,
-                request.ServiceId,
                 request.Date,
                 ct);
 
