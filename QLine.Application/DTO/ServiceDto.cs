@@ -12,6 +12,5 @@ namespace QLine.Application.DTO
         public string Name { get; init; } = default!;
         public int DurationMin { get; init; }
         public int BufferMin { get; init; }
-        public int MaxPerDay { get; init; }
     }
 }

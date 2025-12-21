@@ -16,7 +16,6 @@ namespace QLine.Application.Validation
             RuleFor(x => x.Name).NotEmpty().MaximumLength(200);
             RuleFor(x => x.DurationMin).GreaterThan(0);
             RuleFor(x => x.BufferMin).GreaterThanOrEqualTo(0);
-            RuleFor(x => x.MaxPerDay).GreaterThanOrEqualTo(0);
         }
     }
 }

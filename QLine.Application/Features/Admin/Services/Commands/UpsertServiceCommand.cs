@@ -13,7 +13,6 @@ namespace QLine.Application.Features.Admin.Services.Commands
         Guid ServicePointId,
         string Name,
         int DurationMin,
-        int BufferMin,
-        int MaxPerDay
+        int BufferMin
     ) : IRequest<ServiceDto>;
 }

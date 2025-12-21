@@ -27,8 +27,7 @@ namespace QLine.Application.Features.Admin.Queries
                     Id = s.Id,
                     Name = s.Name,
                     DurationMin = s.DurationMin,
-                    BufferMin = s.BufferMin,
-                    MaxPerDay = s.MaxPerDay
+                    BufferMin = s.BufferMin
                 })
                 .ToList();
         }
