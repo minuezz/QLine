@@ -15,18 +15,16 @@ namespace QLine.Domain.Entities
         public string Name { get; private set; } = null!;
         public int DurationMin { get; private set; }
         public int BufferMin {  get; private set; }
-        public int MaxPerDay { get; private set; }
 
         public Service() { }
 
-        private Service(Guid id, Guid servicePointId, string name, int durationMin, int bufferMin, int maxPerDay)
+        private Service(Guid id, Guid servicePointId, string name, int durationMin, int bufferMin)
         {
             if (id == Guid.Empty) throw new DomainException("Service Id cannot be empty.");
             if (servicePointId == Guid.Empty) throw new DomainException("Service ServicePointId cannot be empty.");
             if (string.IsNullOrWhiteSpace(name)) throw new DomainException("Service Name is required.");
             if (durationMin <= 0) throw new DomainException("Service Duration must be positive.");
             if (bufferMin < 0) throw new DomainException("Service Buffer cannot be negative.");
-            if (maxPerDay < 0) throw new DomainException("Service MaxPerDay cannot be negative.");
 
 
             Id = id;
@@ -34,23 +32,20 @@ namespace QLine.Domain.Entities
             Name = name.Trim();
             DurationMin = durationMin;
             BufferMin = bufferMin;
-            MaxPerDay = maxPerDay;
         }
 
-        public static Service Create(Guid id, Guid servicePointId, string name, int durationMin, int bufferMin, int maxPerDay)
-            => new(id, servicePointId, name, durationMin, bufferMin, maxPerDay);
+        public static Service Create(Guid id, Guid servicePointId, string name, int durationMin, int bufferMin)
+            => new(id, servicePointId, name, durationMin, bufferMin);
 
-        public void Update(string name, int durationMin, int bufferMin, int maxPerDay)
+        public void Update(string name, int durationMin, int bufferMin)
         {
             if (string.IsNullOrWhiteSpace(name)) throw new DomainException("Service Name is required.");
             if (durationMin <= 0) throw new DomainException("Service Duration must be positive.");
             if (bufferMin < 0) throw new DomainException("Service Buffer cannot be negative.");
-            if (maxPerDay < 0) throw new DomainException("Service MaxPerDay cannot be negative.");
 
             Name = name.Trim();
             DurationMin = durationMin;
             BufferMin = bufferMin;
-            MaxPerDay = maxPerDay;
         }
     }
 }

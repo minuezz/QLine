@@ -66,8 +66,7 @@ namespace QLine.Infrastructure.Migrations
                     ServicePointId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: false),
                     DurationMin = table.Column<int>(type: "integer", nullable: false),
-                    BufferMin = table.Column<int>(type: "integer", nullable: false),
-                    MaxPerDay = table.Column<int>(type: "integer", nullable: false)
+                    BufferMin = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {

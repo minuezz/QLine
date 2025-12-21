@@ -148,9 +148,6 @@ namespace QLine.Infrastructure.Migrations
                     b.Property<int>("DurationMin")
                         .HasColumnType("integer");
 
-                    b.Property<int>("MaxPerDay")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)

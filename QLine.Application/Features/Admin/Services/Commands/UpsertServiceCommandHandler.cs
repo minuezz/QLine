@@ -33,8 +33,7 @@ namespace QLine.Application.Features.Admin.Services.Commands
                     request.ServicePointId,
                     request.Name,
                     request.DurationMin,
-                    request.BufferMin,
-                    request.MaxPerDay
+                    request.BufferMin
                 );
                 await _repo.AddAsync(svc, ct);
 
@@ -46,7 +45,6 @@ namespace QLine.Application.Features.Admin.Services.Commands
                     Name = svc.Name,
                     DurationMin = svc.DurationMin,
                     BufferMin = svc.BufferMin,
-                    MaxPerDay = svc.MaxPerDay,
                 };
             }
             else
@@ -54,7 +52,7 @@ namespace QLine.Application.Features.Admin.Services.Commands
                 var existing = await _repo.GetByIdAsync(request.Id!.Value, ct)
                     ?? throw new DomainException("Service not found.");
 
-                existing.Update(request.Name, request.DurationMin, request.BufferMin, request.MaxPerDay);
+                existing.Update(request.Name, request.DurationMin, request.BufferMin);
 
                 await _repo.UpdateAsync(existing, ct);
                 await _realtime.QueueUpdated(request.ServicePointId, ct);
@@ -65,7 +63,6 @@ namespace QLine.Application.Features.Admin.Services.Commands
                     Name = existing.Name,
                     DurationMin = existing.DurationMin,
                     BufferMin = existing.BufferMin,
-                    MaxPerDay = existing.MaxPerDay,
                 };
             }
         }
