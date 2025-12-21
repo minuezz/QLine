@@ -59,48 +59,17 @@
 else
 {
         <h4>Reservation created</h4>
-        <p><strong>Id:</strong>@_created.Id</p>
-        <p><strong>Ticket:</strong>@_created.TicketNo</p>
-        <p><strong>Start (local):</strong><UtcDate Value="@_created.StartTime" /></p>
-        <p><small>UTC: @_created.StartTime.ToString("u")</small></p>
+        <p><strong>Start:</strong><UtcDate Value="@_created.StartTime" /></p>
 
         @if (!string.IsNullOrEmpty(_qrCodeBase64))
         {
                 <div class="qr-wrapper">
-                        <img src="data:image/png;base64,@_qrCodeBase64" alt="Reservation QR Code" class="qr-image" />
-                        <p class="qr-helper">Please scan this code at the kiosk upon arrival.</p>
-                        <p class="qr-helper"><strong>Reservation ID for manual entry:</strong> @_created?.Id</p>
+                    <img src="data:image/png;base64,@_qrCodeBase64" alt="Reservation QR Code" class="qr-image" />
+                    <p class="qr-helper">Please scan this code at the kiosk upon arrival.</p>
+                    <p class="qr-helper"><strong>Reservation ID for manual entry:</strong> @_created?.Id</p>
                 </div>
         }
 }
-
-<style>
-        .slots-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-                gap: 8px;
-                margin-top: 8px;
-        }
-
-        .qr-wrapper {
-                margin-top: 16px;
-                padding: 12px;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                max-width: 320px;
-        }
-
-        .qr-image {
-                display: block;
-                width: 100%;
-                height: auto;
-        }
-
-        .qr-helper {
-                margin-top: 8px;
-                margin-bottom: 0;
-        }
-</style>
 
 @code {
         [Parameter] public Guid ServicePointId { get; set; }

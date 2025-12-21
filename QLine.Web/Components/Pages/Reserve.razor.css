@@ -1,0 +1,25 @@
+﻿.slots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.qr-wrapper {
+    margin-top: 16px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    max-width: 320px;
+}
+
+.qr-image {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.qr-helper {
+    margin-top: 8px;
+    margin-bottom: 0;
+}

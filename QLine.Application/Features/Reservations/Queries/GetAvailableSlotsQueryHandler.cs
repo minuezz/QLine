@@ -42,10 +42,11 @@ namespace QLine.Application.Features.Reservations.Queries
 
             var nowUtc = _clock.UtcNow;
             TimeSpan? minStartTime = null;
+            var nowLocal = nowUtc.ToLocalTime();
 
-            if (DateOnly.FromDateTime(nowUtc.UtcDateTime) == request.Date)
+            if (DateOnly.FromDateTime(nowLocal.DateTime) == request.Date)
             {
-                minStartTime = nowUtc.TimeOfDay;
+                minStartTime = nowLocal.TimeOfDay;
             }
 
             var duration = TimeSpan.FromMinutes(service.DurationMin);

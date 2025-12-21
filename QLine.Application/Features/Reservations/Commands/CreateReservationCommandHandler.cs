@@ -3,6 +3,7 @@ using MediatR;
 using QLine.Application.Abstractions;
 using QLine.Application.DTO;
 using QLine.Domain;
+using QLine.Domain.Entities;
 using QLine.Domain.Abstractions;
 
 namespace QLine.Application.Features.Reservations.Commands
