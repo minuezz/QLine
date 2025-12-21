@@ -6,6 +6,7 @@
 @using QLine.Application.Features.Reservations.Commands
 @using QLine.Application.Features.Reservations.Queries
 @using QLine.Application.DTO
+@using QRCoder
 @inject IMediator Mediator
 
 <h3>Create Reservation</h3>
@@ -62,6 +63,15 @@ else
         <p><strong>Ticket:</strong>@_created.TicketNo</p>
         <p><strong>Start (local):</strong><UtcDate Value="@_created.StartTime" /></p>
         <p><small>UTC: @_created.StartTime.ToString("u")</small></p>
+
+        @if (!string.IsNullOrEmpty(_qrCodeBase64))
+        {
+                <div class="qr-wrapper">
+                        <img src="data:image/png;base64,@_qrCodeBase64" alt="Reservation QR Code" class="qr-image" />
+                        <p class="qr-helper">Please scan this code at the kiosk upon arrival.</p>
+                        <p class="qr-helper"><strong>Reservation ID for manual entry:</strong> @_created?.Id</p>
+                </div>
+        }
 }
 
 <style>
@@ -70,6 +80,25 @@ else
                 grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
                 gap: 8px;
                 margin-top: 8px;
+        }
+
+        .qr-wrapper {
+                margin-top: 16px;
+                padding: 12px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                max-width: 320px;
+        }
+
+        .qr-image {
+                display: block;
+                width: 100%;
+                height: auto;
+        }
+
+        .qr-helper {
+                margin-top: 8px;
+                margin-bottom: 0;
         }
 </style>
 
@@ -84,6 +113,7 @@ else
         private ReservationDto? _created;
         private string? _errorMessage;
         private List<string>? _errorDetails;
+        private string? _qrCodeBase64;
 
         protected override async Task OnInitializedAsync()
         {
@@ -137,6 +167,7 @@ else
                 {
                         _errorMessage = null;
                         _errorDetails = null;
+                        _qrCodeBase64 = null;
                         if (_selectedSlot is null || !_selectedSlot.IsAvailable)
                         {
                                 _errorMessage = "Please select an available time slot.";
@@ -152,10 +183,20 @@ else
                         ));
 
                         _created = dto;
+                        _qrCodeBase64 = GenerateQrCode(dto.Id);
                 }
                 catch (Exception ex)
                 {
                         (_errorMessage, _errorDetails) = ex.ToUserMessage();
                 }
+        }
+
+        private string GenerateQrCode(Guid reservationId)
+        {
+                using var generator = new QRCodeGenerator();
+                using var qrCodeData = generator.CreateQrCode(reservationId.ToString(), QRCodeGenerator.ECCLevel.Q);
+                var qrCode = new PngByteQRCode(qrCodeData);
+                var qrCodeBytes = qrCode.GetGraphic(20);
+                return Convert.ToBase64String(qrCodeBytes);
         }
 }
