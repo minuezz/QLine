@@ -109,9 +109,9 @@ else
                             <p class="card-text">
                                 <strong>Ticket:</strong> <span class="badge bg-secondary">@(reservation.TicketNo ?? "-")</span>
                             </p>
-                            <p class="card-text mb-0">
+                            <p class="card-text mb-1">
                                 <strong>Reservation ID:</strong>
-                                <span class="text-monospace">@reservation.Id</span>
+                                <span class="text-monospace user-select-all">@reservation.Id</span>
                             </p>
 
                             <div class="btn-group mt-2">
@@ -309,7 +309,7 @@ else
     }
 
     private IEnumerable<ReservationViewModel> UpcomingReservations => _reservations
-        .Where(r => r.Status is "Active" or "Waiting")
+        .Where(r => r.Status is "Active" or "Waiting" or "InService")
         .OrderBy(r => r.StartTime);
 
     private IEnumerable<ReservationViewModel> PastReservations => _reservations
@@ -363,6 +363,7 @@ else
     {
         "Active" => "bg-success",
         "Waiting" => "bg-warning text-dark",
+        "InService" => "bg-primary",
         "Cancelled" => "bg-danger",
         "Completed" => "bg-secondary",
         _ => "bg-info"

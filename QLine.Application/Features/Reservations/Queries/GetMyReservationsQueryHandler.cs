@@ -36,7 +36,7 @@ namespace QLine.Application.Features.Reservations.Queries
                 var status = entry?.Status switch
                 {
                     QueueStatus.Waiting => QueueStatus.Waiting.ToString(),
-                    QueueStatus.InService => QueueStatus.Waiting.ToString(),
+                    QueueStatus.InService => QueueStatus.InService.ToString(),
                     QueueStatus.Skipped => QueueStatus.Waiting.ToString(),
                     QueueStatus.Done => ReservationStatus.Completed.ToString(),
                     QueueStatus.NoShow => QueueStatus.NoShow.ToString(),
