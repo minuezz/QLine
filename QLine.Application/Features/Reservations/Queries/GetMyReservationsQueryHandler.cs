@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using MediatR;
 using QLine.Application.DTO;
 using QLine.Domain.Abstractions;
+using QLine.Domain.Enums;
 
 namespace QLine.Application.Features.Reservations.Queries
 {
@@ -32,6 +33,16 @@ namespace QLine.Application.Features.Reservations.Queries
             {
                 var entry = await _queueEntries.GetByReservationAsync(r.Id, ct);
 
+                var status = entry?.Status switch
+                {
+                    QueueStatus.Waiting => QueueStatus.Waiting.ToString(),
+                    QueueStatus.InService => QueueStatus.Waiting.ToString(),
+                    QueueStatus.Skipped => QueueStatus.Waiting.ToString(),
+                    QueueStatus.Done => ReservationStatus.Completed.ToString(),
+                    QueueStatus.NoShow => QueueStatus.NoShow.ToString(),
+                    _ => r.Status.ToString()
+                };
+
                 result.Add(new ReservationDto
                 {
                     Id = r.Id,
@@ -39,7 +50,7 @@ namespace QLine.Application.Features.Reservations.Queries
                     ServiceId = r.ServiceId,
                     UserId = r.UserId,
                     StartTime = r.StartTime,
-                    Status = r.Status.ToString(),
+                    Status = status,
                     TicketNo = entry?.TicketNo
                 });
             }
