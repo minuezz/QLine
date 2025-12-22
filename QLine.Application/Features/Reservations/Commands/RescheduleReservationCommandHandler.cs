@@ -3,6 +3,7 @@ using QLine.Application.Abstractions;
 using QLine.Application.DTO;
 using QLine.Domain;
 using QLine.Domain.Abstractions;
+using QLine.Domain.Enums;
 
 namespace QLine.Application.Features.Reservations.Commands
 {
@@ -33,6 +34,9 @@ namespace QLine.Application.Features.Reservations.Commands
             if (reservation.UserId != userId)
                 throw new UnauthorizedAccessException();
 
+            if (reservation.Status != ReservationStatus.Active)
+                throw new DomainException("Reservation is not active.");
+
             var safeStartTime = request.NewStartTime.ToUniversalTime();
 
             if (safeStartTime < _clock.UtcNow.AddMinutes(-1))
@@ -42,7 +46,11 @@ namespace QLine.Application.Features.Reservations.Commands
 
             if (reservation.StartTime != safeStartTime)
             {
-                var slotFree = await _reservations.IsSlotAvailableAsync(reservation.ServicePointId, safeStartTime, ct);
+                var slotFree = await _reservations.IsSlotAvailableAsync(
+                    reservation.ServicePointId,
+                    safeStartTime,
+                    ct,
+                    reservation.Id);
 
                 if (!slotFree)
                     throw new DomainException("The selected slot is already occupied.");

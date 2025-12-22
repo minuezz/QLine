@@ -15,12 +15,17 @@ namespace QLine.Infrastructure.Persistence.Repositories
         private readonly AppDbContext _db;
         public ReservationRepository(AppDbContext db) => _db = db;
 
-        public async Task<bool> IsSlotAvailableAsync(Guid servicePointId, DateTimeOffset startTime, CancellationToken ct)
+        public async Task<bool> IsSlotAvailableAsync(
+            Guid servicePointId,
+            DateTimeOffset startTime,
+            CancellationToken ct,
+            Guid? reservationIdToIgnore = null)
         {
             var isTaken = await _db.Reservations.AsNoTracking()
                 .AnyAsync(r => r.ServicePointId == servicePointId
                             && r.StartTime == startTime
-                            && r.Status == ReservationStatus.Active, ct);
+                            && r.Status == ReservationStatus.Active
+                            && (reservationIdToIgnore == null || r.Id != reservationIdToIgnore), ct);
 
             return !isTaken;
         }

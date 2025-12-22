@@ -2,6 +2,7 @@ using MediatR;
 using QLine.Application.Abstractions;
 using QLine.Domain;
 using QLine.Domain.Abstractions;
+using QLine.Domain.Enums;
 
 namespace QLine.Application.Features.Reservations.Commands
 {
@@ -28,8 +29,8 @@ namespace QLine.Application.Features.Reservations.Commands
             if (reservation.UserId != userId)
                 throw new UnauthorizedAccessException();
 
-            if (reservation.Status == Domain.Enums.ReservationStatus.Cancelled)
-                return;
+            if (reservation.Status != ReservationStatus.Active)
+                throw new DomainException("Reservation is not active.");
 
             reservation.Cancel();
             await _reservations.UpdateAsync(reservation, ct);
