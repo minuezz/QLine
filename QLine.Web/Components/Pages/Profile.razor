@@ -109,6 +109,10 @@ else
                             <p class="card-text">
                                 <strong>Ticket:</strong> <span class="badge bg-secondary">@(reservation.TicketNo ?? "-")</span>
                             </p>
+                            <p class="card-text mb-0">
+                                <strong>Reservation ID:</strong>
+                                <span class="text-monospace">@reservation.Id</span>
+                            </p>
 
                             <div class="btn-group mt-2">
                                 <button class="btn btn-outline-primary btn-sm" @onclick="() => ToggleQrCode(reservation.Id)">
