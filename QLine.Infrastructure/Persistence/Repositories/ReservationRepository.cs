@@ -52,8 +52,10 @@ namespace QLine.Infrastructure.Persistence.Repositories
                 .ToListAsync(ct);
         }
 
-        public Task<Reservation?> GetByIdAsync(Guid id, CancellationToken ct) =>
-            _db.Reservations.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id, ct);
+        public async Task<Reservation?> GetByIdAsync(Guid id, CancellationToken ct) =>
+            await _db.Reservations
+                .FirstOrDefaultAsync(r => r.Id == id, ct);
+
 
         public async Task<IReadOnlyList<Reservation>> GetByUserAsync(Guid userId, CancellationToken ct) =>
             await _db.Reservations.AsNoTracking()
@@ -63,7 +65,6 @@ namespace QLine.Infrastructure.Persistence.Repositories
 
         public async Task UpdateAsync(Reservation reservation, CancellationToken ct)
         {
-            _db.Reservations.Update(reservation);
             await _db.SaveChangesAsync(ct);
         }
     }

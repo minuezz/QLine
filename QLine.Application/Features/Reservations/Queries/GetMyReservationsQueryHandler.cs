@@ -26,25 +26,25 @@ namespace QLine.Application.Features.Reservations.Queries
         public async Task<IReadOnlyList<ReservationDto>> Handle(GetMyReservationsQuery request, CancellationToken ct)
         {
             var reservations = await _reservations.GetByUserAsync(request.UserId, ct);
+            var result = new List<ReservationDto>();
 
-            var entries = await Task.WhenAll(reservations.Select(async r => new
+            foreach (var r in reservations)
             {
-                Reservation = r,
-                Entry = await _queueEntries.GetByReservationAsync(r.Id, ct)
-            }));
+                var entry = await _queueEntries.GetByReservationAsync(r.Id, ct);
 
-            return entries
-                .Select(x => new ReservationDto
+                result.Add(new ReservationDto
                 {
-                    Id = x.Reservation.Id,
-                    ServicePointId = x.Reservation.ServicePointId,
-                    ServiceId = x.Reservation.ServiceId,
-                    UserId = x.Reservation.UserId,
-                    StartTime = x.Reservation.StartTime,
-                    Status = x.Reservation.Status.ToString(),
-                    TicketNo = x.Entry?.TicketNo
-                })
-                .ToList();
+                    Id = r.Id,
+                    ServicePointId = r.ServicePointId,
+                    ServiceId = r.ServiceId,
+                    UserId = r.UserId,
+                    StartTime = r.StartTime,
+                    Status = r.Status.ToString(),
+                    TicketNo = entry?.TicketNo
+                });
+            }
+
+            return result;
         }
     }
 }

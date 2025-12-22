@@ -27,7 +27,6 @@ namespace QLine.Application.Features.Queue.Commands
                 ?? throw new DomainException("Queue entry not found.");
             e.Skip();
             await _repo.UpdateAsync(e, ct);
-
             await _realtime.QueueUpdated(e.ServicePointId, ct);
         }
     }
