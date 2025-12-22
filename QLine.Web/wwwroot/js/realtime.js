@@ -1,4 +1,4 @@
-window.qlineRealtime = {
+﻿window.qlineRealtime = {
     connect: function (servicePointId, dotNetRef) {
         const conn = new signalR.HubConnectionBuilder()
             .withUrl("/hubs/queue")

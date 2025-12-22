@@ -221,10 +221,19 @@ else
         if (CurrentUser.UserId is Guid userId)
         {
             _user = await Users.GetByIdAsync(userId, CancellationToken.None);
-            await RefreshReservationsAsync();
+
+            await LoadReservations(userId);
         }
 
         ParseMessages();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && CurrentUser.UserId.HasValue)
+        {
+            await EnsureRealtimeSubscriptionsAsync();
+        }
     }
 
     protected override void OnParametersSet()
