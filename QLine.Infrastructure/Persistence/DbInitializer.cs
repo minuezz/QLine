@@ -35,8 +35,7 @@ namespace QLine.Infrastructure.Persistence
                 servicePointId: spId,
                 name: "Rejestracja ogólna",
                 durationMin: 15,
-                bufferMin: 5,
-                maxPerDay: 100
+                bufferMin: 5
             );
 
             var demoPassword = "Pass@word1";
