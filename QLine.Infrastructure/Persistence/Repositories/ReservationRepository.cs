@@ -1,12 +1,13 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using QLine.Domain.Abstractions;
+using QLine.Domain.Entities;
+using QLine.Domain.Enums;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using QLine.Domain.Abstractions;
-using QLine.Domain.Entities;
-using QLine.Domain.Enums;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace QLine.Infrastructure.Persistence.Repositories
 {
@@ -24,7 +25,8 @@ namespace QLine.Infrastructure.Persistence.Repositories
             var isTaken = await _db.Reservations.AsNoTracking()
                 .AnyAsync(r => r.ServicePointId == servicePointId
                             && r.StartTime == startTime
-                            && r.Status == ReservationStatus.Active
+                            && r.Status != ReservationStatus.Cancelled
+                            && r.Status != ReservationStatus.NoShow
                             && (reservationIdToIgnore == null || r.Id != reservationIdToIgnore), ct);
 
             return !isTaken;
@@ -46,7 +48,8 @@ namespace QLine.Infrastructure.Persistence.Repositories
             return await _db.Reservations.AsNoTracking()
                 .Include(r => r.Service)
                 .Where(r => r.ServicePointId == servicePointId
-                            && r.Status == ReservationStatus.Active
+                            && r.Status != ReservationStatus.Cancelled
+                            && r.Status != ReservationStatus.NoShow
                             && r.StartTime.Date == targetDate)
                 .OrderBy(r => r.StartTime)
                 .ToListAsync(ct);

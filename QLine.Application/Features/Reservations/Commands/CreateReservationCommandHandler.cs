@@ -14,15 +14,18 @@ namespace QLine.Application.Features.Reservations.Commands
         private readonly IReservationRepository _reservations;
         private readonly IDateTimeProvider _clock;
         private readonly ICurrentUser _currentUser;
+        private readonly IRealtimeNotifier _realtime;
 
         public CreateReservationCommandHandler(
             IReservationRepository reservations,
             IDateTimeProvider clock,
-            ICurrentUser currentUser)
+            ICurrentUser currentUser,
+            IRealtimeNotifier realtime)
         {
             _reservations = reservations;
             _clock = clock;
             _currentUser = currentUser;
+            _realtime = realtime;
         }
 
         public async Task<ReservationDto> Handle(CreateReservationCommand request, CancellationToken ct)
@@ -52,6 +55,8 @@ namespace QLine.Application.Features.Reservations.Commands
             );
 
             await _reservations.AddAsync(reservation, ct);
+
+            await _realtime.UserReservationsUpdated(reservation.UserId, ct);
 
             return new ReservationDto
             {

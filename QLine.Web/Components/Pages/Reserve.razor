@@ -74,7 +74,9 @@ else
                 <div class="qr-wrapper">
                     <img src="data:image/png;base64,@_qrCodeBase64" alt="Reservation QR Code" class="qr-image" />
                     <p class="qr-helper">Please scan this code at the kiosk upon arrival.</p>
-                    <p class="qr-helper"><strong>Reservation ID for manual entry:</strong> @_created?.Id</p>
+                    <span class="qr-helper"><strong>Reservation ID for manual entry:</strong> 
+                        <p class="user-select-all"> @_created?.Id</p>
+                    </span>
                 </div>
         }
 }

@@ -15,11 +15,13 @@ namespace QLine.Application.Features.Queue.Commands
     {
         private readonly IQueueEntryRepository _repo;
         private readonly IRealtimeNotifier _realtime;
+        private readonly IReservationRepository _reservations;
 
-        public CallNextCommandHandler(IQueueEntryRepository repo, IRealtimeNotifier realtime)
+        public CallNextCommandHandler(IQueueEntryRepository repo, IRealtimeNotifier realtime, IReservationRepository reservations)
         {
             _repo = repo;
             _realtime = realtime;
+            _reservations = reservations;
         }
 
         public async Task<QueueEntryDto?> Handle(CallNextCommand request, CancellationToken ct)
@@ -31,8 +33,17 @@ namespace QLine.Application.Features.Queue.Commands
             var next = await _repo.TryStartNextInServiceAsync(request.ServicePointId, ct);
             if (next is null) return null;
 
+            var reservation = await _reservations.GetByIdAsync(next.ReservationId, ct);
+
             await _realtime.QueueUpdated(next.ServicePointId, ct);
 
+            if (reservation != null)
+            {
+                reservation.StartService();
+                await _reservations.UpdateAsync(reservation, ct);
+
+                await _realtime.UserReservationsUpdated(reservation.UserId, ct);
+            }
             return ToDto(next);
         }
 

@@ -82,11 +82,10 @@ else
 	private QueueSnapshotDto? _snapshot;
 
 	private readonly SemaphoreSlim _refreshGate = new(1, 1);
-	private bool _refreshPending;
 
 	protected override async Task OnInitializedAsync()
 	{
-            _points = (await Mediator.Send(new GetServicePointsQuery())).ToList();
+		_points = (await Mediator.Send(new GetServicePointsQuery())).ToList();
 
 		if (_points.Count > 0)
 			SelectedServicePointIdString = _points[0].Id.ToString();
@@ -131,8 +130,8 @@ else
 			_connectedSpId = null;
 		}
 
-            _realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
-                    "qlineRealtime.connect", sp, DotNetObjectReference.Create(this));
+		_realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
+				"qlineRealtime.connect", sp, DotNetObjectReference.Create(this));
 		_connectedSpId = sp;
 	}
 
@@ -141,20 +140,11 @@ else
 		if (string.IsNullOrWhiteSpace(SelectedServicePointIdString)) return;
 		if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
 
-		if (!await _refreshGate.WaitAsync(0))
-		{
-			_refreshPending = true;
-			return;
-		}
-
+		await _refreshGate.WaitAsync();
 		try
 		{
-			do 
-			{
-				_refreshPending = false;
-				_snapshot = await Mediator.Send(new GetQueueQuery(sp));
-				StateHasChanged();
-			} while (_refreshPending);
+			_snapshot = await Mediator.Send(new GetQueueQuery(sp));
+			StateHasChanged();
 		}
 		finally
 		{
@@ -174,16 +164,54 @@ else
 	private async Task CallNextAsync()
 	{
 		if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
-		await Mediator.Send(new CallNextCommand(sp));
+
+		await _refreshGate.WaitAsync();
+		try
+		{
+			await Mediator.Send(new CallNextCommand(sp));
+		}
+		finally
+		{
+			_refreshGate.Release();
+		}
 	}
 
-	private Task MarkNoShowAsync(Guid id) 
-		=> Mediator.Send(new MarkNoShowCommand(id));
+	private async Task MarkNoShowAsync(Guid id)
+	{
+		await _refreshGate.WaitAsync();
+		try
+		{
+			await Mediator.Send(new MarkNoShowCommand(id));
+		}
+		finally
+		{
+			_refreshGate.Release();
+		}
+	}
 
-	private Task MarkDoneAsync(Guid id)
-		=> Mediator.Send(new MarkDoneCommand(id));
-	
+	private async Task MarkDoneAsync(Guid id)
+	{
+		await _refreshGate.WaitAsync();
+		try
+		{
+			await Mediator.Send(new MarkDoneCommand(id));
+		}
+		finally
+		{
+			_refreshGate.Release();
+		}
+	}
 
-	private Task SkipAsync(Guid id)
-		=> Mediator.Send(new SkipQueueEntryCommand(id));
+	private async Task SkipAsync(Guid id)
+	{
+		await _refreshGate.WaitAsync();
+		try
+		{
+			await Mediator.Send(new SkipQueueEntryCommand(id));
+		}
+		finally
+		{
+			_refreshGate.Release();
+		}
+	}
 }

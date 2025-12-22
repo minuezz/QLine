@@ -59,8 +59,11 @@ namespace QLine.Domain.Entities
 
         public void MarkNoShow()
         {
-            if (Status != QueueStatus.InService)
-                throw new DomainException("Only entries InService can be marked as NoShow.");
+            if (Status != QueueStatus.InService && Status != QueueStatus.Waiting)
+            {
+                throw new DomainException($"Only entries InService or Waiting can be marked as NoShow. Current: {Status}");
+            }
+
             Status = QueueStatus.NoShow;
         }
 

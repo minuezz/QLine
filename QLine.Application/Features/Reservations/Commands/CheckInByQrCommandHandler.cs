@@ -34,12 +34,17 @@ namespace QLine.Application.Features.Reservations.Commands
         public async Task<QueueSnapshotDto> Handle(CheckInByQrCommand request, CancellationToken ct)
         {
             var reservation = await _reservations.GetByIdAsync(request.ReservationId, ct);
+            var now = _clock.UtcNow;
 
-            if (reservation is null
-                || reservation.Status != ReservationStatus.Active
-                || reservation.StartTime.Date != _clock.UtcNow.Date)
+            if (reservation is null || reservation.Status != ReservationStatus.Active)
             {
-                throw new DomainException("Reservation QR code is invalid or expired.");
+                throw new DomainException("Reservation is invalid or not active.");
+            }
+
+            var timeDifference = reservation.StartTime - now;
+            if (timeDifference.TotalHours > 20 || timeDifference.TotalHours < -2)
+            {
+                throw new DomainException("It is too early or too late to check in.");
             }
 
             var existingEntry = await _queueEntries.GetByReservationAsync(reservation.Id, ct);
@@ -59,7 +64,13 @@ namespace QLine.Application.Features.Reservations.Commands
                 createdAt: _clock.UtcNow);
 
             await _queueEntries.AddAsync(entry, ct);
+
+            reservation.CheckIn();
+            await _reservations.UpdateAsync(reservation, ct);
+
             await _realtime.QueueUpdated(entry.ServicePointId, ct);
+
+            await _realtime.UserReservationsUpdated(reservation.UserId, ct);
 
             var current = await _queueEntries.GetCurrentInServiceByServicePointAsync(entry.ServicePointId, ct);
             var waiting = await _queueEntries.GetWaitingByServicePointAsync(entry.ServicePointId, ct);

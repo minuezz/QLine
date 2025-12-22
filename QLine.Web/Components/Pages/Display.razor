@@ -49,12 +49,12 @@ else
 
 	protected override async Task OnAfterRenderAsync(bool firstRender)
 	{
-                if (firstRender)
-                {
-                        _realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
-                                "qlineRealtime.connect", ServicePointId, DotNetObjectReference.Create(this));
-                }
+		if (firstRender)
+		{
+			_realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
+				"qlineRealtime.connect", ServicePointId, DotNetObjectReference.Create(this));
         }
+    }
 
 	private async Task RefreshAsync()
 	{

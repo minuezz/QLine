@@ -22,45 +22,20 @@
         };
     },
 
-    connectToServicePoints: function (servicePointIds, dotNetRef) {
+    connectUserProfile: function (dotNetRef) {
         const conn = new signalR.HubConnectionBuilder()
             .withUrl("/hubs/queue")
             .withAutomaticReconnect()
             .build();
 
-        let joined = new Set();
-
-        const normalize = (ids) => new Set((ids || []).map(id => id?.toString?.() ?? id));
-
-        const syncGroups = (ids) => {
-            const desired = normalize(ids);
-
-            for (const id of joined) {
-                if (!desired.has(id)) {
-                    conn.invoke("LeaveServicePoint", id).catch(console.error);
-                }
-            }
-
-            for (const id of desired) {
-                if (!joined.has(id)) {
-                    conn.invoke("JoinServicePoint", id).catch(console.error);
-                }
-            }
-
-            joined = desired;
-        };
-
-        conn.on("queueUpdated", payload => {
-            if (!payload || !joined.has(payload.servicePointId)) return;
+        conn.on("myReservationsUpdated", () => {
+            console.log("[Realtime] Profile update received!");
             dotNetRef.invokeMethodAsync("OnQueueUpdated");
         });
 
-        conn.start()
-            .then(() => syncGroups(servicePointIds))
-            .catch(console.error);
+        conn.start().catch(console.error);
 
         return {
-            updateServicePoints: (ids) => syncGroups(ids),
             dispose: () => conn.stop()
         };
     }

@@ -12,5 +12,9 @@ namespace QLine.Web.Services
         public Task QueueUpdated(Guid servicePointId, CancellationToken ct = default)
             => _hub.Clients.Group(QueueHub.GroupName(servicePointId))
                 .SendAsync("queueUpdated", new { servicePointId }, ct);
+
+        public Task UserReservationsUpdated(Guid userId, CancellationToken ct = default)
+            => _hub.Clients.User(userId.ToString())
+                .SendAsync("myReservationsUpdated", ct);
     }
 }

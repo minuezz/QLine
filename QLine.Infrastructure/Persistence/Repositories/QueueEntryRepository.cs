@@ -77,5 +77,11 @@ namespace QLine.Infrastructure.Persistence.Repositories
             _db.QueueEntries.Update(entry);
             await _db.SaveChangesAsync(ct);
         }
+
+        public async Task DeleteAsync(QueueEntry entry, CancellationToken ct)
+        {
+            _db.QueueEntries.Remove(entry);
+            await _db.SaveChangesAsync(ct);
+        }
     }
 }

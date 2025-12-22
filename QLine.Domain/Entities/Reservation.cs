@@ -44,17 +44,41 @@ namespace QLine.Domain.Entities
         public static Reservation Create(Guid id, Guid servicePointId, Guid serviceId, Guid userId, DateTimeOffset startTime, DateTimeOffset createdAt)
             => new(id, servicePointId, serviceId, userId, startTime, createdAt);
 
-        public void Cancel()
+        public void CheckIn()
         {
             if (Status != ReservationStatus.Active)
-                throw new DomainException("Only active reservation can be cancelled.");
+            {
+                throw new DomainException("Check-in is allowed only for Active reservations.");
+            }
+            Status = ReservationStatus.Waiting;
+        }
+
+        public void StartService()
+        {
+            if (Status != ReservationStatus.Waiting && Status != ReservationStatus.Active)
+            {
+                throw new DomainException("Can only start service for Waiting reservations.");
+            }
+            Status = ReservationStatus.InService;
+        }
+
+        public void MarkAsNoShow()
+        {
+            Status = ReservationStatus.NoShow;
+        }
+
+        public void Cancel()
+        {
+            if (Status != ReservationStatus.Active && Status != ReservationStatus.Waiting)
+                throw new DomainException("Reservation cannot be cancelled in current state.");
             Status = ReservationStatus.Cancelled;
         }
 
         public void Complete()
         {
-            if (Status != ReservationStatus.Active)
-                throw new DomainException("Only active reservation can be completed.");
+            if (Status == ReservationStatus.Cancelled || Status == ReservationStatus.Completed)
+                throw new DomainException("Reservation is already closed.");
+
             Status = ReservationStatus.Completed;
         }
 

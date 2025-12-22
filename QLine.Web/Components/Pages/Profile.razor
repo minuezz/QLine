@@ -213,8 +213,6 @@ else
     private IJSObjectReference? _realtimeHandle;
     private DotNetObjectReference<Profile>? _dotNetRef;
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
-    private bool _refreshPending;
-    private HashSet<Guid> _subscribedServicePoints = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -232,7 +230,10 @@ else
     {
         if (firstRender && CurrentUser.UserId.HasValue)
         {
-            await EnsureRealtimeSubscriptionsAsync();
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            _realtimeHandle = await Js.InvokeAsync<IJSObjectReference>(
+                "qlineRealtime.connectUserProfile",
+                _dotNetRef);
         }
     }
 
@@ -294,20 +295,10 @@ else
             return;
         }
 
-        if (!await _refreshGate.WaitAsync(0))
-        {
-            _refreshPending = true;
-            return;
-        }
-
+        await _refreshGate.WaitAsync();
         try
         {
-            do
-            {
-                _refreshPending = false;
-                await LoadReservations(userId);
-                await EnsureRealtimeSubscriptionsAsync();
-            } while (_refreshPending);
+            await LoadReservations(userId);
         }
         finally
         {
@@ -371,18 +362,26 @@ else
         if (!confirmed)
             return;
 
-        await Mediator.Send(new CancelReservationCommand(reservationId));
-
-        var target = _reservations.FirstOrDefault(r => r.Id == reservationId);
-        if (target is not null)
+        await _refreshGate.WaitAsync();
+        try
         {
-            target.Status = "Cancelled";
+            await Mediator.Send(new CancelReservationCommand(reservationId));
+
+            var target = _reservations.FirstOrDefault(r => r.Id == reservationId);
+            if (target is not null)
+            {
+                target.Status = "Cancelled";
+            }
+
+            if (_qrReservationId == reservationId)
+            {
+                _qrReservationId = null;
+                _qrImageSource = null;
+            }
         }
-
-        if (_qrReservationId == reservationId)
+        finally
         {
-            _qrReservationId = null;
-            _qrImageSource = null;
+            _refreshGate.Release();
         }
     }
 
@@ -423,47 +422,6 @@ else
         using var qrCode = new PngByteQRCode(qrCodeData);
         var bytes = qrCode.GetGraphic(20);
         return $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
-    }
-
-    private async Task EnsureRealtimeSubscriptionsAsync()
-    {
-        var servicePointIds = _reservations
-            .Select(r => r.ServicePointId)
-            .Distinct()
-            .ToList();
-
-        var desired = servicePointIds.ToHashSet();
-
-        if (_realtimeHandle is null)
-        {
-            if (desired.Count == 0)
-            {
-                return;
-            }
-
-            _dotNetRef ??= DotNetObjectReference.Create(this);
-            _realtimeHandle = await Js.InvokeAsync<IJSObjectReference>(
-                "qlineRealtime.connectToServicePoints",
-                servicePointIds,
-                _dotNetRef);
-
-            _subscribedServicePoints = desired;
-            return;
-        }
-
-        if (desired.Count == 0)
-        {
-            await _realtimeHandle.InvokeVoidAsync("dispose");
-            _realtimeHandle = null;
-            _subscribedServicePoints.Clear();
-            return;
-        }
-
-        if (!_subscribedServicePoints.SetEquals(desired))
-        {
-            await _realtimeHandle.InvokeVoidAsync("updateServicePoints", servicePointIds);
-            _subscribedServicePoints = desired;
-        }
     }
 
     [JSInvokable]
