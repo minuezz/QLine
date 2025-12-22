@@ -23,5 +23,6 @@ namespace QLine.Domain.Abstractions
         Task AddAsync(Reservation reservation, CancellationToken ct);
         Task<Reservation?> GetByIdAsync(Guid id, CancellationToken ct);
         Task<IReadOnlyList<Reservation>> GetByUserAsync(Guid userId, CancellationToken ct);
+        Task UpdateAsync(Reservation reservation, CancellationToken ct);
     }
 }
