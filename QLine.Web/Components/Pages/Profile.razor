@@ -1,13 +1,21 @@
 @page "/profile"
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
 @using QLine.Domain.Abstractions
 @using QLine.Domain.Entities
+@using QLine.Application.Features.Admin.Queries
+@using QLine.Application.Features.Reservations.Commands
+@using QLine.Application.Features.Reservations.Queries
+@using MediatR
+@using QRCoder
 @using System.Web
 @using QLine.Application.Abstractions
 @inject IAppUserRepository Users
 @inject ICurrentUser CurrentUser
 @inject NavigationManager Nav
+@inject IMediator Mediator
+@inject IJSRuntime Js
 
 <h3>Profile</h3>
 
@@ -69,6 +77,46 @@ else
             <button type="button" class="danger" @onclick="ShowDeleteDialog">Remove Account</button>
         </div>
     </section>
+
+    <section class="reservations-section">
+        <h4>Upcoming reservations</h4>
+        @if (_loadingReservations)
+        {
+            <p>Loading your reservations...</p>
+        }
+        else if (!UpcomingReservations.Any())
+        {
+            <p>No upcoming reservations.</p>
+        }
+        else
+        {
+            <div class="reservation-list">
+                @foreach (var reservation in UpcomingReservations)
+                {
+                    @ReservationCard(reservation)
+                }
+            </div>
+        }
+
+        <h4>History</h4>
+        @if (_loadingReservations)
+        {
+            <p>Loading your reservations...</p>
+        }
+        else if (!PastReservations.Any())
+        {
+            <p>No past reservations.</p>
+        }
+        else
+        {
+            <div class="reservation-list">
+                @foreach (var reservation in PastReservations)
+                {
+                    @ReservationCard(reservation)
+                }
+            </div>
+        }
+    </section>
 }
 
 @if (_showDeleteDialog)
@@ -108,12 +156,16 @@ else
     private bool _showDeleteDialog;
     private string? _successMessage;
     private List<string> _errorMessages = new();
+    private List<ReservationViewModel> _reservations = new();
+    private bool _loadingReservations;
+    private Guid? _qrReservationId;
 
     protected override async Task OnInitializedAsync()
     {
         if (CurrentUser.UserId is Guid userId)
         {
             _user = await Users.GetByIdAsync(userId, CancellationToken.None);
+            await LoadReservations(userId);
         }
 
         ParseMessages();
@@ -169,4 +221,196 @@ else
     private void ShowDeleteDialog() => _showDeleteDialog = true;
 
     private void HideDeleteDialog() => _showDeleteDialog = false;
+
+    private async Task LoadReservations(Guid userId)
+    {
+        _loadingReservations = true;
+
+        var reservations = await Mediator.Send(new GetMyReservationsQuery(userId));
+        var servicePoints = await Mediator.Send(new GetServicePointsQuery());
+        var servicePointLookup = servicePoints.ToDictionary(sp => sp.Id, sp => sp.Name);
+
+        var servicesLookup = new Dictionary<Guid, Dictionary<Guid, string>>();
+
+        foreach (var servicePointId in reservations.Select(r => r.ServicePointId).Distinct())
+        {
+            var services = await Mediator.Send(new GetServicesForServicePointQuery(servicePointId));
+            servicesLookup[servicePointId] = services.ToDictionary(svc => svc.Id, svc => svc.Name);
+        }
+
+        _reservations = reservations
+            .Select(r => new ReservationViewModel
+            {
+                Id = r.Id,
+                ServicePointId = r.ServicePointId,
+                ServiceId = r.ServiceId,
+                StartTime = r.StartTime,
+                Status = r.Status,
+                TicketNo = r.TicketNo,
+                ServiceName = servicesLookup.TryGetValue(r.ServicePointId, out var svc)
+                    && svc.TryGetValue(r.ServiceId, out var name)
+                        ? name
+                        : "Service",
+                ServicePointName = servicePointLookup.TryGetValue(r.ServicePointId, out var spName)
+                    ? spName
+                    : "Service point"
+            })
+            .ToList();
+
+        _loadingReservations = false;
+    }
+
+    private IEnumerable<ReservationViewModel> UpcomingReservations => _reservations
+        .Where(r => r.Status is "Active" or "Waiting")
+        .OrderBy(r => r.StartTime);
+
+    private IEnumerable<ReservationViewModel> PastReservations => _reservations
+        .Where(r => r.Status is "Completed" or "Cancelled" or "NoShow")
+        .OrderByDescending(r => r.StartTime);
+
+    private RenderFragment ReservationCard(ReservationViewModel reservation) => builder =>
+    {
+        var seq = 0;
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", "reservation-card");
+
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", "reservation-header");
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", "reservation-title");
+        builder.AddContent(seq++, reservation.ServiceName);
+        builder.CloseElement();
+        builder.OpenElement(seq++, "span");
+        builder.AddAttribute(seq++, "class", $"status-badge {GetStatusClass(reservation.Status)}");
+        builder.AddContent(seq++, reservation.Status);
+        builder.CloseElement();
+        builder.CloseElement();
+
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", "reservation-meta");
+        builder.AddContent(seq++, $"Service Point: {reservation.ServicePointName}");
+        builder.CloseElement();
+
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", "reservation-meta");
+        builder.AddContent(seq++, reservation.StartTime.ToLocalTime().ToString("f"));
+        builder.CloseElement();
+
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", "reservation-meta");
+        builder.AddContent(seq++, $"Ticket: {reservation.TicketNo ?? "-"}");
+        builder.CloseElement();
+
+        builder.OpenElement(seq++, "div");
+        builder.AddAttribute(seq++, "class", "reservation-actions");
+
+        builder.OpenElement(seq++, "button");
+        builder.AddAttribute(seq++, "type", "button");
+        builder.AddAttribute(seq++, "class", "secondary");
+        builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => ToggleQrCode(reservation.Id)));
+        builder.AddContent(seq++, _qrReservationId == reservation.Id ? "Hide QR" : "Show QR");
+        builder.CloseElement();
+
+        builder.OpenElement(seq++, "button");
+        builder.AddAttribute(seq++, "type", "button");
+        builder.AddAttribute(seq++, "class", "danger-outline");
+        builder.AddAttribute(seq++, "disabled", !CanCancel(reservation.Status));
+        builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => Cancel(reservation.Id)));
+        builder.AddContent(seq++, "Cancel");
+        builder.CloseElement();
+
+        builder.OpenElement(seq++, "button");
+        builder.AddAttribute(seq++, "type", "button");
+        builder.AddAttribute(seq++, "class", "secondary");
+        builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => Reschedule(reservation)));
+        builder.AddContent(seq++, "Reschedule");
+        builder.CloseElement();
+
+        builder.CloseElement();
+
+        if (_qrReservationId == reservation.Id && _qrImageSource is not null)
+        {
+            builder.OpenElement(seq++, "div");
+            builder.AddAttribute(seq++, "class", "qr-wrapper");
+            builder.OpenElement(seq++, "img");
+            builder.AddAttribute(seq++, "src", _qrImageSource);
+            builder.AddAttribute(seq++, "alt", "Reservation QR Code");
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+
+        builder.CloseElement();
+    };
+
+    private string? _qrImageSource;
+
+    private async Task Cancel(Guid reservationId)
+    {
+        var confirmed = await Js.InvokeAsync<bool>("confirm", "Cancel this reservation?");
+        if (!confirmed)
+            return;
+
+        await Mediator.Send(new CancelReservationCommand(reservationId));
+
+        var target = _reservations.FirstOrDefault(r => r.Id == reservationId);
+        if (target is not null)
+        {
+            target.Status = "Cancelled";
+        }
+
+        if (_qrReservationId == reservationId)
+        {
+            _qrReservationId = null;
+            _qrImageSource = null;
+        }
+    }
+
+    private void Reschedule(ReservationViewModel reservation)
+    {
+        Nav.NavigateTo($"/reserve/{reservation.ServicePointId}/{reservation.ServiceId}?rescheduleId={reservation.Id}");
+    }
+
+    private void ToggleQrCode(Guid reservationId)
+    {
+        if (_qrReservationId == reservationId)
+        {
+            _qrReservationId = null;
+            _qrImageSource = null;
+            return;
+        }
+
+        _qrReservationId = reservationId;
+        _qrImageSource = GenerateQrCode(reservationId);
+    }
+
+    private static bool CanCancel(string status) => status is "Active" or "Waiting";
+
+    private static string GetStatusClass(string status) => status switch
+    {
+        "Active" => "status-success",
+        "Cancelled" => "status-danger",
+        "Completed" => "status-muted",
+        _ => "status-neutral"
+    };
+
+    private static string GenerateQrCode(Guid reservationId)
+    {
+        using var generator = new QRCodeGenerator();
+        using var qrCodeData = generator.CreateQrCode(reservationId.ToString(), QRCodeGenerator.ECCLevel.Q);
+        using var qrCode = new PngByteQRCode(qrCodeData);
+        var bytes = qrCode.GetGraphic(20);
+        return $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
+    }
+
+    private sealed class ReservationViewModel
+    {
+        public Guid Id { get; init; }
+        public Guid ServicePointId { get; init; }
+        public Guid ServiceId { get; init; }
+        public DateTimeOffset StartTime { get; init; }
+        public string Status { get; set; } = string.Empty;
+        public string? TicketNo { get; init; }
+        public string ServiceName { get; init; } = string.Empty;
+        public string ServicePointName { get; init; } = string.Empty;
+    }
 }

@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MediatR;
 
 namespace QLine.Application.Features.Reservations.Commands
 {
-    public class CancelReservationCommand
-    {
-    }
+    public sealed record CancelReservationCommand(Guid ReservationId) : IRequest;
 }

@@ -60,3 +60,89 @@
     gap: 8px;
     margin-top: 12px;
 }
+
+.reservations-section {
+    margin-top: 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.reservation-list {
+    display: grid;
+    gap: 12px;
+}
+
+.reservation-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+}
+
+.reservation-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.reservation-title {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.reservation-meta {
+    color: #555;
+    font-size: 0.95rem;
+}
+
+.reservation-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    color: #fff;
+}
+
+.status-success {
+    background-color: #28a745;
+}
+
+.status-danger {
+    background-color: #dc3545;
+}
+
+.status-muted {
+    background-color: #6c757d;
+}
+
+.status-neutral {
+    background-color: #007bff;
+}
+
+.secondary {
+    background: #f4f4f4;
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+}
+
+.danger-outline {
+    background: transparent;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    padding: 6px 10px;
+}
+
+.qr-wrapper {
+    display: inline-flex;
+    justify-content: center;
+    padding-top: 8px;
+}

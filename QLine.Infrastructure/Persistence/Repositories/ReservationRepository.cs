@@ -55,5 +55,11 @@ namespace QLine.Infrastructure.Persistence.Repositories
                 .Where(r => r.UserId == userId)
                 .OrderBy(r => r.StartTime)
                 .ToListAsync(ct);
+
+        public async Task UpdateAsync(Reservation reservation, CancellationToken ct)
+        {
+            _db.Reservations.Update(reservation);
+            await _db.SaveChangesAsync(ct);
+        }
     }
 }
