@@ -1,12 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using MediatR;
+using QLine.Application.DTO;
 
 namespace QLine.Application.Features.Reservations.Commands
 {
-    public class RescheduleReservationCommand
-    {
-    }
+    public sealed record RescheduleReservationCommand(
+        Guid ReservationId,
+        DateTimeOffset NewStartTime
+    ) : IRequest<ReservationDto>;
 }
