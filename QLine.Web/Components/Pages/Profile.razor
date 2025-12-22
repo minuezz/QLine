@@ -78,7 +78,7 @@ else
         </div>
     </section>
 
-    <section class="reservations-section">
+    <section class="reservations-section mt-4">
         <h4>Upcoming reservations</h4>
         @if (_loadingReservations)
         {
@@ -86,33 +86,77 @@ else
         }
         else if (!UpcomingReservations.Any())
         {
-            <p>No upcoming reservations.</p>
+            <p class="text-muted">No upcoming reservations.</p>
         }
         else
         {
             <div class="reservation-list">
                 @foreach (var reservation in UpcomingReservations)
                 {
-                    @ReservationCard(reservation)
+                    <div class="card mb-3 shadow-sm reservation-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title">@reservation.ServiceName</h5>
+                                    <h6 class="card-subtitle mb-2 text-muted">@reservation.ServicePointName</h6>
+                                </div>
+                                <span class="badge @GetStatusClass(reservation.Status)">@reservation.Status</span>
+                            </div>
+
+                            <p class="card-text mb-1">
+                                <strong>Date:</strong> <UtcDate Value="@reservation.StartTime" />
+                            </p>
+                            <p class="card-text">
+                                <strong>Ticket:</strong> <span class="badge bg-secondary">@(reservation.TicketNo ?? "-")</span>
+                            </p>
+
+                            <div class="btn-group mt-2">
+                                <button class="btn btn-outline-primary btn-sm" @onclick="() => ToggleQrCode(reservation.Id)">
+                                    @(_qrReservationId == reservation.Id ? "Hide QR" : "Show QR")
+                                </button>
+                                <button class="btn btn-outline-danger btn-sm"
+                                        disabled="@(!CanCancel(reservation.Status))"
+                                        @onclick="() => Cancel(reservation.Id)">
+                                    Cancel
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm"
+                                        @onclick="() => Reschedule(reservation)">
+                                    Reschedule
+                                </button>
+                            </div>
+
+                            @if (_qrReservationId == reservation.Id && _qrImageSource is not null)
+                            {
+                                <div class="mt-3 text-center border p-2 rounded bg-white" style="max-width: 200px;">
+                                    <img src="@_qrImageSource" alt="QR Code" class="img-fluid" />
+                                </div>
+                            }
+                        </div>
+                    </div>
                 }
             </div>
         }
 
-        <h4>History</h4>
-        @if (_loadingReservations)
+        <h4 class="mt-4">History</h4>
+        @if (!PastReservations.Any() && !_loadingReservations)
         {
-            <p>Loading your reservations...</p>
-        }
-        else if (!PastReservations.Any())
-        {
-            <p>No past reservations.</p>
+            <p class="text-muted">No past reservations.</p>
         }
         else
         {
             <div class="reservation-list">
                 @foreach (var reservation in PastReservations)
                 {
-                    @ReservationCard(reservation)
+                    <div class="card mb-2 text-muted" style="opacity: 0.8;">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between">
+                                <strong>@reservation.ServiceName</strong>
+                                <span>@reservation.StartTime.ToLocalTime().ToString("g")</span>
+                                <span class="badge bg-secondary">@reservation.Status</span>
+                            </div>
+                            <small>@reservation.ServicePointName</small>
+                        </div>
+                    </div>
                 }
             </div>
         }
@@ -268,80 +312,6 @@ else
         .Where(r => r.Status is "Completed" or "Cancelled" or "NoShow")
         .OrderByDescending(r => r.StartTime);
 
-    private RenderFragment ReservationCard(ReservationViewModel reservation) => builder =>
-    {
-        var seq = 0;
-        builder.OpenElement(seq++, "div");
-        builder.AddAttribute(seq++, "class", "reservation-card");
-
-        builder.OpenElement(seq++, "div");
-        builder.AddAttribute(seq++, "class", "reservation-header");
-        builder.OpenElement(seq++, "div");
-        builder.AddAttribute(seq++, "class", "reservation-title");
-        builder.AddContent(seq++, reservation.ServiceName);
-        builder.CloseElement();
-        builder.OpenElement(seq++, "span");
-        builder.AddAttribute(seq++, "class", $"status-badge {GetStatusClass(reservation.Status)}");
-        builder.AddContent(seq++, reservation.Status);
-        builder.CloseElement();
-        builder.CloseElement();
-
-        builder.OpenElement(seq++, "div");
-        builder.AddAttribute(seq++, "class", "reservation-meta");
-        builder.AddContent(seq++, $"Service Point: {reservation.ServicePointName}");
-        builder.CloseElement();
-
-        builder.OpenElement(seq++, "div");
-        builder.AddAttribute(seq++, "class", "reservation-meta");
-        builder.AddContent(seq++, reservation.StartTime.ToLocalTime().ToString("f"));
-        builder.CloseElement();
-
-        builder.OpenElement(seq++, "div");
-        builder.AddAttribute(seq++, "class", "reservation-meta");
-        builder.AddContent(seq++, $"Ticket: {reservation.TicketNo ?? "-"}");
-        builder.CloseElement();
-
-        builder.OpenElement(seq++, "div");
-        builder.AddAttribute(seq++, "class", "reservation-actions");
-
-        builder.OpenElement(seq++, "button");
-        builder.AddAttribute(seq++, "type", "button");
-        builder.AddAttribute(seq++, "class", "secondary");
-        builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => ToggleQrCode(reservation.Id)));
-        builder.AddContent(seq++, _qrReservationId == reservation.Id ? "Hide QR" : "Show QR");
-        builder.CloseElement();
-
-        builder.OpenElement(seq++, "button");
-        builder.AddAttribute(seq++, "type", "button");
-        builder.AddAttribute(seq++, "class", "danger-outline");
-        builder.AddAttribute(seq++, "disabled", !CanCancel(reservation.Status));
-        builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => Cancel(reservation.Id)));
-        builder.AddContent(seq++, "Cancel");
-        builder.CloseElement();
-
-        builder.OpenElement(seq++, "button");
-        builder.AddAttribute(seq++, "type", "button");
-        builder.AddAttribute(seq++, "class", "secondary");
-        builder.AddAttribute(seq++, "onclick", EventCallback.Factory.Create(this, () => Reschedule(reservation)));
-        builder.AddContent(seq++, "Reschedule");
-        builder.CloseElement();
-
-        builder.CloseElement();
-
-        if (_qrReservationId == reservation.Id && _qrImageSource is not null)
-        {
-            builder.OpenElement(seq++, "div");
-            builder.AddAttribute(seq++, "class", "qr-wrapper");
-            builder.OpenElement(seq++, "img");
-            builder.AddAttribute(seq++, "src", _qrImageSource);
-            builder.AddAttribute(seq++, "alt", "Reservation QR Code");
-            builder.CloseElement();
-            builder.CloseElement();
-        }
-
-        builder.CloseElement();
-    };
-
     private string? _qrImageSource;
 
     private async Task Cancel(Guid reservationId)
@@ -387,10 +357,11 @@ else
 
     private static string GetStatusClass(string status) => status switch
     {
-        "Active" => "status-success",
-        "Cancelled" => "status-danger",
-        "Completed" => "status-muted",
-        _ => "status-neutral"
+        "Active" => "bg-success",
+        "Waiting" => "bg-warning text-dark",
+        "Cancelled" => "bg-danger",
+        "Completed" => "bg-secondary",
+        _ => "bg-info"
     };
 
     private static string GenerateQrCode(Guid reservationId)
