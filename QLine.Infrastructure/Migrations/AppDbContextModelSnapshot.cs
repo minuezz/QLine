@@ -187,6 +187,21 @@ namespace QLine.Infrastructure.Migrations
                     b.ToTable("ServicePoints");
                 });
 
+            modelBuilder.Entity("QLine.Domain.Entities.StaffAssignment", b =>
+                {
+                    b.Property<Guid>("ServicePointId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ServicePointId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("StaffAssignments");
+                });
+
             modelBuilder.Entity("QLine.Domain.Entities.Reservation", b =>
                 {
                     b.HasOne("QLine.Domain.Entities.Service", "Service")
@@ -196,6 +211,21 @@ namespace QLine.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("QLine.Domain.Entities.StaffAssignment", b =>
+                {
+                    b.HasOne("QLine.Domain.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QLine.Domain.Entities.ServicePoint", null)
+                        .WithMany()
+                        .HasForeignKey("ServicePointId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

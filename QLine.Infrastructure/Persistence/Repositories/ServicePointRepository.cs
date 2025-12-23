@@ -41,5 +41,47 @@ namespace QLine.Infrastructure.Persistence.Repositories
             _db.ServicePoints.Remove(entity);
             await _db.SaveChangesAsync(ct);
         }
+
+        public async Task AddStaffAssignmentAsync(StaffAssignment assignment, CancellationToken ct)
+        {
+            await _db.StaffAssignments.AddAsync(assignment, ct);
+            await _db.SaveChangesAsync(ct);
+        }
+
+        public async Task RemoveStaffAssignmentAsync(Guid servicePointId, Guid userId, CancellationToken ct)
+        {
+            var assignment = await _db.StaffAssignments
+                .FirstOrDefaultAsync(sa => sa.ServicePointId == servicePointId && sa.UserId == userId, ct);
+
+            if (assignment is null) return;
+
+            _db.StaffAssignments.Remove(assignment);
+            await _db.SaveChangesAsync(ct);
+        }
+
+        public async Task<IReadOnlyList<AppUser>> GetAssignedStaffAsync(Guid servicePointId, CancellationToken ct) =>
+            await _db.StaffAssignments
+                .AsNoTracking()
+                .Where(sa => sa.ServicePointId == servicePointId)
+                .Join(
+                    _db.AppUsers.AsNoTracking(),
+                    sa => sa.UserId,
+                    u => u.Id,
+                    (_, u) => u)
+                .OrderBy(u => u.FirstName)
+                .ThenBy(u => u.LastName)
+                .ToListAsync(ct);
+
+        public async Task<IReadOnlyList<ServicePoint>> GetAssignedServicePointsAsync(Guid userId, CancellationToken ct) =>
+            await _db.StaffAssignments
+                .AsNoTracking()
+                .Where(sa => sa.UserId == userId)
+                .Join(
+                    _db.ServicePoints.AsNoTracking(),
+                    sa => sa.ServicePointId,
+                    sp => sp.Id,
+                    (_, sp) => sp)
+                .OrderBy(sp => sp.Name)
+                .ToListAsync(ct);
     }
 }
