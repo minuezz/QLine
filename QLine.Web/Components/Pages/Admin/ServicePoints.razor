@@ -38,22 +38,27 @@
 </div>
 
 <table>
-	<thead><tr><th>Name</th><th>Address</th><th></th></tr></thead>
-	<tbody>
-		@foreach (var sp in _list)
-		{
-			<tr>
-				<td>@sp.Name</td>
-				<td>@sp.Address</td>
-				<td>
-					<button @onclick="() => Edit(sp)">Edit</button>
-					<button @onclick="() => DeleteAsync(sp.Id)" style="margin-left:6px;">Delete</button>
-					<a href="@($"/admin/services/{sp.Id}")" style="margin-left:12px;">Services</a>
-				</td>
-			</tr>
-		}
-	</tbody>
+        <thead><tr><th>Name</th><th>Address</th><th></th></tr></thead>
+        <tbody>
+                @foreach (var sp in _list)
+                {
+                        <tr>
+                                <td>@sp.Name</td>
+                                <td>@sp.Address</td>
+                                <td>
+                                        <button @onclick="() => Edit(sp)">Edit</button>
+                                        <button @onclick="() => DeleteAsync(sp.Id)" style="margin-left:6px;">Delete</button>
+                                        <a href="@($"/admin/services/{sp.Id}")" style="margin-left:12px;">Services</a>
+                                        <button @onclick="() => OpenStaffModal(sp)" style="margin-left:12px;">
+                                                <i class="bi bi-people"></i> Staff
+                                        </button>
+                                </td>
+                        </tr>
+                }
+        </tbody>
 </table>
+
+<StaffAssignmentModal Visible="@_showStaffModal" ServicePointId="@_staffModalServicePointId" ServicePointName="@_staffModalServicePointName" OnClose="CloseStaffModal" />
 
 @code {
     private List<ServicePointDto> _list = new();
@@ -64,8 +69,12 @@
 	private string? _formOpenHoursJson = DefaultOpenHoursJson();
 	private bool _openHoursValid = true;
 
-	private string? _errorMessage;
-	private List<string>? _errorDetails;
+        private string? _errorMessage;
+        private List<string>? _errorDetails;
+
+        private bool _showStaffModal;
+        private Guid _staffModalServicePointId;
+        private string? _staffModalServicePointName;
 
 	private static string DefaultOpenHoursJson() =>
 		"""{ "monday":{"open":true, "start":"07:30","end":"16:00"}, "tuesday":{"open":true, "start":"07:30","end":"16:00"}, "wednesday":{"open":true, "start":"07:30","end":"16:00"}, "thursday":{"open":true, "start":"07:30","end":"16:00"}, "friday":{"open":true, "start":"07:30","end":"16:00"}, "saturday":{"open":false, "start":"07:30","end":"16:00"}, "sunday":{"open":false, "start":"07:30","end":"16:00"} }""";
@@ -135,18 +144,30 @@
 		}
 	}
 
-	private async Task DeleteAsync(Guid id)
-	{
-		try
-		{
-			await Mediator.Send(new DeleteServicePointCommand(id));
-			await LoadAsync();
-			StateHasChanged();
-		}
-		catch (Exception ex)
-		{
-			(_errorMessage, _errorDetails) = ex.ToUserMessage();
-		}
+        private async Task DeleteAsync(Guid id)
+        {
+                try
+                {
+                        await Mediator.Send(new DeleteServicePointCommand(id));
+                        await LoadAsync();
+                        StateHasChanged();
+                }
+                catch (Exception ex)
+                {
+                        (_errorMessage, _errorDetails) = ex.ToUserMessage();
+                }
 
-	}
+        }
+
+        private void OpenStaffModal(ServicePointDto sp)
+        {
+                _staffModalServicePointId = sp.Id;
+                _staffModalServicePointName = sp.Name;
+                _showStaffModal = true;
+        }
+
+        private void CloseStaffModal()
+        {
+                _showStaffModal = false;
+        }
 }

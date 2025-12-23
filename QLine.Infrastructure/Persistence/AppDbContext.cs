@@ -17,6 +17,7 @@ namespace QLine.Infrastructure.Persistence
         public DbSet<Reservation> Reservations => Set<Reservation>();
         public DbSet<QueueEntry> QueueEntries => Set<QueueEntry>();
         public DbSet<AppUser> AppUsers => Set<AppUser>();
+        public DbSet<StaffAssignment> StaffAssignments => Set<StaffAssignment>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

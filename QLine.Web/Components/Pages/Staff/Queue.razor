@@ -4,7 +4,6 @@
 @using Microsoft.JSInterop
 @using MediatR
 @using QLine.Application.DTO
-@using QLine.Application.Features.Admin.Queries
 @using QLine.Application.Features.Queue.Queries
 @using QLine.Application.Features.Queue.Commands
 @inject IMediator Mediator
@@ -12,109 +11,181 @@
 
 <h3>Staff Queue</h3>
 
-<div style="margin:6px 0 12px 0;">
-	<label style="margin-right: 8px;">Service Point:</label>
-	<select @bind="SelectedServicePointIdString" @bind:after="OnServicePointChanged">
-		@foreach (var sp in _points)
-		{
-			<option value="@sp.Id.ToString()">@sp.Name</option>
-		}
-	</select>
-	<button @onclick="CallNextAsync" style="margin-left: 8px;">Call Next</button>
-</div>
-
-@if (string.IsNullOrWhiteSpace(SelectedServicePointIdString) || !Guid.TryParse(SelectedServicePointIdString, out var _))
+@if (!string.IsNullOrWhiteSpace(_accessMessage))
 {
-	<p class="text-danger">Select a Service Point.</p>
-}
-else if (_snapshot is null)
-{
-	<p>Loading...</p>
+        <p class="text-danger">@_accessMessage</p>
 }
 else
 {
-	<h4>In Service</h4>
-	@if (_snapshot.Current is null)
-	{
-		<p>(none)</p>
-	}
-	else
-	{
-		<div class="card">
-			<div><strong>@_snapshot.Current.TicketNo</strong></div>
-			<div><strong>Status: </strong>@_snapshot.Current.Status</div>
-			<div><strong>Priority: </strong>@_snapshot.Current.Priority</div>
-			<div>
-				<button @onclick="() => MarkDoneAsync(_snapshot.Current!.Id)">Done</button>
-				<button @onclick="() => MarkNoShowAsync(_snapshot.Current!.Id)" style="margin-left: 6px;">No-show</button>
-			</div>
-		</div>
-	}
+        @if (_points.Count > 1 && !HasSelectedServicePoint)
+        {
+                <div class="card">
+                        <h5>Where are you working today?</h5>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                                <select @bind="_selectionCandidateId" style="flex:1;">
+                                        @foreach (var sp in _points)
+                                        {
+                                                <option value="@sp.Id.ToString()">@sp.Name</option>
+                                        }
+                                </select>
+                                <button @onclick="ConfirmServicePointAsync">Load Queue</button>
+                        </div>
+                        @if (!string.IsNullOrWhiteSpace(_selectionError))
+                        {
+                                <p class="text-danger">@_selectionError</p>
+                        }
+                </div>
+        }
 
-	<h4 style="margin:16px;">Waiting</h4>
-	@if (_snapshot.Waiting.Count == 0)
-	{
-		<p>(empty)</p>
-	}
-	else
-	{
-		<ul>
-			@foreach (var w in _snapshot.Waiting)
-			{
-				<li>
-					<strong>@w.TicketNo</strong> - created @w.CreatedAt.ToString("u") (prio @w.Priority)
-					<button @onclick="() => SkipAsync(w.Id)">Skip</button>
-				</li>
-			}
-		</ul>
-	}
+        @if (HasSelectedServicePoint)
+        {
+                <div style="margin:6px 0 12px 0;">
+                        <label style="margin-right: 8px;">Service Point:</label>
+                        <select @bind="SelectedServicePointIdString" @bind:after="OnServicePointChanged">
+                                @foreach (var sp in _points)
+                                {
+                                        <option value="@sp.Id.ToString()">@sp.Name</option>
+                                }
+                        </select>
+                        <button @onclick="CallNextAsync" style="margin-left: 8px;">Call Next</button>
+                </div>
+
+                @if (_snapshot is null)
+                {
+                        <p>Loading...</p>
+                }
+                else
+                {
+                        <h4>In Service</h4>
+                        @if (_snapshot.Current is null)
+                        {
+                                <p>(none)</p>
+                        }
+                        else
+                        {
+                                <div class="card">
+                                        <div><strong>@_snapshot.Current.TicketNo</strong></div>
+                                        <div><strong>Status: </strong>@_snapshot.Current.Status</div>
+                                        <div><strong>Priority: </strong>@_snapshot.Current.Priority</div>
+                                        <div>
+                                                <button @onclick="() => MarkDoneAsync(_snapshot.Current!.Id)">Done</button>
+                                                <button @onclick="() => MarkNoShowAsync(_snapshot.Current!.Id)" style="margin-left: 6px;">No-show</button>
+                                        </div>
+                                </div>
+                        }
+
+                        <h4 style="margin:16px;">Waiting</h4>
+                        @if (_snapshot.Waiting.Count == 0)
+                        {
+                                <p>(empty)</p>
+                        }
+                        else
+                        {
+                                <ul>
+                                        @foreach (var w in _snapshot.Waiting)
+                                        {
+                                                <li>
+                                                        <strong>@w.TicketNo</strong> - created @w.CreatedAt.ToString("u") (prio @w.Priority)
+                                                        <button @onclick="() => SkipAsync(w.Id)">Skip</button>
+                                                </li>
+                                        }
+                                </ul>
+                        }
+                }
+        }
 }
 
 @code {
-	private List<ServicePointDto> _points = new();
+        private List<ServicePointDto> _points = new();
 
-	private string? SelectedServicePointIdString;
+        private string? SelectedServicePointIdString;
+        private string? _selectionCandidateId;
+        private string? _selectionError;
+        private string? _accessMessage;
 
-	private IJSObjectReference? _realtimeHandle;
-	private Guid? _connectedSpId;
-	private bool _realtimeReady;
+        private IJSObjectReference? _realtimeHandle;
+        private Guid? _connectedSpId;
+        private bool _realtimeReady;
 
-	private QueueSnapshotDto? _snapshot;
+        private QueueSnapshotDto? _snapshot;
 
-	private readonly SemaphoreSlim _refreshGate = new(1, 1);
+        private readonly SemaphoreSlim _refreshGate = new(1, 1);
 
-	protected override async Task OnInitializedAsync()
-	{
-		_points = (await Mediator.Send(new GetServicePointsQuery())).ToList();
+        private bool HasSelectedServicePoint =>
+                Guid.TryParse(SelectedServicePointIdString, out var sp) && _points.Any(p => p.Id == sp);
 
-		if (_points.Count > 0)
-			SelectedServicePointIdString = _points[0].Id.ToString();
+        protected override async Task OnInitializedAsync()
+        {
+                _points = (await Mediator.Send(new GetMyServicePointsQuery())).ToList();
 
-		await RefreshAsync();
-	}
+                if (_points.Count == 0)
+                {
+                        _accessMessage = "You are not assigned to any service point. Please contact an administrator.";
+                        return;
+                }
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		if (firstRender)
-		{
-			_realtimeReady = true;
-			await ConnectToRealtimeAsync();
-		}
-	}
+                if (_points.Count == 1)
+                {
+                        SelectedServicePointIdString = _points[0].Id.ToString();
+                        await RefreshAsync();
+                }
+                else
+                {
+                        _selectionCandidateId = _points[0].Id.ToString();
+                }
+        }
 
-	private async Task OnServicePointChanged()
-	{
-		await ConnectToRealtimeAsync();
-		await RefreshAsync();
-	}
+        protected override async Task OnAfterRenderAsync(bool firstRender)
+        {
+                if (firstRender)
+                {
+                        _realtimeReady = true;
+                        if (HasSelectedServicePoint)
+                                await ConnectToRealtimeAsync();
+                }
+        }
 
-	private async Task ConnectToRealtimeAsync()
-	{
-		if (!_realtimeReady) return;
-		if (string.IsNullOrWhiteSpace(SelectedServicePointIdString)) return;
-		if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
+        private async Task OnServicePointChanged()
+        {
+                if (!HasSelectedServicePoint)
+                {
+                        _selectionError = "Invalid service point selection.";
+                        StateHasChanged();
+                        return;
+                }
 
-		if (_connectedSpId == sp) return;
+                await ConnectToRealtimeAsync();
+                await RefreshAsync();
+        }
+
+        private async Task ConfirmServicePointAsync()
+        {
+                if (string.IsNullOrWhiteSpace(_selectionCandidateId) || !Guid.TryParse(_selectionCandidateId, out var candidate))
+                {
+                        _selectionError = "Select a service point.";
+                        return;
+                }
+
+                if (!_points.Any(p => p.Id == candidate))
+                {
+                        _selectionError = "You cannot select this service point.";
+                        return;
+                }
+
+                SelectedServicePointIdString = candidate.ToString();
+                _selectionError = null;
+
+                await OnServicePointChanged();
+        }
+
+        private async Task ConnectToRealtimeAsync()
+        {
+                if (!_realtimeReady) return;
+                if (string.IsNullOrWhiteSpace(SelectedServicePointIdString)) return;
+                if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
+                if (!_points.Any(p => p.Id == sp)) return;
+
+                if (_connectedSpId == sp) return;
 
 		if (_realtimeHandle is not null)
 		{
@@ -135,12 +206,13 @@ else
 		_connectedSpId = sp;
 	}
 
-	private async Task RefreshAsync()
-	{
-		if (string.IsNullOrWhiteSpace(SelectedServicePointIdString)) return;
-		if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
+        private async Task RefreshAsync()
+        {
+                if (string.IsNullOrWhiteSpace(SelectedServicePointIdString)) return;
+                if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
+                if (!_points.Any(p => p.Id == sp)) return;
 
-		await _refreshGate.WaitAsync();
+                await _refreshGate.WaitAsync();
 		try
 		{
 			_snapshot = await Mediator.Send(new GetQueueQuery(sp));
@@ -161,9 +233,10 @@ else
 			await _realtimeHandle.InvokeVoidAsync("dispose");
 	}
 
-	private async Task CallNextAsync()
-	{
-		if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
+        private async Task CallNextAsync()
+        {
+                if (!Guid.TryParse(SelectedServicePointIdString, out var sp)) return;
+                if (!_points.Any(p => p.Id == sp)) return;
 
 		await _refreshGate.WaitAsync();
 		try
@@ -176,11 +249,11 @@ else
 		}
 	}
 
-	private async Task MarkNoShowAsync(Guid id)
-	{
-		await _refreshGate.WaitAsync();
-		try
-		{
+        private async Task MarkNoShowAsync(Guid id)
+        {
+                await _refreshGate.WaitAsync();
+                try
+                {
 			await Mediator.Send(new MarkNoShowCommand(id));
 		}
 		finally
@@ -189,11 +262,11 @@ else
 		}
 	}
 
-	private async Task MarkDoneAsync(Guid id)
-	{
-		await _refreshGate.WaitAsync();
-		try
-		{
+        private async Task MarkDoneAsync(Guid id)
+        {
+                await _refreshGate.WaitAsync();
+                try
+                {
 			await Mediator.Send(new MarkDoneCommand(id));
 		}
 		finally
@@ -202,10 +275,10 @@ else
 		}
 	}
 
-	private async Task SkipAsync(Guid id)
-	{
-		await _refreshGate.WaitAsync();
-		try
+        private async Task SkipAsync(Guid id)
+        {
+                await _refreshGate.WaitAsync();
+                try
 		{
 			await Mediator.Send(new SkipQueueEntryCommand(id));
 		}
