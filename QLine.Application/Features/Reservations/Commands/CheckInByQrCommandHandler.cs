@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Threading;
 using System.Threading.Tasks;
 using MediatR;
@@ -98,9 +99,13 @@ namespace QLine.Application.Features.Reservations.Commands
 
         private string GenerateTicketNumber(Reservation reservation)
         {
-            var timePart = _clock.UtcNow.ToString("yyyyMMddHHmmss");
-            var prefix = reservation.ServicePointId.ToString("N").Substring(0, 4).ToUpperInvariant();
-            return $"{prefix}-{timePart}";
+            var prefix = reservation.ServicePointId
+                .ToString("N")
+                .Substring(0, 4)
+                .ToUpperInvariant();
+
+            var randomNumber = RandomNumberGenerator.GetInt32(100, 10000);
+            return $"{prefix}-{randomNumber:0000}";
         }
     }
 }

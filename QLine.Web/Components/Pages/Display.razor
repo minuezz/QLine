@@ -1,92 +1,205 @@
-﻿@page "/display/{ServicePointId:guid}"
+@page "/display/{ServicePointId:guid}"
 @using MediatR
 @using Microsoft.JSInterop
 @using QLine.Application.DTO
+@using QLine.Application.Features.Admin.Queries
 @using QLine.Application.Features.Queue.Queries
 @inject IMediator Mediator
 @inject IJSRuntime JS
+@inject NavigationManager Nav
 
-<h3>Now Serving</h3>
+<PageTitle>Display Board</PageTitle>
 
-@if (_snapshot is null)
+@if (_isLoading)
 {
-	<p>Loading...</p>
+    <p>Loading display...</p>
+}
+else if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+    <a class="btn btn-outline-primary mt-3" href="/display">Back to display menu</a>
+}
+else if (_snapshot is null)
+{
+    <p>Queue data is unavailable right now.</p>
 }
 else
 {
-	<div style="font-size:56px;font-weight:800;margin:10px 0;">
-		@(_snapshot.Current?.TicketNo ?? "—")
-	</div>
+    <div class="display-board">
+        <section class="now-serving">
+            <div class="section-header">
+                <div>
+                    <div class="section-label">Now Serving</div>
+                    @if (!string.IsNullOrWhiteSpace(_servicePointName))
+                    {
+                        <div class="section-point">@_servicePointName</div>
+                    }
+                </div>
+            </div>
 
-	<div style="margin-top:16px;">
-		<h4>Up next</h4>
-		@if (_snapshot.Waiting.Count == 0)
-		{ 
-			<p>(empty)</p>
-		}
-		else
-		{
-			<ul>
-				@foreach(var w in _snapshot.Waiting.Take(5))
-				{
-					<li style="font-size:24px;">@w.TicketNo</li>
-				}
-			</ul>
-		}
-	</div>
+            @if (_snapshot.Current is null)
+            {
+                <div class="now-serving-placeholder">
+                    <div class="placeholder-text">Please wait</div>
+                </div>
+            }
+            else
+            {
+                <div class="ticket-number">@_snapshot.Current.TicketNo</div>
+            }
+        </section>
+
+        <section class="up-next">
+            <div class="section-header">
+                <div class="section-label">Up Next</div>
+                <div class="section-subtitle">Next clients in line</div>
+            </div>
+
+            @if (_snapshot.Waiting.Count == 0)
+            {
+                <div class="empty">(empty)</div>
+            }
+            else
+            {
+                <ul class="up-next-list">
+                    @foreach (var w in _snapshot.Waiting.Take(5))
+                    {
+                        <li class="up-next-item">@w.TicketNo</li>
+                    }
+                </ul>
+            }
+        </section>
+    </div>
 }
 
 @code {
-	[Parameter] public Guid ServicePointId { get; set; }
+    [Parameter] public Guid ServicePointId { get; set; }
 
-	private readonly SemaphoreSlim _refreshGate = new(1, 1);
-	private bool _refreshPending;
+    private readonly SemaphoreSlim _refreshGate = new(1, 1);
+    private bool _refreshPending;
 
-	private IJSObjectReference? _realtimeHandle;
-	private QueueSnapshotDto? _snapshot;
+    private IJSObjectReference? _realtimeHandle;
+    private QueueSnapshotDto? _snapshot;
+    private bool _isLoading = true;
+    private string? _errorMessage;
+    private List<string>? _errorDetails;
+    private string? _servicePointName;
+    private bool _isFirstRender = true;
+    private string? _lastTicketNo;
 
-	protected override async Task OnInitializedAsync() => await RefreshAsync();
+    protected override async Task OnInitializedAsync()
+    {
+        if (ServicePointId == Guid.Empty)
+        {
+            Nav.NavigateTo("/display", true);
+            return;
+        }
 
-	protected override async Task OnAfterRenderAsync(bool firstRender)
-	{
-		if (firstRender)
-		{
-			_realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
-				"qlineRealtime.connect", ServicePointId, DotNetObjectReference.Create(this));
+        await LoadServicePointNameAsync();
+        await RefreshAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && ServicePointId != Guid.Empty)
+        {
+            _realtimeHandle = await JS.InvokeAsync<IJSObjectReference>(
+                "qlineRealtime.connect", ServicePointId, DotNetObjectReference.Create(this));
         }
     }
 
-	private async Task RefreshAsync()
-	{
-		if (!Guid.TryParse(ServicePointId.ToString(), out var sp)) return;
+    private async Task LoadServicePointNameAsync()
+    {
+        try
+        {
+            var points = await Mediator.Send(new GetServicePointsQuery());
+            _servicePointName = points.FirstOrDefault(p => p.Id == ServicePointId)?.Name;
+        }
+        catch
+        {
+            _servicePointName = null;
+        }
+    }
 
-		if(!await _refreshGate.WaitAsync(0))
-		{
-			_refreshPending = true;
-			return;
-		}
+    private async Task RefreshAsync()
+    {
+        if (ServicePointId == Guid.Empty)
+        {
+            Nav.NavigateTo("/display", true);
+            return;
+        }
 
-		try 
-		{
-			do
-			{
-				_refreshPending = false;
-				_snapshot = await Mediator.Send(new GetQueueQuery(sp));
-				StateHasChanged();
-			} while (_refreshPending);
-		}
-		finally
-		{
-			_refreshGate.Release();
-		}
-	}
+        if (!await _refreshGate.WaitAsync(0))
+        {
+            _refreshPending = true;
+            return;
+        }
 
-	[JSInvokable]
-	public async Task OnQueueUpdated() => await RefreshAsync();
+        try
+        {
+            do
+            {
+                _refreshPending = false;
 
-	public async ValueTask DisposeAsync()
-	{
-		if (_realtimeHandle is not null)
-			await _realtimeHandle.InvokeVoidAsync("dispose");
-	}
+                QueueSnapshotDto? snapshot = null;
+                try
+                {
+                    snapshot = await Mediator.Send(new GetQueueQuery(ServicePointId));
+                    _errorMessage = null;
+                    _errorDetails = null;
+                }
+                catch (Exception ex)
+                {
+                    (_errorMessage, _errorDetails) = ex.ToUserMessage();
+                    _snapshot = null;
+                    _isLoading = false;
+                    StateHasChanged();
+                    break;
+                }
+
+                var shouldPlaySound = snapshot?.Current is not null
+                    && string.Equals(snapshot.Current.Status, "InService", StringComparison.OrdinalIgnoreCase)
+                    && snapshot.Current.TicketNo != _lastTicketNo
+                    && !_isFirstRender;
+
+                _snapshot = snapshot;
+                _isLoading = false;
+
+                if (shouldPlaySound)
+                {
+                    await PlayAudioAsync();
+                }
+
+                _lastTicketNo = snapshot?.Current?.TicketNo;
+                _isFirstRender = false;
+
+                StateHasChanged();
+            } while (_refreshPending);
+        }
+        finally
+        {
+            _refreshGate.Release();
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnQueueUpdated() => await RefreshAsync();
+
+    private async Task PlayAudioAsync()
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("qlineSound.playTone");
+        }
+        catch
+        {
+            // ignored on purpose
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_realtimeHandle is not null)
+            await _realtimeHandle.InvokeVoidAsync("dispose");
+    }
 }
