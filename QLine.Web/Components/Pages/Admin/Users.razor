@@ -1,5 +1,91 @@
-﻿<h3>Users</h3>
+@page "/admin/users"
+@attribute [Authorize(Roles = "Admin")]
+@using MediatR
+@using QLine.Application.Abstractions
+@using QLine.Application.DTO
+@using QLine.Application.Features.Admin.Commands
+@using QLine.Application.Features.Admin.Queries
+@using QLine.Domain.Enums
+@inject IMediator Mediator
+@inject ICurrentUser CurrentUser
+
+<h3>Users</h3>
+
+@if (_loading)
+{
+    <p>Loading users...</p>
+}
+else if (_users.Count == 0)
+{
+    <p>No users found.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in _users)
+            {
+                <tr>
+                    <td>@user.Name</td>
+                    <td>@user.Email</td>
+                    <td>@user.Role</td>
+                    <td>
+                        @if (user.Role == nameof(UserRole.Client))
+                        {
+                            <button class="btn btn-success btn-sm"
+                                    disabled="@IsCurrentUser(user.Id)"
+                                    @onclick="() => UpdateRole(user.Id, UserRole.Staff)">
+                                Promote to Staff
+                            </button>
+                        }
+                        else if (user.Role == nameof(UserRole.Staff))
+                        {
+                            <button class="btn btn-warning btn-sm"
+                                    disabled="@IsCurrentUser(user.Id)"
+                                    @onclick="() => UpdateRole(user.Id, UserRole.Client)">
+                                Demote to Client
+                            </button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
 
 @code {
+    private readonly List<UserDto> _users = new();
+    private bool _loading = true;
+    private Guid? _currentUserId;
 
+    protected override async Task OnInitializedAsync()
+    {
+        _currentUserId = CurrentUser.UserId;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _users.Clear();
+        _users.AddRange(await Mediator.Send(new GetAllUsersQuery()));
+        _loading = false;
+    }
+
+    private async Task UpdateRole(Guid userId, UserRole newRole)
+    {
+        await Mediator.Send(new UpdateUserRoleCommand(userId, newRole));
+        await LoadAsync();
+        StateHasChanged();
+    }
+
+    private bool IsCurrentUser(Guid userId) => _currentUserId.HasValue && _currentUserId.Value == userId;
 }

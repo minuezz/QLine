@@ -11,6 +11,7 @@ namespace QLine.Domain.Abstractions
     {
         Task<AppUser?> GetByIdAsync(Guid id, CancellationToken ct);
         Task<AppUser?> GetByEmailAsync(string email, CancellationToken ct);
+        Task<IReadOnlyList<AppUser>> GetAllAsync(CancellationToken ct);
         Task AddAsync (AppUser user, CancellationToken ct);
         Task UpdateAsync(AppUser user, CancellationToken ct);
         Task DeleteWithRelatedDataAsync(AppUser user, CancellationToken ct);
