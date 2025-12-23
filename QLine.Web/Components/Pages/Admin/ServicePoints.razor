@@ -6,6 +6,7 @@
 @using QLine.Application.Features.Admin.Queries
 @using QLine.Application.Features.Admin.ServicePoints.Commands
 @using QLine.Web.Components.OpenHours
+@inject NavigationManager Nav
 @inject IMediator Mediator
 
 <h3>ServicePoints (Admin)</h3>
@@ -48,7 +49,7 @@
                                 <td>
                                         <button @onclick="() => Edit(sp)">Edit</button>
                                         <button @onclick="() => DeleteAsync(sp.Id)" style="margin-left:6px;">Delete</button>
-                                        <a href="@($"/admin/services/{sp.Id}")" style="margin-left:12px;">Services</a>
+                                        <button @onclick="() => GoToServices(sp.Id)" style="margin-left:12px;">Services</button>
                                         <button @onclick="() => OpenStaffModal(sp)" style="margin-left:12px;">
                                                 <i class="bi bi-people"></i> Staff
                                         </button>
@@ -170,4 +171,7 @@
         {
                 _showStaffModal = false;
         }
+
+		private void GoToServices(Guid id)
+			=> Nav.NavigateTo($"/admin/services/{id}");
 }
