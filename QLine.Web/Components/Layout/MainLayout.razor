@@ -1,23 +1,60 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<MudThemeProvider Theme="@CurrentTheme" IsDarkMode="@isDarkMode">
+    <MudDialogProvider>
+        <MudSnackbarProvider>
+            <div class="page">
+                <div class="sidebar">
+                    <NavMenu />
+                </div>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+                <main>
+                    <div class="top-row px-4">
+                        <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+                    </div>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+                    <article class="content px-4">
+                        @Body
+                    </article>
+                </main>
 
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
-    </div>
-</div>
+                <div id="blazor-error-ui">
+                    An unhandled error has occurred.
+                    <a href="" class="reload">Reload</a>
+                    <a class="dismiss">🗙</a>
+                </div>
+            </div>
+        </MudSnackbarProvider>
+    </MudDialogProvider>
+</MudThemeProvider>
+
+@code {
+    private readonly MudTheme lightTheme = new()
+    {
+        Palette = new Palette
+        {
+            Primary = "#0d6efd"
+        }
+    };
+
+    private readonly MudTheme darkTheme = new()
+    {
+        Palette = new PaletteDark
+        {
+            Primary = "#0d6efd",
+            Background = "#121212",
+            Surface = "#1e1e1e",
+            DrawerBackground = "#1f1f1f",
+            AppbarBackground = "#1f1f1f",
+            AppbarText = "#ffffff",
+            DrawerText = "#ffffff",
+            TextPrimary = "#ffffff"
+        }
+    };
+
+    private bool isDarkMode;
+
+    private MudTheme CurrentTheme => isDarkMode ? darkTheme : lightTheme;
+
+    public void ToggleTheme() => isDarkMode = !isDarkMode;
+}
