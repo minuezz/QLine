@@ -22,6 +22,7 @@ namespace QLine.Infrastructure.Persistence
             var svcId = Guid.NewGuid();
             var userId = Guid.NewGuid();
             var staffId = Guid.NewGuid();
+            var adminId = Guid.NewGuid();
 
             var sp = ServicePoint.Create(
                 id: spId,
@@ -57,6 +58,21 @@ namespace QLine.Infrastructure.Persistence
                 role: UserRole.Staff
             );
             staff.UpdatePasswordHash(passwordHasher.HashPassword(staff, demoPassword));
+
+            if (!await db.AppUsers.AnyAsync(u => u.Role == UserRole.Admin, ct))
+            {
+                var admin = AppUser.Create(
+                    id: adminId,
+                    email: "admin@qline.local",
+                    firstName: "Demo",
+                    lastName: "Admin",
+                    role: UserRole.Admin
+                );
+                admin.UpdatePasswordHash(passwordHasher.HashPassword(admin, demoPassword));
+
+                await db.AppUsers.AddAsync(admin, ct);
+                await db.SaveChangesAsync(ct);
+            }
 
             await db.ServicePoints.AddAsync(sp, ct);
             await db.Services.AddAsync(svc, ct);
