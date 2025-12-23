@@ -3,27 +3,54 @@
 <MudThemeProvider Theme="@CurrentTheme" IsDarkMode="@isDarkMode">
     <MudDialogProvider>
         <MudSnackbarProvider>
-            <div class="page">
-                <div class="sidebar">
-                    <NavMenu />
-                </div>
+            <MudLayout>
+                <MudAppBar Elevation="1">
+                    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+                    <MudText Typo="Typo.h5" Class="font-weight-bold ml-2">QLine</MudText>
+                    <MudSpacer />
+                    <MudToggleIconButton @bind-Toggled="isDarkMode" Color="Color.Inherit" Icon="@Icons.Material.Filled.LightMode" ToggledIcon="@Icons.Material.Filled.DarkMode" Title="Toggle light/dark mode" />
+                    <AuthorizeView>
+                        <Authorized Context="authContext">
+                            <MudMenu Color="Color.Inherit" Dense="true" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+                                <ChildContent>
+                                    <MudAvatar Size="Size.Medium" Color="Color.Primary">@GetInitials(authContext.User.Identity?.Name)</MudAvatar>
+                                    <MudText Class="ml-2 font-weight-semibold">@authContext.User.Identity?.Name</MudText>
+                                </ChildContent>
+                                <MudMenuItem Href="/logout" Icon="@Icons.Material.Filled.Logout">Logout</MudMenuItem>
+                            </MudMenu>
+                        </Authorized>
+                        <NotAuthorized>
+                            <MudMenu Color="Color.Inherit" Dense="true" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+                                <ChildContent>
+                                    <MudAvatar Size="Size.Medium" Color="Color.Primary">G</MudAvatar>
+                                    <MudText Class="ml-2 font-weight-semibold">Guest</MudText>
+                                </ChildContent>
+                                <MudMenuItem Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudMenuItem>
+                            </MudMenu>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </MudAppBar>
 
-                <main>
-                    <div class="top-row px-4">
-                        <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-                    </div>
+                <MudDrawer Variant="DrawerVariant.Responsive" @bind-Open="drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+                    <MudNavMenu>
+                        <MudNavLink Href="/queue" Icon="@Icons.Material.Filled.ListAlt">My Workspace</MudNavLink>
+                        <AuthorizeView Roles="Admin">
+                            <Authorized>
+                                <MudNavGroup Title="Admin" Icon="@Icons.Material.Filled.AdminPanelSettings" Expandable="true">
+                                    <MudNavLink Href="/admin/dashboard" Icon="@Icons.Material.Filled.Dashboard">Dashboard</MudNavLink>
+                                    <MudNavLink Href="/admin/servicepoints" Icon="@Icons.Material.Filled.RoomPreferences">Service Points</MudNavLink>
+                                    <MudNavLink Href="/admin/services" Icon="@Icons.Material.Filled.Build">Services</MudNavLink>
+                                    <MudNavLink Href="/admin/users" Icon="@Icons.Material.Filled.Group">Users</MudNavLink>
+                                </MudNavGroup>
+                            </Authorized>
+                        </AuthorizeView>
+                    </MudNavMenu>
+                </MudDrawer>
 
-                    <article class="content px-4">
-                        @Body
-                    </article>
-                </main>
-
-                <div id="blazor-error-ui">
-                    An unhandled error has occurred.
-                    <a href="" class="reload">Reload</a>
-                    <a class="dismiss">🗙</a>
-                </div>
-            </div>
+                <MudMainContent Class="pa-4">
+                    @Body
+                </MudMainContent>
+            </MudLayout>
         </MudSnackbarProvider>
     </MudDialogProvider>
 </MudThemeProvider>
@@ -53,8 +80,26 @@
     };
 
     private bool isDarkMode;
+    private bool drawerOpen = true;
 
     private MudTheme CurrentTheme => isDarkMode ? darkTheme : lightTheme;
 
-    public void ToggleTheme() => isDarkMode = !isDarkMode;
+    private void ToggleDrawer() => drawerOpen = !drawerOpen;
+
+    private static string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return "U";
+        }
+
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        return parts.Length switch
+        {
+            0 => "U",
+            1 => parts[0][0].ToString().ToUpperInvariant(),
+            _ => string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant()
+        };
+    }
 }
