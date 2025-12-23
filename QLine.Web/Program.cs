@@ -50,6 +50,8 @@ services.AddServerSideBlazor().AddCircuitOptions(options =>
     options.DetailedErrors = true;
 });
 
+services.AddMudServices();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
