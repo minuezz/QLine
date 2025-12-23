@@ -1,4 +1,5 @@
 @page "/display/{ServicePointId:guid}"
+@layout QLine.Web.Components.Layout.EmptyLayout
 @using MediatR
 @using Microsoft.JSInterop
 @using QLine.Application.DTO
@@ -76,7 +77,6 @@ else
     [Parameter] public Guid ServicePointId { get; set; }
 
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
-    private bool _refreshPending;
 
     private IJSObjectReference? _realtimeHandle;
     private QueueSnapshotDto? _snapshot;
@@ -129,52 +129,42 @@ else
             return;
         }
 
-        if (!await _refreshGate.WaitAsync(0))
-        {
-            _refreshPending = true;
-            return;
-        }
-
+        await _refreshGate.WaitAsync();
         try
         {
-            do
+            QueueSnapshotDto? snapshot = null;
+            try
             {
-                _refreshPending = false;
-
-                QueueSnapshotDto? snapshot = null;
-                try
-                {
-                    snapshot = await Mediator.Send(new GetQueueQuery(ServicePointId));
-                    _errorMessage = null;
-                    _errorDetails = null;
-                }
-                catch (Exception ex)
-                {
-                    (_errorMessage, _errorDetails) = ex.ToUserMessage();
-                    _snapshot = null;
-                    _isLoading = false;
-                    StateHasChanged();
-                    break;
-                }
-
-                var shouldPlaySound = snapshot?.Current is not null
-                    && string.Equals(snapshot.Current.Status, "InService", StringComparison.OrdinalIgnoreCase)
-                    && snapshot.Current.TicketNo != _lastTicketNo
-                    && !_isFirstRender;
-
-                _snapshot = snapshot;
+                snapshot = await Mediator.Send(new GetQueueQuery(ServicePointId));
+                _errorMessage = null;
+                _errorDetails = null;
+            }
+            catch (Exception ex)
+            {
+                (_errorMessage, _errorDetails) = ex.ToUserMessage();
+                _snapshot = null;
                 _isLoading = false;
-
-                if (shouldPlaySound)
-                {
-                    await PlayAudioAsync();
-                }
-
-                _lastTicketNo = snapshot?.Current?.TicketNo;
-                _isFirstRender = false;
-
                 StateHasChanged();
-            } while (_refreshPending);
+                return;
+            }
+
+            var shouldPlaySound = snapshot?.Current is not null
+                && string.Equals(snapshot.Current.Status, "InService", StringComparison.OrdinalIgnoreCase)
+                && snapshot.Current.TicketNo != _lastTicketNo
+                && !_isFirstRender;
+
+            _snapshot = snapshot;
+            _isLoading = false;
+
+            if (shouldPlaySound)
+            {
+                await PlayAudioAsync();
+            }
+
+            _lastTicketNo = snapshot?.Current?.TicketNo;
+            _isFirstRender = false;
+
+            StateHasChanged();
         }
         finally
         {
