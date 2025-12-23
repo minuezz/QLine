@@ -22,6 +22,11 @@ namespace QLine.Infrastructure.Persistence.Repositories
             _db.AppUsers
                 .FirstOrDefaultAsync(u => u.Email == email, ct);
 
+        public Task<IReadOnlyList<AppUser>> GetAllAsync(CancellationToken ct) =>
+            _db.AppUsers
+                .AsNoTracking()
+                .ToListAsync(ct);
+
         public async Task AddAsync(AppUser user, CancellationToken ct)
         {
             await _db.AppUsers.AddAsync(user, ct);
