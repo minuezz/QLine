@@ -36,16 +36,10 @@
             </Authorized>
         </AuthorizeView>
 
-        <AuthorizeView Roles="Staff, Admin">
+        <AuthorizeView Roles="Staff">
             <Authorized>
                 <div class="nav-item px-3">
-                    <NavLink class="nav-link" href="/admin/servicepoints">
-                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Service Points Manager
-                    </NavLink>
-                </div>
-
-                <div class="nav-item px-3">
-                                    <NavLink class="nav-link" href="/staff/queue">
+                    <NavLink class="nav-link" href="/staff/queue">
                         <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Queue
                     </NavLink>
                 </div>
@@ -54,6 +48,12 @@
 
         <AuthorizeView Roles="Admin">
             <Authorized>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/admin/servicepoints">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Service Points Manager
+                    </NavLink>
+                </div>
+
                 <div class="nav-item px-3">
                     <NavLink class="nav-link" href="/admin/users">
                         <span class="bi bi-people" aria-hidden="true"></span> Users

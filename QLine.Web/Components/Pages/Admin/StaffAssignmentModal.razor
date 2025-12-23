@@ -3,78 +3,81 @@
 @using QLine.Application.Features.Admin.ServicePoints.Commands
 @using QLine.Application.Features.Admin.ServicePoints.Queries
 
-@if (!Visible)
+@if (Visible)
 {
-    <div style="display:none"></div>
-}
-else
-{
-    <div class="modal-backdrop" style="position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.4);z-index:1000;" @onclick="CloseAsync"></div>
-    <div class="modal-dialog" style="position:fixed;top:10%;left:50%;transform:translateX(-50%);background:#fff;padding:16px;border-radius:8px;z-index:1001;min-width:320px;max-width:520px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-            <h4 style="margin:0;">Staff for @ServicePointName</h4>
-            <button @onclick="CloseAsync">&times;</button>
-        </div>
+    <div class="modal-overlay" @onclick="CloseAsync">
 
-        <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+        <div class="modal-box" @onclick:stopPropagation="true">
 
-        <div style="margin-bottom:16px;">
-            <h5>Add Staff</h5>
-            <div style="display:flex;gap:8px;align-items:center;">
-                <select @bind="_selectedUserIdString" style="flex:1;">
-                    <option value="">-- Select Staff --</option>
-                    @foreach (var staff in _unassigned)
-                    {
-                        <option value="@staff.Id">@staff.Name (@staff.Email)</option>
-                    }
-                </select>
-                <button @onclick="AssignAsync" disabled="string.IsNullOrWhiteSpace(_selectedUserIdString)">Assign</button>
+            <div class="modal-header-custom">
+                <h4>Staff for @ServicePointName</h4>
+                <button type="button" class="btn-close" aria-label="Close" @onclick="CloseAsync"></button>
             </div>
-        </div>
 
-        <div>
-            <h5>Assigned Staff</h5>
-            @if (_assigned.Count == 0)
-            {
-                <p>(none)</p>
-            }
-            else
-            {
-                <table style="width:100%;">
-                    <thead>
-                        <tr><th style="text-align:left;">Name</th><th style="text-align:left;">Email</th><th style="width:80px;"></th></tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var staff in _assigned)
+            <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+
+            <div class="add-staff-panel">
+                <h5>Add Staff</h5>
+                <div class="add-controls">
+                    <select @bind="_selectedUserIdString" class="form-select" style="flex:1;">
+                        <option value="">-- Select Staff --</option>
+                        @foreach (var staff in _unassigned)
                         {
-                            <tr>
-                                <td>@staff.Name</td>
-                                <td>@staff.Email</td>
-                                <td><button @onclick="() => UnassignAsync(staff.Id)" title="Remove"><i class="bi bi-trash"></i></button></td>
-                            </tr>
+                            <option value="@staff.Id">@staff.Name (@staff.Email)</option>
                         }
-                    </tbody>
-                </table>
-            }
+                    </select>
+                    <button class="btn btn-primary" @onclick="AssignAsync" disabled="@string.IsNullOrWhiteSpace(_selectedUserIdString)">
+                        Assign
+                    </button>
+                </div>
+            </div>
+
+            <div class="assigned-section">
+                <h5>Assigned Staff</h5>
+
+                @if (_assigned.Count == 0)
+                {
+                    <p class="text-muted text-center py-2">(none)</p>
+                }
+                else
+                {
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;">Name</th>
+                                <th style="text-align:left;">Email</th>
+                                <th style="width:50px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var staff in _assigned)
+                            {
+                                <tr>
+                                    <td>@staff.Name</td>
+                                    <td class="text-muted email-text">@staff.Email</td>
+                                    <td>
+                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => UnassignAsync(staff.Id)" title="Remove">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+            </div>
+
         </div>
     </div>
 }
 
 @code {
-    [Parameter]
-    public bool Visible { get; set; }
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public Guid ServicePointId { get; set; }
+    [Parameter] public string? ServicePointName { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
 
-    [Parameter]
-    public Guid ServicePointId { get; set; }
-
-    [Parameter]
-    public string? ServicePointName { get; set; }
-
-    [Parameter]
-    public EventCallback OnClose { get; set; }
-
-    [Inject]
-    public IMediator Mediator { get; set; } = default!;
+    [Inject] public IMediator Mediator { get; set; } = default!;
 
     private List<StaffDto> _assigned = new();
     private List<StaffDto> _unassigned = new();
@@ -97,7 +100,6 @@ else
     private async Task LoadAsync()
     {
         if (!Visible) return;
-
         try
         {
             _errorMessage = null; _errorDetails = null;
@@ -114,7 +116,6 @@ else
     {
         if (string.IsNullOrWhiteSpace(_selectedUserIdString)) return;
         if (!Guid.TryParse(_selectedUserIdString, out var userId)) return;
-
         try
         {
             await Mediator.Send(new AssignStaffCommand(ServicePointId, userId));
