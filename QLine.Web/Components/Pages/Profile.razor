@@ -20,185 +20,219 @@
 @inject IMediator Mediator
 @inject IJSRuntime Js
 
-<h3>Profile</h3>
+<MudContainer MaxWidth="MaxWidth.Medium" Class="mx-auto my-6">
+    <MudText Typo="Typo.h4" Class="mb-2">Profile</MudText>
 
-@if (!string.IsNullOrWhiteSpace(_successMessage))
-{
-    <p class="text-success">@_successMessage</p>
-}
-@if (_errorMessages.Count > 0)
-{
-    @foreach (var message in _errorMessages)
+    @if (!string.IsNullOrWhiteSpace(_successMessage))
     {
-        <p class="text-danger">@message</p>
+        <MudAlert Severity="Severity.Success" Dense="true" Elevation="0" Class="mb-2">@_successMessage</MudAlert>
     }
-}
 
-@if (_user is null)
-{
-    <p>Loading...</p>
-}
-else
-{
-    <div class="profile-card">
-        <div class="profile-field">
-            <label>First Name</label>
-            <input readonly value="@_user.FirstName" />
-        </div>
-        <div class="profile-field">
-            <label>Last Name</label>
-            <input readonly value="@_user.LastName" />
-        </div>
-        <div class="profile-field">
-            <label>Email</label>
-            <input readonly value="@_user.Email" />
-        </div>
-    </div>
-
-    <section class="profile-actions">
-        <div class="change-password">
-            <button type="button" @onclick="ToggleChangePassword">Change Password</button>
-
-            @if (_showChangePassword)
-            {
-                <form method="post" action="/account/change-password" class="password-form" data-enhance="false">
-                    <label for="current-password">Password</label>
-                    <input id="current-password" name="password" type="password" />
-
-                    <label for="new-password">New Password</label>
-                    <input id="new-password" name="newPassword" type="password" />
-
-                    <label for="confirm-password">Confirm New Password</label>
-                    <input id="confirm-password" name="confirmPassword" type="password" />
-
-                    <button type="submit">Save</button>
-                </form>
-            }
-        </div>
-
-        <div class="remove-account">
-            <button type="button" class="danger" @onclick="ShowDeleteDialog">Remove Account</button>
-        </div>
-    </section>
-
-    <section class="reservations-section mt-4">
-        <h4>Upcoming reservations</h4>
-        @if (_loadingReservations)
+    @if (_errorMessages.Count > 0)
+    {
+        @foreach (var message in _errorMessages)
         {
-            <p>Loading your reservations...</p>
+            <MudAlert Severity="Severity.Error" Dense="true" Elevation="0" Class="mb-2">@message</MudAlert>
         }
-        else if (!UpcomingReservations.Any())
-        {
-            <p class="text-muted">No upcoming reservations.</p>
-        }
-        else
-        {
-            <div class="reservation-list">
-                @foreach (var reservation in UpcomingReservations)
-                {
-                    <div class="card mb-3 shadow-sm reservation-card">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <h5 class="card-title">@reservation.ServiceName</h5>
-                                    <h6 class="card-subtitle mb-2 text-muted">@reservation.ServicePointName</h6>
-                                </div>
-                                <span class="badge @GetStatusClass(reservation.Status)">@reservation.Status</span>
-                            </div>
+    }
 
-                            <p class="card-text mb-1">
-                                <strong>Date:</strong> <UtcDate Value="@reservation.StartTime" />
-                            </p>
-                            <p class="card-text">
-                                <strong>Ticket:</strong> <span class="badge bg-secondary">@(reservation.TicketNo ?? "-")</span>
-                            </p>
-                            <p class="card-text mb-1">
-                                <strong>Reservation ID:</strong>
-                                <span class="text-monospace user-select-all">@reservation.Id</span>
-                            </p>
+    @if (_user is null)
+    {
+        <MudStack AlignItems="Center" Class="my-6">
+            <MudProgressCircular Indeterminate Color="Color.Primary" />
+            <MudText Color="Color.TextSecondary">Loading profile...</MudText>
+        </MudStack>
+    }
+    else
+    {
+        <MudTabs Centered="true" Rounded="true" Elevation="1">
+            <MudTabPanel Text="My Profile">
+                <MudCard Class="p-4 mb-4">
+                    <MudStack Row="true" Spacing="2" AlignItems="Center" Class="mb-4">
+                        <MudAvatar Color="Color.Primary" Size="Size.Large" Rounded="true" Text="@GetInitials()" />
+                        <MudStack>
+                            <MudText Typo="Typo.h6">@_user.FullName</MudText>
+                            <MudText Color="Color.TextSecondary">@_user.Email</MudText>
+                        </MudStack>
+                    </MudStack>
 
-                            <div class="btn-group mt-2">
-                                <button class="btn btn-outline-primary btn-sm" @onclick="() => ToggleQrCode(reservation.Id)">
-                                    @(_qrReservationId == reservation.Id ? "Hide QR" : "Show QR")
-                                </button>
-                                <button class="btn btn-outline-danger btn-sm"
-                                        disabled="@(!CanCancel(reservation.Status))"
-                                        @onclick="() => Cancel(reservation.Id)">
-                                    Cancel
-                                </button>
-                                <button class="btn btn-outline-secondary btn-sm"
-                                        @onclick="() => Reschedule(reservation)">
-                                    Reschedule
-                                </button>
-                            </div>
+                    <MudGrid Class="mb-2" Spacing="2">
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_fullName"
+                                          Label="Full Name"
+                                          Variant="Variant.Outlined"
+                                          Placeholder="Enter your name"
+                                          ReadOnly="true" />
+                        </MudItem>
+                        <MudItem xs="12" sm="6">
+                            <MudTextField @bind-Value="_phoneNumber"
+                                          Label="Phone"
+                                          Variant="Variant.Outlined"
+                                          Placeholder="Add a phone number"
+                                          ReadOnly="true" />
+                        </MudItem>
+                        <MudItem xs="12">
+                            <MudTextField Value="@_user.Email"
+                                          Label="Email"
+                                          Variant="Variant.Outlined"
+                                          ReadOnly="true" />
+                        </MudItem>
+                    </MudGrid>
 
-                            @if (_qrReservationId == reservation.Id && _qrImageSource is not null)
+                    <MudStack Row="true" Spacing="1">
+                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ToggleChangePassword">
+                            Change Password
+                        </MudButton>
+                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ShowDeleteDialog">
+                            Remove Account
+                        </MudButton>
+                    </MudStack>
+
+                    <MudCollapse Expanded="_showChangePassword" Class="mt-3">
+                        <form method="post" action="/account/change-password" data-enhance="false">
+                            <MudGrid Spacing="2">
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField Name="password"
+                                                  Label="Current Password"
+                                                  InputType="InputType.Password"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true" />
+                                </MudItem>
+                                <MudItem xs="12" sm="6">
+                                    <MudTextField Name="newPassword"
+                                                  Label="New Password"
+                                                  InputType="InputType.Password"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudTextField Name="confirmPassword"
+                                                  Label="Confirm New Password"
+                                                  InputType="InputType.Password"
+                                                  Variant="Variant.Outlined"
+                                                  Required="true" />
+                                </MudItem>
+                                <MudItem xs="12">
+                                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
+                                        Save
+                                    </MudButton>
+                                </MudItem>
+                            </MudGrid>
+                        </form>
+                    </MudCollapse>
+                </MudCard>
+            </MudTabPanel>
+
+            <MudTabPanel Text="My Reservations">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle1">Active Reservations</MudText>
+                    @if (_loadingReservations)
+                    {
+                        <MudProgressLinear Indeterminate Color="Color.Primary" />
+                    }
+                    else if (!UpcomingReservations.Any())
+                    {
+                        <MudText Color="Color.TextSecondary">No upcoming reservations.</MudText>
+                    }
+                    else
+                    {
+                        <MudGrid Spacing="2">
+                            @foreach (var reservation in UpcomingReservations)
                             {
-                                <div class="mt-3 text-center border p-2 rounded bg-white" style="max-width: 200px;">
-                                    <img src="@_qrImageSource" alt="QR Code" class="img-fluid" />
-                                </div>
-                            }
-                        </div>
-                    </div>
-                }
-            </div>
-        }
+                                <MudItem xs="12" sm="6">
+                                    <MudCard Class="h-100">
+                                        <MudCardContent>
+                                            <MudStack Spacing="1">
+                                                <MudChip T="string" Color="Color.Info" Variant="Variant.Filled" Class="mb-1">
+                                                    <UtcDate Value="@reservation.StartTime" />
+                                                </MudChip>
+                                                <MudText Typo="Typo.h6">@reservation.ServiceName</MudText>
+                                                <MudText Color="Color.TextSecondary">@reservation.ServicePointName</MudText>
+                                                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Class="mt-1">
+                                                    Ticket: @(reservation.TicketNo ?? "-")
+                                                </MudChip>
+                                                <MudText Typo="Typo.caption" Color="Color.TextSecondary" Class="text-monospace">
+                                                    @reservation.Id
+                                                </MudText>
+                                            </MudStack>
 
-        <h4 class="mt-4">History</h4>
-        @if (!PastReservations.Any() && !_loadingReservations)
-        {
-            <p class="text-muted">No past reservations.</p>
-        }
-        else
-        {
-            <div class="reservation-list">
-                @foreach (var reservation in PastReservations)
-                {
-                    <div class="card mb-2 text-muted" style="opacity: 0.8;">
-                        <div class="card-body py-2">
-                            <div class="d-flex justify-content-between">
-                                <strong>@reservation.ServiceName</strong>
-                                <span>@reservation.StartTime.ToLocalTime().ToString("g")</span>
-                                <span class="badge bg-secondary">@reservation.Status</span>
-                            </div>
-                            <small>@reservation.ServicePointName</small>
-                        </div>
-                    </div>
-                }
-            </div>
-        }
-    </section>
-}
+                                            <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-3">
+                                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ToggleQrCode(reservation.Id)">
+                                                    @(_qrReservationId == reservation.Id ? "Hide QR" : "Show QR")
+                                                </MudButton>
+                                                <MudButton Variant="Variant.Filled" Color="Color.Error" Disabled="@(!CanCancel(reservation.Status))" OnClick="() => Cancel(reservation.Id)">
+                                                    Cancel
+                                                </MudButton>
+                                                <MudButton Variant="Variant.Text" Color="Color.Info" OnClick="() => Reschedule(reservation)">
+                                                    Reschedule
+                                                </MudButton>
+                                            </MudStack>
+
+                                            <MudCollapse Expanded="_qrReservationId == reservation.Id && _qrImageSource is not null" Class="mt-3">
+                                                <MudPaper Class="p-3 d-flex justify-center">
+                                                    <img src="@_qrImageSource" alt="QR Code" style="max-width: 180px;" />
+                                                </MudPaper>
+                                            </MudCollapse>
+                                        </MudCardContent>
+                                    </MudCard>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    }
+
+                    <MudText Typo="Typo.subtitle1" Class="mt-4">History</MudText>
+                    @if (!PastReservations.Any() && !_loadingReservations)
+                    {
+                        <MudText Color="Color.TextSecondary">No past reservations.</MudText>
+                    }
+                    else
+                    {
+                        <MudTable T="ReservationViewModel" Items="PastReservations" Dense="true" Hover="true">
+                            <HeaderContent>
+                                <MudTh>Service</MudTh>
+                                <MudTh>Location</MudTh>
+                                <MudTh>When</MudTh>
+                                <MudTh>Status</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Service">@context.ServiceName</MudTd>
+                                <MudTd DataLabel="Location">@context.ServicePointName</MudTd>
+                                <MudTd DataLabel="When">@context.StartTime.ToLocalTime().ToString("g")</MudTd>
+                                <MudTd DataLabel="Status">
+                                    <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">@context.Status</MudChip>
+                                </MudTd>
+                            </RowTemplate>
+                        </MudTable>
+                    }
+                </MudStack>
+            </MudTabPanel>
+        </MudTabs>
+    }
+</MudContainer>
 
 @if (_showDeleteDialog)
 {
-    <div class="modal-backdrop fade show" style="display: block; z-index: 1040;"></div>
+    <MudOverlay Visible="true" DarkBackground="true" Absolute="true" ZIndex="9999">
+        <MudPaper Class="pa-4" Style="width: 400px; max-width: 90vw;">
+            <MudText Typo="Typo.h6" GutterBottom="true">Remove Account</MudText>
+            <MudText Color="Color.Error" Class="mb-4">This action is irreversible.</MudText>
 
-    <div class="modal fade show" tabindex="-1" style="display: block; z-index: 1050;">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Remove Account</h5>
-                    <button type="button" class="btn-close" @onclick="HideDeleteDialog"></button>
-                </div>
-                <div class="modal-body">
-                    <p class="text-danger">This action is irreversible.</p>
-
-                    <form method="post" action="/account/delete" data-enhance="false">
-                        <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input name="password" type="password" class="form-control" />
-                        </div>
-
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" @onclick="HideDeleteDialog">Cancel</button>
-                            <button type="submit" class="btn btn-danger">Confirm Removal</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+            <form method="post" action="/account/delete" data-enhance="false">
+                <MudStack Spacing="3">
+                    <MudTextField Name="password"
+                                  Label="Password"
+                                  InputType="InputType.Password"
+                                  Variant="Variant.Outlined"
+                                  Required="true" />
+                    
+                    <MudStack Row="true" Justify="Justify.End">
+                        <MudButton OnClick="HideDeleteDialog">Cancel</MudButton>
+                        <MudButton ButtonType="ButtonType.Submit" Color="Color.Error" Variant="Variant.Filled">Confirm Removal</MudButton>
+                    </MudStack>
+                </MudStack>
+            </form>
+        </MudPaper>
+    </MudOverlay>
 }
 
 @code {
@@ -210,6 +244,8 @@ else
     private List<ReservationViewModel> _reservations = new();
     private bool _loadingReservations;
     private Guid? _qrReservationId;
+    private string _fullName = string.Empty;
+    private string _phoneNumber = string.Empty;
     private IJSObjectReference? _realtimeHandle;
     private DotNetObjectReference<Profile>? _dotNetRef;
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
@@ -219,6 +255,7 @@ else
         if (CurrentUser.UserId is Guid userId)
         {
             _user = await Users.GetByIdAsync(userId, CancellationToken.None);
+            _fullName = _user.FullName;
 
             await LoadReservations(userId);
         }
@@ -404,6 +441,20 @@ else
     }
 
     private static bool CanCancel(string status) => status is "Active" or "Waiting";
+
+    private string GetInitials()
+    {
+        if (_user is null)
+        {
+            return string.Empty;
+        }
+
+        var initials = string.Concat(
+            _user.FirstName.FirstOrDefault(),
+            _user.LastName.FirstOrDefault());
+
+        return initials.ToUpperInvariant();
+    }
 
     private static string GetStatusClass(string status) => status switch
     {
