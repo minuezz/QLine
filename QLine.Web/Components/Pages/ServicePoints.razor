@@ -6,55 +6,73 @@
 @inject IMediator Mediator
 @inject NavigationManager Nav
 
-<h3>Service Points</h3>
+<MudStack Spacing="3">
+    <MudText Typo="Typo.h4" Class="font-weight-bold">Service Points</MudText>
 
-@if (_loading)
-{
-	<p>Loading...</p>
-}
-else if (!string.IsNullOrWhiteSpace(_errorMessage))
-{
-	<ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
-}
-else if (_points.Count == 0)
-{
-	<p>No service points.</p>
-}
-else
-{
-	<ul>
-		@foreach (var sp in _points)
-		{
-			<li>
-				<strong>@sp.Name</strong>
-				<div>@sp.Address</div>
-				<button @onclick="() => GoToServices(sp.Id)">View services</button>
-			</li>
-		}
-	</ul>
-}
+    <MudTextField @bind-Value="_searchTerm"
+                  Placeholder="Search service points"
+                  Adornment="Adornment.Start"
+                  AdornmentIcon="@Icons.Material.Filled.Search"
+                  Immediate="true" />
+
+    @if (_loading)
+    {
+        <p>Loading...</p>
+    }
+    else if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+    }
+    else if (!FilteredServicePoints.Any())
+    {
+        <p>No service points.</p>
+    }
+    else
+    {
+        <MudGrid GutterSize="GutterSize.Small">
+            @foreach (var sp in FilteredServicePoints)
+            {
+                <MudItem xs="12" sm="6" md="4">
+                    <MudCard Class="mud-elevation-1 hover:mud-elevation-4 cursor-pointer" @onclick="() => GoToServices(sp.Id)">
+                        <MudCardContent>
+                            <MudText Typo="Typo.h6" Class="font-weight-bold">@sp.Name</MudText>
+                            <MudText Color="Color.TextSecondary">@sp.Address</MudText>
+                        </MudCardContent>
+                    </MudCard>
+                </MudItem>
+            }
+        </MudGrid>
+    }
+</MudStack>
 @code {
     private bool _loading = true;
-	private string? _errorMessage;
-	private List<string>? _errorDetails;
-	private List<ServicePointDto> _points = new();
+    private string? _errorMessage;
+    private List<string>? _errorDetails;
+    private string _searchTerm = string.Empty;
+    private List<ServicePointDto> _points = new();
 
-	protected override async Task OnInitializedAsync()
-	{
-		_errorMessage = null;
-		_errorDetails = null;
+    private IEnumerable<ServicePointDto> FilteredServicePoints =>
+        _points.Where(sp =>
+            string.IsNullOrWhiteSpace(_searchTerm) ||
+            sp.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ||
+            sp.Address.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
 
-            try
-            {
-                    _points = (await Mediator.Send(new GetServicePointsQuery())).ToList();
-            }
-		catch (Exception ex)
-		{
-			(_errorMessage, _errorDetails) = ex.ToUserMessage();
-		}
-		finally { _loading = false; }
-	}
+    protected override async Task OnInitializedAsync()
+    {
+        _errorMessage = null;
+        _errorDetails = null;
 
-	private void GoToServices(Guid servicePointId)
-	=> Nav.NavigateTo($"/services/{servicePointId}");
+        try
+        {
+            _points = (await Mediator.Send(new GetServicePointsQuery())).ToList();
+        }
+        catch (Exception ex)
+        {
+            (_errorMessage, _errorDetails) = ex.ToUserMessage();
+        }
+        finally { _loading = false; }
+    }
+
+    private void GoToServices(Guid servicePointId)
+        => Nav.NavigateTo($"/services/{servicePointId}");
 }
