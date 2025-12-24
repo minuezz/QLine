@@ -13,64 +13,64 @@
 
 @if (_isLoading)
 {
-    <p>Loading display...</p>
+    <div class="display-loading">
+        <MudProgressCircular Color="Color.Primary" Size="Size.Large" Class="mb-4" />
+        <MudText Typo="Typo.h5">Loading display...</MudText>
+    </div>
 }
 else if (!string.IsNullOrWhiteSpace(_errorMessage))
 {
     <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
-    <a class="btn btn-outline-primary mt-3" href="/display">Back to display menu</a>
+    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="/display" Class="mt-3">Back to display menu</MudButton>
 }
 else if (_snapshot is null)
 {
-    <p>Queue data is unavailable right now.</p>
+    <div class="display-loading">
+        <MudText Typo="Typo.h5">Queue data is unavailable right now.</MudText>
+    </div>
 }
 else
 {
-    <div class="display-board">
-        <section class="now-serving">
-            <div class="section-header">
-                <div>
-                    <div class="section-label">Now Serving</div>
-                    @if (!string.IsNullOrWhiteSpace(_servicePointName))
-                    {
-                        <div class="section-point">@_servicePointName</div>
-                    }
-                </div>
+    <MudGrid Spacing="0" Class="display-grid">
+        <MudItem Xs="12" Md="8" Class="now-serving-panel">
+            <div class="panel-content">
+                <MudText Typo="Typo.h4" Class="section-label" Color="Color.Secondary">Now Serving</MudText>
+                @if (!string.IsNullOrWhiteSpace(_servicePointName))
+                {
+                    <MudText Typo="Typo.subtitle1" Class="section-point" Color="Color.Info">@_servicePointName</MudText>
+                }
+
+                @if (_snapshot.Current is null)
+                {
+                    <MudText Typo="Typo.h3" Class="placeholder-text">Please wait</MudText>
+                }
+                else
+                {
+                    <MudText Typo="Typo.h1" Class="ticket-number">@_snapshot.Current.TicketNo</MudText>
+                }
             </div>
+        </MudItem>
+        <MudItem Xs="12" Md="4" Class="up-next-panel">
+            <div class="panel-content">
+                <MudText Typo="Typo.h5" Class="section-label" Color="Color.Primary">Up Next</MudText>
+                <MudText Typo="Typo.subtitle2" Class="section-subtitle">Next clients in line</MudText>
 
-            @if (_snapshot.Current is null)
-            {
-                <div class="now-serving-placeholder">
-                    <div class="placeholder-text">Please wait</div>
-                </div>
-            }
-            else
-            {
-                <div class="ticket-number">@_snapshot.Current.TicketNo</div>
-            }
-        </section>
-
-        <section class="up-next">
-            <div class="section-header">
-                <div class="section-label">Up Next</div>
-                <div class="section-subtitle">Next clients in line</div>
+                @if (_snapshot.Waiting.Count == 0)
+                {
+                    <MudText Typo="Typo.subtitle1" Class="placeholder-text">(empty)</MudText>
+                }
+                else
+                {
+                    <MudList T="string" Class="up-next-list" DisableGutters="true">
+                        @foreach (var ticket in _snapshot.Waiting.Take(6))
+                        {
+                            <MudListItem Class="up-next-item">@ticket.TicketNo</MudListItem>
+                        }
+                    </MudList>
+                }
             </div>
-
-            @if (_snapshot.Waiting.Count == 0)
-            {
-                <div class="empty">(empty)</div>
-            }
-            else
-            {
-                <ul class="up-next-list">
-                    @foreach (var w in _snapshot.Waiting.Take(5))
-                    {
-                        <li class="up-next-item">@w.TicketNo</li>
-                    }
-                </ul>
-            }
-        </section>
-    </div>
+        </MudItem>
+    </MudGrid>
 }
 
 @code {
@@ -193,3 +193,89 @@ else
             await _realtimeHandle.InvokeVoidAsync("dispose");
     }
 }
+
+<style>
+    .display-grid {
+        height: 100vh;
+        background: linear-gradient(135deg, #0f172a 0%, #0b2847 50%, #0f172a 100%);
+        color: #ffffff;
+    }
+
+    .now-serving-panel,
+    .up-next-panel {
+        height: 100vh;
+        display: flex;
+        align-items: center;
+    }
+
+    .now-serving-panel {
+        background: rgba(10, 25, 47, 0.92);
+        border-right: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .up-next-panel {
+        background: #f7f8fb;
+        color: #111827;
+    }
+
+    .panel-content {
+        width: 100%;
+        padding: clamp(32px, 6vw, 72px);
+    }
+
+    .section-label {
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        opacity: 0.9;
+    }
+
+    .section-point {
+        margin-top: 8px;
+        font-weight: 600;
+    }
+
+    .ticket-number {
+        font-size: clamp(72px, 14vw, 160px);
+        font-weight: 800;
+        letter-spacing: 6px;
+        margin-top: clamp(32px, 4vw, 64px);
+        text-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    .placeholder-text {
+        opacity: 0.85;
+    }
+
+    .up-next-list {
+        margin-top: 16px;
+        background: transparent;
+    }
+
+    .up-next-item {
+        font-size: clamp(28px, 3vw, 48px);
+        font-weight: 700;
+        padding: 12px 0;
+        border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    }
+
+    .display-loading {
+        min-height: 60vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    @media (max-width: 960px) {
+        .display-grid,
+        .now-serving-panel,
+        .up-next-panel {
+            height: auto;
+        }
+
+        .now-serving-panel {
+            border-right: none;
+        }
+    }
+</style>

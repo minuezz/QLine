@@ -8,51 +8,62 @@
 
 <PageTitle>Display Menu</PageTitle>
 
-<h3>Display Boards</h3>
-
-@if (_loading)
-{
-    <p>Loading service points...</p>
-}
-else if (!string.IsNullOrWhiteSpace(_errorMessage))
-{
-    <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
-}
-else if (_servicePoints.Count == 0)
-{
-    <p>No service points available.</p>
-}
-else
-{
-    <div class="row g-4">
-        @foreach (var sp in _servicePoints)
+<div class="display-selection-wrapper">
+    <MudContainer MaxWidth="MaxWidth.Medium">
+        @if (_loading)
         {
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100 shadow-sm">
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">@sp.Name</h5>
-                        <p class="card-text text-muted">@sp.Address</p>
-                        <div class="mt-auto">
-                            <a class="btn btn-primary w-100" href="/display/@sp.Id" target="_blank" rel="noopener noreferrer">Open Board</a>
-                        </div>
-                    </div>
-                </div>
+            <div class="display-selection-loading">
+                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Class="mb-3" />
+                <MudText Typo="Typo.subtitle1" Color="Color.Primary">Loading service points...</MudText>
             </div>
         }
-    </div>
-}
+        else if (!string.IsNullOrWhiteSpace(_errorMessage))
+        {
+            <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+        }
+        else if (_servicePoints.Count == 0)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Filled" Elevation="0">No service points available.</MudAlert>
+        }
+        else
+        {
+            <MudCard Class="display-selection-card" Elevation="8">
+                <MudCardContent>
+                    <MudText Typo="Typo.h5" GutterBottom="true">Open Display Board</MudText>
+                    <MudText Typo="Typo.subtitle1" Class="mb-4">Select a service point to launch its display.</MudText>
+                    <MudSelect T="Guid?" Label="Service Point" @bind-Value="_selectedServicePoint" Dense="false" FullWidth="true" Required="true" DisableUnderline="true">
+                        @foreach (var sp in _servicePoints)
+                        {
+                            <MudSelectItem Value="@sp.Id">@sp.Name (@sp.Address)</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudCardContent>
+                <MudCardActions Class="display-selection-actions">
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" FullWidth="true"
+                               Disabled="!_selectedServicePoint.HasValue"
+                               Href="@(_selectedServicePoint is Guid id ? $"/display/{id}" : null)"
+                               Target="_blank" Rel="noopener noreferrer">
+                        Start
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        }
+    </MudContainer>
+</div>
 
 @code {
     private bool _loading = true;
     private string? _errorMessage;
     private List<string>? _errorDetails;
     private List<ServicePointDto> _servicePoints = new();
+    private Guid? _selectedServicePoint;
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
             _servicePoints = (await Mediator.Send(new GetServicePointsQuery())).ToList();
+            _selectedServicePoint = _servicePoints.FirstOrDefault()?.Id;
         }
         catch (Exception ex)
         {
@@ -64,3 +75,31 @@ else
         }
     }
 }
+
+<style>
+    .display-selection-wrapper {
+        min-height: calc(100vh - 120px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 16px;
+    }
+
+    .display-selection-card {
+        padding: 12px 12px 4px;
+        border-radius: 16px;
+    }
+
+    .display-selection-actions {
+        padding: 0 16px 16px;
+    }
+
+    .display-selection-loading {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 48px 0;
+        gap: 8px;
+    }
+</style>
