@@ -45,9 +45,11 @@
                 <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditDialog(context)" />
                 <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context.Id)" />
                 <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => GoToServices(context.Id)">Services</MudButton>
-                <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="() => OpenStaffModal(context)">
-                    <MudIcon Icon="@Icons.Material.Filled.People" Class="mr-1" />Staff
-                </MudButton>
+                <MudTooltip Text="Assign staff">
+                    <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="() => OpenStaffModal(context)">
+                        <MudIcon Icon="@Icons.Material.Filled.People" Class="mr-1" />Staff
+                    </MudButton>
+                </MudTooltip>
             </MudTd>
         </RowTemplate>
     </MudTable>
