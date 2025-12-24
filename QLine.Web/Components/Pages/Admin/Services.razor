@@ -7,49 +7,85 @@
 @using QLine.Application.Features.Admin.Services.Commands
 @inject IMediator Mediator
 
-<h3>Services (Admin)</h3>
+<MudStack Spacing="3">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+        <MudIcon Icon="@Icons.Material.Filled.DesignServices" Color="Color.Primary" />
+        <MudText Typo="Typo.h4" Class="font-weight-bold">Services (Admin)</MudText>
+    </MudStack>
 
-<p><a href="/admin/servicepoints">Back to Service Points</a></p>
+    <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/admin/servicepoints">
+        <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="mr-1" />Back to Service Points
+    </MudButton>
 
-<div style="margin-bottom:12px; padding:10px; border:1px solid #eee; border-radius: 6px;">
-        <h4>@(_editingId is null ? "Create" : "Edit")</h4>
-        <div><label>Name</label><br /><input @bind="_name" /></div>
-        <div><label>Duration (min)</label><br /><input type="number" @bind="_dur" /></div>
-        <div><label>Buffer (min)</label><br /><input type="number" @bind="_buf" /></div>
-        <button @onclick="SaveAsync">Save</button>
-        @if (_editingId is not null)
-        {
-                <button @onclick="CancelEdit" style="margin-left:6px;">Cancel</button>
-        }
-</div>
-
-<table>
-        <thead>
-                <tr><th>Name</th><th>Duration</th><th>Buffer</th><th></th></tr>
-        </thead>
-        <tbody>
-                @foreach (var s in _list)
-                {
-                        <tr>
-                                <td>@s.Name</td><td>@s.DurationMin</td><td>@s.BufferMin</td>
-                                <td>
-                                        <button @onclick="() => Edit(s)">Edit</button>
-                                        <button @onclick="() => DeleteAsync(s.Id)" style="margin-left:6px;">Delete</button>
-				</td>
-			</tr>
-		}
-	</tbody>
-</table>
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="4">
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h6">@(_editingId is null ? "Create" : "Edit")</MudText>
+                    <MudTextField @bind-Value="_name" Label="Name" Required="true" />
+                    <MudNumericField @bind-Value="_dur" Label="Duration (min)" Required="true" />
+                    <MudNumericField @bind-Value="_buf" Label="Buffer (min)" Required="true" />
+                    <MudStack Row="true" Spacing="1">
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Save</MudButton>
+                        @if (_editingId is not null)
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelEdit">Cancel</MudButton>
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" md="8">
+            <MudTable @ref="_table"
+                      Items="FilteredServices"
+                      Hover="true"
+                      Striped="true"
+                      SortLabel="Sort by">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">Services</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="_searchTerm"
+                                  Placeholder="Search services"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="true" />
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortLabel="Name" SortBy="s => s.Name">Name</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortLabel="Duration" SortBy="s => s.DurationMin">Duration</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortLabel="Buffer" SortBy="s => s.BufferMin">Buffer</MudTableSortLabel></MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Duration">@context.DurationMin min</MudTd>
+                    <MudTd DataLabel="Buffer">@context.BufferMin min</MudTd>
+                    <MudTd DataLabel="Actions">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => Edit(context)" />
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context.Id)" />
+                    </MudTd>
+                </RowTemplate>
+            </MudTable>
+            <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" Table="_table" />
+        </MudItem>
+    </MudGrid>
+</MudStack>
 
 @code {
     [Parameter] public Guid ServicePointId { get; set; }
 
         private List<ServiceDto> _list = new();
+        private MudTable<ServiceDto>? _table;
+        private string _searchTerm = string.Empty;
 
         private Guid? _editingId;
         private string _name = "";
         private int _dur = 15;
         private int _buf = 5;
+
+        private IEnumerable<ServiceDto> FilteredServices =>
+            _list.Where(s => string.IsNullOrWhiteSpace(_searchTerm)
+                || s.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
 
 	protected override async Task OnInitializedAsync() => await LoadAsync();
 
