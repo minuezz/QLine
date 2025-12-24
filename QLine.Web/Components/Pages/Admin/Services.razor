@@ -6,6 +6,7 @@
 @using QLine.Application.Features.Admin.Queries
 @using QLine.Application.Features.Admin.Services.Commands
 @inject IMediator Mediator
+@inject IDialogService DialogService
 
 <MudStack Spacing="3">
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
@@ -17,58 +18,41 @@
         <MudIcon Icon="@Icons.Material.Filled.ArrowBack" Class="mr-1" />Back to Service Points
     </MudButton>
 
-    <MudGrid Spacing="3">
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-4" Elevation="1">
-                <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">@(_editingId is null ? "Create" : "Edit")</MudText>
-                    <MudTextField @bind-Value="_name" Label="Name" Required="true" />
-                    <MudNumericField @bind-Value="_dur" Label="Duration (min)" Required="true" />
-                    <MudNumericField @bind-Value="_buf" Label="Buffer (min)" Required="true" />
-                    <MudStack Row="true" Spacing="1">
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveAsync">Save</MudButton>
-                        @if (_editingId is not null)
-                        {
-                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelEdit">Cancel</MudButton>
-                        }
-                    </MudStack>
-                </MudStack>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" md="8">
-            <MudTable @ref="_table"
-                      Items="FilteredServices"
-                      Hover="true"
-                      Striped="true"
-                      SortLabel="Sort by">
-                <ToolBarContent>
-                    <MudText Typo="Typo.h6">Services</MudText>
-                    <MudSpacer />
-                    <MudTextField @bind-Value="_searchTerm"
-                                  Placeholder="Search services"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Immediate="true" />
-                </ToolBarContent>
-                <HeaderContent>
-                    <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortLabel="Name" SortBy="s => s.Name">Name</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel SortLabel="Duration" SortBy="s => s.DurationMin">Duration</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel SortLabel="Buffer" SortBy="s => s.BufferMin">Buffer</MudTableSortLabel></MudTh>
-                    <MudTh></MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Name">@context.Name</MudTd>
-                    <MudTd DataLabel="Duration">@context.DurationMin min</MudTd>
-                    <MudTd DataLabel="Buffer">@context.BufferMin min</MudTd>
-                    <MudTd DataLabel="Actions">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => Edit(context)" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context.Id)" />
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
-            <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" Table="_table" />
-        </MudItem>
-    </MudGrid>
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.h6">Services</MudText>
+            <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.Add" Size="Size.Small" Label="Create New" OnClick="OpenCreateDialog" />
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchTerm"
+                          Placeholder="Search services"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true" />
+        </MudStack>
+    </MudPaper>
+
+    <MudTable @ref="_table"
+              Items="FilteredServices"
+              Hover="true"
+              Striped="true"
+              SortLabel="Sort by">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortLabel="Name" SortBy="s => s.Name">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="Duration" SortBy="s => s.DurationMin">Duration</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="Buffer" SortBy="s => s.BufferMin">Buffer</MudTableSortLabel></MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Duration">@context.DurationMin min</MudTd>
+            <MudTd DataLabel="Buffer">@context.BufferMin min</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditDialog(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context.Id)" />
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+    <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" Table="_table" />
 </MudStack>
 
 @code {
@@ -78,54 +62,45 @@
         private MudTable<ServiceDto>? _table;
         private string _searchTerm = string.Empty;
 
-        private Guid? _editingId;
-        private string _name = "";
-        private int _dur = 15;
-        private int _buf = 5;
-
         private IEnumerable<ServiceDto> FilteredServices =>
             _list.Where(s => string.IsNullOrWhiteSpace(_searchTerm)
                 || s.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
 
-	protected override async Task OnInitializedAsync() => await LoadAsync();
+        protected override async Task OnInitializedAsync() => await LoadAsync();
 
-	private async Task LoadAsync()
-		=> _list = (await Mediator.Send(new GetServicesForServicePointQuery(ServicePointId))).ToList();
+        private async Task LoadAsync()
+                => _list = (await Mediator.Send(new GetServicesForServicePointQuery(ServicePointId))).ToList();
 
-        private void Edit(ServiceDto s)
+        private async Task OpenCreateDialog() => await OpenDialogAsync(null);
+
+        private async Task OpenEditDialog(ServiceDto s) => await OpenDialogAsync(s);
+
+        private async Task OpenDialogAsync(ServiceDto? service)
         {
-                _editingId = s.Id;
-                _name = s.Name;
-                _dur = s.DurationMin;
-                _buf = s.BufferMin;
+                var parameters = new DialogParameters
+                {
+                        { nameof(ServiceFormDialog.ServiceId), service?.Id },
+                        { nameof(ServiceFormDialog.ServicePointId), ServicePointId },
+                        { nameof(ServiceFormDialog.Name), service?.Name },
+                        { nameof(ServiceFormDialog.Duration), service?.DurationMin },
+                        { nameof(ServiceFormDialog.Buffer), service?.BufferMin }
+                };
+
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+                var dialog = DialogService.Show<ServiceFormDialog>(service is null ? "Create Service" : "Edit Service", parameters, options);
+                var result = await dialog.Result;
+
+                if (!result.Cancelled)
+                {
+                        await LoadAsync();
+                        StateHasChanged();
+                }
         }
 
-        private void CancelEdit()
+        private async Task DeleteAsync(Guid id)
         {
-                _editingId = null;
-                _name = "";
-                _dur = 15;
-                _buf = 5;
-        }
-
-        private async Task SaveAsync()
-        {
-                await Mediator.Send(new UpsertServiceCommand(
-                        Id: _editingId,
-                        ServicePointId: ServicePointId,
-                        Name: _name,
-                        DurationMin: _dur,
-                        BufferMin: _buf
-                ));
-                CancelEdit();
+                await Mediator.Send(new DeleteServiceCommand(id));
                 await LoadAsync();
-		StateHasChanged();
-	}
-
-	private async Task DeleteAsync(Guid id)
-	{
-		await Mediator.Send(new DeleteServiceCommand(id));
-		await LoadAsync();
-		StateHasChanged();
-	}
+                StateHasChanged();
+        }
 }

@@ -8,70 +8,50 @@
 @using QLine.Web.Components.OpenHours
 @inject NavigationManager Nav
 @inject IMediator Mediator
+@inject IDialogService DialogService
 
 <MudStack Spacing="3">
     <MudText Typo="Typo.h4" Class="font-weight-bold">ServicePoints (Admin)</MudText>
 
     <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
 
-    <MudGrid Spacing="3">
-        <MudItem xs="12" md="4">
-            <MudPaper Class="pa-4" Elevation="1">
-                <MudStack Spacing="2">
-                    <MudText Typo="Typo.h6">@(_editingId is null ? "Create" : "Edit")</MudText>
-                    <EditForm Model="this" OnValidSubmit="SaveAsync">
-                        <MudStack Spacing="2">
-                            <MudTextField @bind-Value="_formName" Label="Name" Required="true" />
-                            <MudTextField @bind-Value="_formAddress" Label="Address" Required="true" />
-                            <OpenHoursEditor @bind-Value="_formOpenHoursJson" @bind-Valid="_openHoursValid" />
-                            <MudStack Row="true" Spacing="1">
-                                <MudButton Variant="Variant.Filled" Color="Color.Primary" Type="Submit" Disabled="@IsSaveDisabled">Save</MudButton>
-                                @if (_editingId is not null)
-                                {
-                                    <MudButton Variant="Variant.Outlined" Color="Color.Secondary" OnClick="CancelEdit">Cancel</MudButton>
-                                }
-                            </MudStack>
-                        </MudStack>
-                    </EditForm>
-                </MudStack>
-            </MudPaper>
-        </MudItem>
-        <MudItem xs="12" md="8">
-            <MudTable @ref="_table"
-                      Items="FilteredServicePoints"
-                      Hover="true"
-                      Striped="true"
-                      SortLabel="Sort by">
-                <ToolBarContent>
-                    <MudText Typo="Typo.h6">Service Points</MudText>
-                    <MudSpacer />
-                    <MudTextField @bind-Value="_searchTerm"
-                                  Placeholder="Search service points"
-                                  Adornment="Adornment.Start"
-                                  AdornmentIcon="@Icons.Material.Filled.Search"
-                                  Immediate="true" />
-                </ToolBarContent>
-                <HeaderContent>
-                    <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortLabel="Name" SortBy="sp => sp.Name">Name</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel SortLabel="Address" SortBy="sp => sp.Address">Address</MudTableSortLabel></MudTh>
-                    <MudTh></MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Name">@context.Name</MudTd>
-                    <MudTd DataLabel="Address">@context.Address</MudTd>
-                    <MudTd DataLabel="Actions">
-                        <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => Edit(context)" />
-                        <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context.Id)" />
-                        <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => GoToServices(context.Id)">Services</MudButton>
-                        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="() => OpenStaffModal(context)">
-                            <MudIcon Icon="@Icons.Material.Filled.People" Class="mr-1" />Staff
-                        </MudButton>
-                    </MudTd>
-                </RowTemplate>
-            </MudTable>
-            <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" Table="_table" />
-        </MudItem>
-    </MudGrid>
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.h6">Service Points</MudText>
+            <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.Add" Size="Size.Small" Label="Create New" OnClick="OpenCreateDialog" />
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchTerm"
+                          Placeholder="Search service points"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Immediate="true" />
+        </MudStack>
+    </MudPaper>
+
+    <MudTable @ref="_table"
+              Items="FilteredServicePoints"
+              Hover="true"
+              Striped="true"
+              SortLabel="Sort by">
+        <HeaderContent>
+            <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortLabel="Name" SortBy="sp => sp.Name">Name</MudTableSortLabel></MudTh>
+            <MudTh><MudTableSortLabel SortLabel="Address" SortBy="sp => sp.Address">Address</MudTableSortLabel></MudTh>
+            <MudTh></MudTh>
+        </HeaderContent>
+        <RowTemplate>
+            <MudTd DataLabel="Name">@context.Name</MudTd>
+            <MudTd DataLabel="Address">@context.Address</MudTd>
+            <MudTd DataLabel="Actions">
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Color="Color.Primary" Size="Size.Small" OnClick="() => OpenEditDialog(context)" />
+                <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Size="Size.Small" OnClick="() => DeleteAsync(context.Id)" />
+                <MudButton Variant="Variant.Text" Color="Color.Primary" OnClick="() => GoToServices(context.Id)">Services</MudButton>
+                <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="() => OpenStaffModal(context)">
+                    <MudIcon Icon="@Icons.Material.Filled.People" Class="mr-1" />Staff
+                </MudButton>
+            </MudTd>
+        </RowTemplate>
+    </MudTable>
+    <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" Table="_table" />
 </MudStack>
 
 <StaffAssignmentModal Visible="@_showStaffModal" ServicePointId="@_staffModalServicePointId" ServicePointName="@_staffModalServicePointName" OnClose="CloseStaffModal" />
@@ -81,12 +61,6 @@
     private MudTable<ServicePointDto>? _table;
     private string _searchTerm = string.Empty;
 
-	private Guid? _editingId;
-	private string _formName = "";
-	private string _formAddress = "";
-	private string? _formOpenHoursJson = DefaultOpenHoursJson();
-	private bool _openHoursValid = true;
-
         private string? _errorMessage;
         private List<string>? _errorDetails;
 
@@ -94,79 +68,50 @@
         private Guid _staffModalServicePointId;
         private string? _staffModalServicePointName;
 
-	private static string DefaultOpenHoursJson() =>
-		"""{ "monday":{"open":true, "start":"07:30","end":"16:00"}, "tuesday":{"open":true, "start":"07:30","end":"16:00"}, "wednesday":{"open":true, "start":"07:30","end":"16:00"}, "thursday":{"open":true, "start":"07:30","end":"16:00"}, "friday":{"open":true, "start":"07:30","end":"16:00"}, "saturday":{"open":false, "start":"07:30","end":"16:00"}, "sunday":{"open":false, "start":"07:30","end":"16:00"} }""";
-
-    private bool IsSaveDisabled =>
-            string.IsNullOrWhiteSpace(_formName) ||
-            string.IsNullOrWhiteSpace(_formAddress) ||
-            string.IsNullOrWhiteSpace(_formOpenHoursJson) ||
-            !_openHoursValid;
-
-    private IEnumerable<ServicePointDto> FilteredServicePoints =>
+        private IEnumerable<ServicePointDto> FilteredServicePoints =>
         _list.Where(sp =>
             string.IsNullOrWhiteSpace(_searchTerm) ||
             sp.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ||
             sp.Address.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
 
-	protected override async Task OnInitializedAsync() => await LoadAsync();
+        protected override async Task OnInitializedAsync() => await LoadAsync();
 
-	private async Task LoadAsync()
-	{
+        private async Task LoadAsync()
+        {
             try
             {
                     _list = (await Mediator.Send(new GetServicePointsQuery())).ToList();
             }
-		catch (Exception ex)
-		{
-			(_errorMessage, _errorDetails) = ex.ToUserMessage();
-		}
-	}
+                catch (Exception ex)
+                {
+                        (_errorMessage, _errorDetails) = ex.ToUserMessage();
+                }
+        }
 
-	private void Edit(ServicePointDto sp)
-	{
-		_editingId = sp.Id;
-		_formName = sp.Name;
-		_formAddress = sp.Address;
-		_formOpenHoursJson = string.IsNullOrWhiteSpace(sp.OpenHoursJson)
-			? DefaultOpenHoursJson()
-			: sp.OpenHoursJson;
-		_openHoursValid = true;
-	}
+        private async Task OpenCreateDialog() => await OpenDialogAsync(null);
 
-	private void CancelEdit()
-	{
-		_editingId = null;
-		_formName = ""; 
-		_formAddress = "";
-		_formOpenHoursJson = DefaultOpenHoursJson();
-		_openHoursValid = true;
-		_errorMessage = null; _errorDetails = null;
-	}
+        private async Task OpenEditDialog(ServicePointDto sp) => await OpenDialogAsync(sp);
 
-	private async Task SaveAsync()
-	{
-		if (IsSaveDisabled) return;
+        private async Task OpenDialogAsync(ServicePointDto? sp)
+        {
+                var parameters = new DialogParameters
+                {
+                        { nameof(ServicePointFormDialog.ServicePointId), sp?.Id },
+                        { nameof(ServicePointFormDialog.Name), sp?.Name },
+                        { nameof(ServicePointFormDialog.Address), sp?.Address },
+                        { nameof(ServicePointFormDialog.OpenHoursJson), sp?.OpenHoursJson }
+                };
 
-		try
-		{
-			_errorMessage = null; _errorDetails = null;
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+                var dialog = DialogService.Show<ServicePointFormDialog>(sp is null ? "Create Service Point" : "Edit Service Point", parameters, options);
+                var result = await dialog.Result;
 
-                        await Mediator.Send(new UpsertServicePointCommand(
-                                Id: _editingId,
-                                Name: _formName.Trim(),
-                                Address: _formAddress.Trim(),
-                                OpenHoursJson: _formOpenHoursJson ?? DefaultOpenHoursJson()
-                        ));
-			CancelEdit();
-			await LoadAsync();
-			StateHasChanged();
-		}
-		catch (Exception ex)
-		{
-			(_errorMessage, _errorDetails) = ex.ToUserMessage();
-		}
-	}
+                if (!result.Cancelled)
+                {
+                        await LoadAsync();
+                        StateHasChanged();
+                }
+        }
 
         private async Task DeleteAsync(Guid id)
         {
@@ -195,6 +140,6 @@
                 _showStaffModal = false;
         }
 
-		private void GoToServices(Guid id)
-			=> Nav.NavigateTo($"/admin/services/{id}");
+                private void GoToServices(Guid id)
+                        => Nav.NavigateTo($"/admin/services/{id}");
 }

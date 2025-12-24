@@ -1,0 +1,66 @@
+@using MediatR
+@using QLine.Application.Features.Admin.Services.Commands
+@inject IMediator Mediator
+
+<MudDialog MaxWidth="MaxWidth.Small" CloseOnEscapeKey="true">
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">@(_serviceId is null ? "Create Service" : "Edit Service")</MudText>
+            <EditForm Model="this" OnValidSubmit="SaveAsync">
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_name" Label="Name" Required="true" />
+                    <MudNumericField @bind-Value="_duration" Label="Duration (min)" Required="true" Min="1" Immediate="true" />
+                    <MudNumericField @bind-Value="_buffer" Label="Buffer (min)" Required="true" Min="0" Immediate="true" />
+                </MudStack>
+            </EditForm>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="IsSaveDisabled" OnClick="SaveAsync">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public Guid? ServiceId { get; set; }
+    [Parameter] public Guid ServicePointId { get; set; }
+    [Parameter] public string? Name { get; set; }
+    [Parameter] public int? Duration { get; set; }
+    [Parameter] public int? Buffer { get; set; }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+
+    private Guid? _serviceId;
+    private Guid _servicePointId;
+    private string _name = string.Empty;
+    private int? _duration;
+    private int? _buffer;
+
+    protected override void OnInitialized()
+    {
+        _serviceId = ServiceId;
+        _servicePointId = ServicePointId;
+        _name = Name ?? string.Empty;
+        _duration = Duration ?? 15;
+        _buffer = Buffer ?? 5;
+    }
+
+    private bool IsSaveDisabled => string.IsNullOrWhiteSpace(_name) || !_duration.HasValue || !_buffer.HasValue;
+
+    private async Task SaveAsync()
+    {
+        if (IsSaveDisabled) return;
+
+        await Mediator.Send(new UpsertServiceCommand(
+            Id: _serviceId,
+            ServicePointId: _servicePointId,
+            Name: _name.Trim(),
+            DurationMin: _duration!.Value,
+            BufferMin: _buffer!.Value
+        ));
+
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+}
