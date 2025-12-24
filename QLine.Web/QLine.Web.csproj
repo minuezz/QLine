@@ -18,7 +18,7 @@
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 			<PrivateAssets>all</PrivateAssets>
 		</PackageReference>
-                <PackageReference Include="MudBlazor" Version="8.11.0" />
+                <PackageReference Include="MudBlazor" Version="8.15.0" />
                 <PackageReference Include="MudBlazor.ThemeManager" Version="3.0.0" />
                 <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
                 <PackageReference Include="QRCoder" Version="1.4.3" />
