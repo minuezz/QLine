@@ -10,60 +10,76 @@
 @inject IMediator Mediator
 @inject ICurrentUser CurrentUser
 
-<h3>Users</h3>
+<MudStack Spacing="3">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+        <MudIcon Icon="@Icons.Material.Filled.People" Color="Color.Primary" />
+        <MudText Typo="Typo.h4" Class="font-weight-bold">Users</MudText>
+    </MudStack>
 
-@if (_loading)
-{
-    <p>Loading users...</p>
-}
-else if (_users.Count == 0)
-{
-    <p>No users found.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var user in _users)
-            {
-                <tr>
-                    <td>@user.Name</td>
-                    <td>@user.Email</td>
-                    <td>@user.Role</td>
-                    <td>
-                        @if (user.Role == nameof(UserRole.Client))
+    @if (_loading)
+    {
+        <MudProgressCircular Color="Color.Primary" />
+    }
+    else
+    {
+        <MudPaper Class="pa-3" Elevation="1">
+            <MudTable @ref="_table"
+                      Items="FilteredUsers"
+                      Hover="true"
+                      Striped="true"
+                      SortLabel="Sort by"
+                      Dense="true">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6">All Users</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="_searchTerm"
+                                  Placeholder="Search users"
+                                  Adornment="Adornment.Start"
+                                  AdornmentIcon="@Icons.Material.Filled.Search"
+                                  Immediate="true" />
+                </ToolBarContent>
+                <HeaderContent>
+                    <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortLabel="Name" SortBy="u => u.Name">Name</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortLabel="Email" SortBy="u => u.Email">Email</MudTableSortLabel></MudTh>
+                    <MudTh><MudTableSortLabel SortLabel="Role" SortBy="u => u.Role">Role</MudTableSortLabel></MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Name">@context.Name</MudTd>
+                    <MudTd DataLabel="Email">@context.Email</MudTd>
+                    <MudTd DataLabel="Role">@context.Role</MudTd>
+                    <MudTd DataLabel="Actions">
+                        @if (context.Role == nameof(UserRole.Client))
                         {
-                            <button class="btn btn-success btn-sm"
-                                    disabled="@IsCurrentUser(user.Id)"
-                                    @onclick="() => UpdateRole(user.Id, UserRole.Staff)">
-                                Promote to Staff
-                            </button>
+                            <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                                       Disabled="@IsCurrentUser(context.Id)"
+                                       OnClick="() => UpdateRole(context.Id, UserRole.Staff)">
+                                <MudIcon Icon="@Icons.Material.Filled.Upgrade" Class="mr-1" />Promote to Staff
+                            </MudButton>
                         }
-                        else if (user.Role == nameof(UserRole.Staff))
+                        else if (context.Role == nameof(UserRole.Staff))
                         {
-                            <button class="btn btn-warning btn-sm"
-                                    disabled="@IsCurrentUser(user.Id)"
-                                    @onclick="() => UpdateRole(user.Id, UserRole.Client)">
-                                Demote to Client
-                            </button>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Warning" Size="Size.Small"
+                                       Disabled="@IsCurrentUser(context.Id)"
+                                       OnClick="() => UpdateRole(context.Id, UserRole.Client)">
+                                <MudIcon Icon="@Icons.Material.Filled.South" Class="mr-1" />Demote to Client
+                            </MudButton>
                         }
-                    </td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Typo="Typo.subtitle2" Color="Color.Secondary">No users found.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+            <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" Table="_table" />
+        </MudPaper>
+    }
+</MudStack>
 
 @code {
     private readonly List<UserDto> _users = new();
+    private MudTable<UserDto>? _table;
+    private string _searchTerm = string.Empty;
     private bool _loading = true;
     private Guid? _currentUserId;
 
@@ -80,6 +96,12 @@ else
         _users.AddRange(await Mediator.Send(new GetAllUsersQuery()));
         _loading = false;
     }
+
+    private IEnumerable<UserDto> FilteredUsers =>
+        _users.Where(u => string.IsNullOrWhiteSpace(_searchTerm)
+            || u.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+            || u.Email.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+            || u.Role.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
 
     private async Task UpdateRole(Guid userId, UserRole newRole)
     {
