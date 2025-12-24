@@ -1,20 +1,69 @@
 @page "/register"
 @inject NavigationManager Nav
 
-<h3>Register</h3>
+<MudGrid Class="auth-grid" Justify="Justify.Center" AlignItems="AlignItems.Center">
+    <MudItem xs="12" sm="8" md="5" lg="4">
+        <MudCard Class="auth-card" Elevation="3">
+            <MudCardContent>
+                <MudText Typo="Typo.h5" GutterBottom="true">Register</MudText>
 
-@if (ErrorCode is not null)
-{
-        <p class="text-danger">@ErrorMessage</p>
-}
+                @if (ErrorCode is not null)
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Filled" Class="mb-2">@ErrorMessage</MudAlert>
+                }
 
-<form method="post" action="/auth/register">
-        <input type="text" name="firstName" value="@_firstName" placeholder="First name" />
-        <input type="text" name="lastName" value="@_lastName" placeholder="Last name" style="margin-left:8px;" />
-        <input type="email" name="email" value="@_email" placeholder="email" style="margin-left:8px;" />
-        <input type="password" name="password" value="@_password" placeholder="password" style="margin-left:8px;" />
-        <button type="submit" style="margin-left:8px;">Create account</button>
-</form>
+                <form method="post" action="/auth/register" class="auth-form">
+                    <MudStack Spacing="1.5">
+                        <MudTextField @bind-Value="_firstName"
+                                      Label="First name"
+                                      Name="firstName"
+                                      Required="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Person"
+                                      FullWidth="true" />
+
+                        <MudTextField @bind-Value="_lastName"
+                                      Label="Last name"
+                                      Name="lastName"
+                                      Required="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Person"
+                                      FullWidth="true" />
+
+                        <MudTextField @bind-Value="_email"
+                                      Label="Email"
+                                      InputType="InputType.Email"
+                                      Name="email"
+                                      Required="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Email"
+                                      FullWidth="true" />
+
+                        <MudTextField @bind-Value="_password"
+                                      Label="Password"
+                                      InputType="InputType.Password"
+                                      Name="password"
+                                      Required="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                                      FullWidth="true" />
+
+                        <MudButton Type="ButtonType.Submit"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   FullWidth="true">
+                            Create account
+                        </MudButton>
+
+                        <MudText Typo="Typo.body2" Align="Align.Center">
+                            Already have an account? <MudLink Href="/login">Sign in</MudLink>
+                        </MudText>
+                    </MudStack>
+                </form>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
 
 @code {
         private string _firstName = "";
