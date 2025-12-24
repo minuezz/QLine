@@ -47,7 +47,20 @@
                 <RowTemplate>
                     <MudTd DataLabel="Name">@context.Name</MudTd>
                     <MudTd DataLabel="Email">@context.Email</MudTd>
-                    <MudTd DataLabel="Role">@context.Role</MudTd>
+                    <MudTd DataLabel="Role">
+                        @switch (context.Role)
+                        {
+                            case nameof(UserRole.Admin):
+                                <MudChip Color="Color.Success" Variant="Variant.Filled">@context.Role</MudChip>
+                                break;
+                            case nameof(UserRole.Staff):
+                                <MudChip Color="Color.Info" Variant="Variant.Filled">@context.Role</MudChip>
+                                break;
+                            default:
+                                <MudChip Color="Color.Default" Variant="Variant.Filled">@context.Role</MudChip>
+                                break;
+                        }
+                    </MudTd>
                     <MudTd DataLabel="Actions">
                         @if (context.Role == nameof(UserRole.Client))
                         {
