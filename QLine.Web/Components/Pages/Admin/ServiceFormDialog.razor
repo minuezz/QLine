@@ -2,7 +2,7 @@
 @using QLine.Application.Features.Admin.Services.Commands
 @inject IMediator Mediator
 
-<MudDialog MaxWidth="MaxWidth.Small" CloseOnEscapeKey="true">
+<MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
             <MudText Typo="Typo.h6">@(_serviceId is null ? "Create Service" : "Edit Service")</MudText>
@@ -28,7 +28,7 @@
     [Parameter] public int? Duration { get; set; }
     [Parameter] public int? Buffer { get; set; }
 
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
     private Guid? _serviceId;
     private Guid _servicePointId;

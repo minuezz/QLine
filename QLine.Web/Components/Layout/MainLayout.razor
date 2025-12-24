@@ -12,7 +12,9 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         <MudText Typo="Typo.h5" Class="font-weight-bold ml-2">QLine</MudText>
         <MudSpacer />
-        <MudToggleIconButton @bind-Toggled="isDarkMode" Color="Color.Inherit" Icon="@Icons.Material.Filled.LightMode" ToggledIcon="@Icons.Material.Filled.DarkMode" Title="Toggle light/dark mode" />
+        <MudTooltip Text="Toggle light/dark mode">
+            <MudToggleIconButton @bind-Toggled="isDarkMode" Color="Color.Inherit" Icon="@Icons.Material.Filled.LightMode" ToggledIcon="@Icons.Material.Filled.DarkMode" />
+        </MudTooltip>
 
         <AuthorizeView>
             <Authorized Context="authContext">

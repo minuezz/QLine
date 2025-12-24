@@ -2,8 +2,9 @@
 @using QLine.Application.Features.Admin.ServicePoints.Commands
 @using QLine.Application.DTO
 @inject IMediator Mediator
+@using QLine.Web.Components.OpenHours
 
-<MudDialog MaxWidth="MaxWidth.Medium" CloseOnEscapeKey="true">
+<MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
             <MudText Typo="Typo.h6">@(_servicePointId is null ? "Create Service Point" : "Edit Service Point")</MudText>
@@ -29,7 +30,7 @@
     [Parameter] public string? Address { get; set; }
     [Parameter] public string? OpenHoursJson { get; set; }
 
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
     private Guid? _servicePointId;
     private string _name = string.Empty;

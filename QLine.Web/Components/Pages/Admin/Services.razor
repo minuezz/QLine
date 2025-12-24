@@ -21,7 +21,7 @@
     <MudPaper Class="pa-4 mb-4" Elevation="1">
         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
             <MudText Typo="Typo.h6">Services</MudText>
-            <MudFab Color="Color.Primary" Icon="@Icons.Material.Filled.Add" Size="Size.Small" Label="Create New" OnClick="OpenCreateDialog" />
+            <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" Size="Size.Small" Label="Create New" OnClick="OpenCreateDialog" />
             <MudSpacer />
             <MudTextField @bind-Value="_searchTerm"
                           Placeholder="Search services"
@@ -37,9 +37,15 @@
               Striped="true"
               SortLabel="Sort by">
         <HeaderContent>
-            <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortLabel="Name" SortBy="s => s.Name">Name</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortLabel="Duration" SortBy="s => s.DurationMin">Duration</MudTableSortLabel></MudTh>
-            <MudTh><MudTableSortLabel SortLabel="Buffer" SortBy="s => s.BufferMin">Buffer</MudTableSortLabel></MudTh>
+            <MudTh>
+                <MudTableSortLabel T="ServiceDto" InitialDirection="SortDirection.Ascending" SortLabel="Name" SortBy="s => s.Name">Name</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel T="ServiceDto" SortLabel="Duration" SortBy="s => s.DurationMin">Duration</MudTableSortLabel>
+            </MudTh>
+            <MudTh>
+                <MudTableSortLabel T="ServiceDto" SortLabel="Buffer" SortBy="s => s.BufferMin">Buffer</MudTableSortLabel>
+            </MudTh>
             <MudTh></MudTh>
         </HeaderContent>
         <RowTemplate>
@@ -52,7 +58,7 @@
             </MudTd>
         </RowTemplate>
     </MudTable>
-    <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" Table="_table" />
+    <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
 </MudStack>
 
 @code {
@@ -87,10 +93,10 @@
                 };
 
                 var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
-                var dialog = DialogService.Show<ServiceFormDialog>(service is null ? "Create Service" : "Edit Service", parameters, options);
+                var dialog = await DialogService.ShowAsync<ServiceFormDialog>(service is null ? "Create Service" : "Edit Service", parameters, options);
                 var result = await dialog.Result;
 
-                if (!result.Cancelled)
+                if (result != null && !result.Canceled)
                 {
                         await LoadAsync();
                         StateHasChanged();

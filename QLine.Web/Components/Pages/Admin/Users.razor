@@ -39,9 +39,15 @@
                                   Immediate="true" />
                 </ToolBarContent>
                 <HeaderContent>
-                    <MudTh><MudTableSortLabel InitialDirection="SortDirection.Ascending" SortLabel="Name" SortBy="u => u.Name">Name</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel SortLabel="Email" SortBy="u => u.Email">Email</MudTableSortLabel></MudTh>
-                    <MudTh><MudTableSortLabel SortLabel="Role" SortBy="u => u.Role">Role</MudTableSortLabel></MudTh>
+                    <MudTh>
+                        <MudTableSortLabel T="UserDto" InitialDirection="SortDirection.Ascending" SortLabel="Name" SortBy="u => u.Name">Name</MudTableSortLabel>
+                    </MudTh>
+                    <MudTh>
+                        <MudTableSortLabel T="UserDto" SortLabel="Email" SortBy="u => u.Email">Email</MudTableSortLabel>
+                    </MudTh>
+                    <MudTh>
+                        <MudTableSortLabel T="UserDto" SortLabel="Role" SortBy="u => u.Role">Role</MudTableSortLabel>
+                    </MudTh>
                     <MudTh></MudTh>
                 </HeaderContent>
                 <RowTemplate>
@@ -51,13 +57,13 @@
                         @switch (context.Role)
                         {
                             case nameof(UserRole.Admin):
-                                <MudChip Color="Color.Success" Variant="Variant.Filled">@context.Role</MudChip>
+                                <MudChip T="string" Color="Color.Success" Variant="Variant.Filled">@context.Role</MudChip>
                                 break;
                             case nameof(UserRole.Staff):
-                                <MudChip Color="Color.Info" Variant="Variant.Filled">@context.Role</MudChip>
+                                <MudChip T="string" Color="Color.Info" Variant="Variant.Filled">@context.Role</MudChip>
                                 break;
                             default:
-                                <MudChip Color="Color.Default" Variant="Variant.Filled">@context.Role</MudChip>
+                                <MudChip T="string" Color="Color.Default" Variant="Variant.Filled">@context.Role</MudChip>
                                 break;
                         }
                     </MudTd>
@@ -84,7 +90,7 @@
                     <MudText Typo="Typo.subtitle2" Color="Color.Secondary">No users found.</MudText>
                 </NoRecordsContent>
             </MudTable>
-            <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" Table="_table" />
+            <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
         </MudPaper>
     }
 </MudStack>

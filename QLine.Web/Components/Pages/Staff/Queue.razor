@@ -23,7 +23,11 @@
         @if (_points.Count > 1 && !HasSelectedServicePoint)
         {
             <MudCard Elevation="1">
-                <MudCardHeader Title="Where are you working today?" />
+                <MudCardHeader>
+                    <CardHeaderContent>
+                        <MudText>Where are you working today?</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
                 <MudCardContent>
                     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                         <MudSelect @bind-Value="_selectionCandidateId" FullWidth="true" Label="Service Point">
@@ -64,7 +68,11 @@
             <MudGrid Class="mt-2" Spacing="3">
                 <MudItem xs="12" md="8">
                     <MudCard Elevation="3" Class="high-emphasis-card">
-                        <MudCardHeader Title="Current Ticket" />
+                        <MudCardHeader>
+                            <CardHeaderContent>
+                                <MudText>Current Ticket</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
                         <MudCardContent>
                             @if (_snapshot is null)
                             {

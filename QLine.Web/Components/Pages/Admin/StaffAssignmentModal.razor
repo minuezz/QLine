@@ -3,7 +3,7 @@
 @using QLine.Application.Features.Admin.ServicePoints.Commands
 @using QLine.Application.Features.Admin.ServicePoints.Queries
 
-<MudDialog MaxWidth="MaxWidth.Medium" FullWidth="true" CloseOnEscapeKey="true">
+<MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
             <MudText Typo="Typo.h6">Staff for @ServicePointName</MudText>
@@ -14,7 +14,7 @@
                 <MudStack Spacing="2">
                     <MudText Typo="Typo.subtitle1">Add Staff</MudText>
                     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                        <MudSelect T="Guid?" Label="Select Staff" @bind-Value="_selectedUserId" Dense="true" Searchable="true" Clearable="true" FullWidth="true">
+                        <MudSelect T="Guid?" Label="Select Staff" @bind-Value="_selectedUserId" Dense="true" Clearable="true" FullWidth="true">
                             @foreach (var staff in _unassigned)
                             {
                                 <MudSelectItem Value="staff.Id">@staff.Name (@staff.Email)</MudSelectItem>
@@ -32,21 +32,26 @@
 
                 @if (_assigned.Count == 0)
                 {
-                    <MudText Color="Color.TextSecondary">(none)</MudText>
+                    <MudText Color="Color.Secondary">(none)</MudText>
                 }
                 else
                 {
-                    <MudList Dense="true">
+                    <MudList T="string" Dense="true">
                         @foreach (var staff in _assigned)
                         {
-                            <MudListItem>
-                                <MudListItemText>
-                                    <MudText>@staff.Name</MudText>
-                                    <MudText Typo="Typo.caption" Color="Color.TextSecondary">@staff.Email</MudText>
-                                </MudListItemText>
-                                <MudListItemIcon>
-                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Title="Remove" OnClick="() => UnassignAsync(staff.Id)" />
-                                </MudListItemIcon>
+                            <MudListItem T="string">
+                                <div class="d-flex justify-space-between align-center w-100">
+                                    <div>
+                                        <MudText>@staff.Name</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@staff.Email</MudText>
+                                    </div>
+                                    <MudTooltip Text="Remove">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                       Color="Color.Error"
+                                                       Size="Size.Small"
+                                                       OnClick="() => UnassignAsync(staff.Id)" />
+                                    </MudTooltip>
+                                </div>
                             </MudListItem>
                         }
                     </MudList>
@@ -63,7 +68,7 @@
     [Parameter] public Guid ServicePointId { get; set; }
     [Parameter] public string? ServicePointName { get; set; }
 
-    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
 
     [Inject] public IMediator Mediator { get; set; } = default!;
 

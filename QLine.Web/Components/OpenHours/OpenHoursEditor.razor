@@ -8,16 +8,17 @@
         @foreach (var row in Rows)
         {
             <MudItem xs="12">
-                <MudGrid AlignItems="AlignItems.Center" Class="oh-row" Spacing="2">
+                <MudGrid Class="oh-row align-center" Spacing="2">
                     <MudItem xs="12" sm="3">
                         <MudText Typo="Typo.subtitle2" Class="oh-day">@row.Label</MudText>
                     </MudItem>
                     <MudItem xs="12" sm="3">
-                        <MudSwitch Color="Color.Primary"
-                                   Checked="row.Open"
-                                   CheckedChanged="value => OnOpenChanged(row, value)"
+                        <MudSwitch T="bool" 
+                                   Color="Color.Primary"
+                                   Value="row.Open"
+                                   ValueChanged="value => OnOpenChanged(row, value)"
                                    Class="oh-open"
-                                   DisableRipple="true"
+                                   Ripple="false"
                                    Label="Open" />
                     </MudItem>
                     <MudItem xs="12" sm="3">
@@ -26,7 +27,7 @@
                                        Time="row.Opening"
                                        TimeChanged="time => OnTimeChanged(row, time, true)"
                                        Disabled="@(!row.Open)"
-                                       MinuteInterval="5"
+                                       MinuteSelectionStep="5"
                                        Label="Start" />
                     </MudItem>
                     <MudItem xs="12" sm="3">
@@ -35,7 +36,7 @@
                                        Time="row.Closing"
                                        TimeChanged="time => OnTimeChanged(row, time, false)"
                                        Disabled="@(!row.Open)"
-                                       MinuteInterval="5"
+                                       MinuteSelectionStep="5"
                                        Label="End" />
                         @if (!string.IsNullOrEmpty(row.Error))
                         {

@@ -27,13 +27,13 @@
                                 }
                                 else
                                 {
-                                        <MudGrid Class="service-grid" GutterSize="2">
+                                        <MudGrid Class="service-grid" Spacing="2">
                                                 @foreach (var service in _services)
                                                 {
                                                         <MudItem xs="12" sm="6">
-                                                                <MudCard Class="service-card @(ReferenceEquals(_selectedService, service) ? "service-card--selected" : string.Empty)"
-                                                                         Outlined="true"
-                                                                         OnClick="() => SelectServiceAsync(service)">
+                                                                <MudCard Class="@($"service-card {(ReferenceEquals(_selectedService, service) ? "service-card--selected" : string.Empty)}")"
+                                                                            Outlined="true"
+                                                                            @onclick="() => SelectServiceAsync(service)">
                                                                         <MudCardContent>
                                                                                 <MudText Typo="Typo.subtitle1">@service.Name</MudText>
                                                                                 <MudText Typo="Typo.body2" Color="Color.Secondary">@service.DurationMin min</MudText>
@@ -51,7 +51,7 @@
                                               DateChanged="OnDateChanged"
                                               PickerVariant="PickerVariant.Static"
                                               MinDate="@DateTime.Today"
-                                              DisableToolbar="true"
+                                              ShowToolbar="false"
                                               Class="full-width-picker" />
                         </MudPaper>
 
@@ -67,12 +67,13 @@
                                 }
                                 else
                                 {
-                                        <MudChipSet MultiSelection="false">
+                                        <MudChipSet T="string" SelectionMode="SelectionMode.SingleSelection">
                                                 @foreach (var slot in _availableSlots)
                                                 {
-                                                        <MudChip Color="@(ReferenceEquals(_selectedSlot, slot) ? Color.Primary : Color.Default)"
+                                                        <MudChip T="string"
+                                                                 Color="@(ReferenceEquals(_selectedSlot, slot) ? Color.Primary : Color.Default)"
                                                                  Variant="@(ReferenceEquals(_selectedSlot, slot) ? Variant.Filled : Variant.Outlined)"
-                                                                 DisableRipple="false"
+                                                                 Ripple="true"
                                                                  OnClick="() => SelectSlot(slot)"
                                                                  Disabled="@(!slot.IsAvailable)"
                                                                  Class="slot-chip">
@@ -84,31 +85,57 @@
                         </MudPaper>
 
                         <MudPaper Elevation="1" Class="section summary">
-                                <MudText Typo="Typo.subtitle1" GutterBottom>Reservation summary</MudText>
-                                <MudList Dense="true">
-                                        <MudListItem>
-                                                <MudListItemIcon><MudIcon Icon="@Icons.Material.Filled.HomeRepairService" /></MudListItemIcon>
-                                                <MudListItemText PrimaryText="Service" SecondaryText="@(_selectedService?.Name ?? "Select a service")" />
-                                        </MudListItem>
-                                        <MudListItem>
-                                                <MudListItemIcon><MudIcon Icon="@Icons.Material.Filled.Today" /></MudListItemIcon>
-                                                <MudListItemText PrimaryText="Date" SecondaryText="@_selectedDate.ToString("dddd, MMM d")" />
-                                        </MudListItem>
-                                        <MudListItem>
-                                                <MudListItemIcon><MudIcon Icon="@Icons.Material.Filled.Schedule" /></MudListItemIcon>
-                                                <MudListItemText PrimaryText="Time" SecondaryText="@(_selectedSlot is null ? "Select a slot" : _selectedSlot.Start.ToString("hh\\:mm"))" />
-                                        </MudListItem>
-                                </MudList>
+    <MudText Typo="Typo.subtitle1" GutterBottom>Reservation summary</MudText>
+    
+    <MudList T="string" Dense="true">
+        
+        <MudListItem T="string">
+            <div class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.HomeRepairService" Class="mr-3" Color="Color.Default" />
+                <div>
+                    <MudText Typo="Typo.body2">Service</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @(_selectedService?.Name ?? "Select a service")
+                    </MudText>
+                </div>
+            </div>
+        </MudListItem>
 
-                                <MudButton Variant="Variant.Filled"
-                                           Color="Color.Primary"
-                                           Disabled="@(_selectedSlot is null || _selectedService is null)"
-                                           OnClick="SubmitAsync"
-                                           FullWidth="true"
-                                           Size="Size.Large">
-                                        Confirm Reservation
-                                </MudButton>
-                        </MudPaper>
+        <MudListItem T="string">
+            <div class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Today" Class="mr-3" Color="Color.Default" />
+                <div>
+                    <MudText Typo="Typo.body2">Date</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @_selectedDate.ToString("dddd, MMM d")
+                    </MudText>
+                </div>
+            </div>
+        </MudListItem>
+
+        <MudListItem T="string">
+            <div class="d-flex align-center">
+                <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="mr-3" Color="Color.Default" />
+                <div>
+                    <MudText Typo="Typo.body2">Time</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        @(_selectedSlot is null ? "Select a slot" : _selectedSlot.Start.ToString("hh\\:mm"))
+                    </MudText>
+                </div>
+            </div>
+        </MudListItem>
+
+    </MudList>
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               Disabled="@(_selectedSlot is null || _selectedService is null)"
+               OnClick="SubmitAsync"
+               FullWidth="true"
+               Size="Size.Large">
+        Confirm Reservation
+    </MudButton>
+</MudPaper>
 
                         @if (!string.IsNullOrWhiteSpace(_errorMessage))
                         {
