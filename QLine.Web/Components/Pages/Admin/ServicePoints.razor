@@ -54,8 +54,6 @@
     <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" Table="_table" />
 </MudStack>
 
-<StaffAssignmentModal Visible="@_showStaffModal" ServicePointId="@_staffModalServicePointId" ServicePointName="@_staffModalServicePointName" OnClose="CloseStaffModal" />
-
 @code {
     private List<ServicePointDto> _list = new();
     private MudTable<ServicePointDto>? _table;
@@ -63,10 +61,6 @@
 
         private string? _errorMessage;
         private List<string>? _errorDetails;
-
-        private bool _showStaffModal;
-        private Guid _staffModalServicePointId;
-        private string? _staffModalServicePointName;
 
         private IEnumerable<ServicePointDto> FilteredServicePoints =>
         _list.Where(sp =>
@@ -128,16 +122,16 @@
 
         }
 
-        private void OpenStaffModal(ServicePointDto sp)
+        private async Task OpenStaffModal(ServicePointDto sp)
         {
-                _staffModalServicePointId = sp.Id;
-                _staffModalServicePointName = sp.Name;
-                _showStaffModal = true;
-        }
+                var parameters = new DialogParameters
+                {
+                        { nameof(StaffAssignmentModal.ServicePointId), sp.Id },
+                        { nameof(StaffAssignmentModal.ServicePointName), sp.Name }
+                };
 
-        private void CloseStaffModal()
-        {
-                _showStaffModal = false;
+                var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+                await DialogService.ShowAsync<StaffAssignmentModal>($"Staff for {sp.Name}", parameters, options);
         }
 
                 private void GoToServices(Guid id)

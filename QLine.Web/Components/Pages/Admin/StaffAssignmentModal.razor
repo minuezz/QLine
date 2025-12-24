@@ -3,103 +3,90 @@
 @using QLine.Application.Features.Admin.ServicePoints.Commands
 @using QLine.Application.Features.Admin.ServicePoints.Queries
 
-@if (Visible)
-{
-    <div class="modal-overlay" @onclick="CloseAsync">
-
-        <div class="modal-box" @onclick:stopPropagation="true">
-
-            <div class="modal-header-custom">
-                <h4>Staff for @ServicePointName</h4>
-                <button type="button" class="btn-close" aria-label="Close" @onclick="CloseAsync"></button>
-            </div>
+<MudDialog MaxWidth="MaxWidth.Medium" FullWidth="true" CloseOnEscapeKey="true">
+    <DialogContent>
+        <MudStack Spacing="2">
+            <MudText Typo="Typo.h6">Staff for @ServicePointName</MudText>
 
             <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
 
-            <div class="add-staff-panel">
-                <h5>Add Staff</h5>
-                <div class="add-controls">
-                    <select @bind="_selectedUserIdString" class="form-select" style="flex:1;">
-                        <option value="">-- Select Staff --</option>
-                        @foreach (var staff in _unassigned)
-                        {
-                            <option value="@staff.Id">@staff.Name (@staff.Email)</option>
-                        }
-                    </select>
-                    <button class="btn btn-primary" @onclick="AssignAsync" disabled="@string.IsNullOrWhiteSpace(_selectedUserIdString)">
-                        Assign
-                    </button>
-                </div>
-            </div>
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle1">Add Staff</MudText>
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudSelect T="Guid?" Label="Select Staff" @bind-Value="_selectedUserId" Dense="true" Searchable="true" Clearable="true" FullWidth="true">
+                            @foreach (var staff in _unassigned)
+                            {
+                                <MudSelectItem Value="staff.Id">@staff.Name (@staff.Email)</MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_selectedUserId is null" OnClick="AssignAsync">
+                            Assign
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
 
-            <div class="assigned-section">
-                <h5>Assigned Staff</h5>
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.subtitle1">Assigned Staff</MudText>
 
                 @if (_assigned.Count == 0)
                 {
-                    <p class="text-muted text-center py-2">(none)</p>
+                    <MudText Color="Color.TextSecondary">(none)</MudText>
                 }
                 else
                 {
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th style="text-align:left;">Name</th>
-                                <th style="text-align:left;">Email</th>
-                                <th style="width:50px;"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var staff in _assigned)
-                            {
-                                <tr>
-                                    <td>@staff.Name</td>
-                                    <td class="text-muted email-text">@staff.Email</td>
-                                    <td>
-                                        <button class="btn btn-outline-danger btn-sm" @onclick="() => UnassignAsync(staff.Id)" title="Remove">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                    <MudList Dense="true">
+                        @foreach (var staff in _assigned)
+                        {
+                            <MudListItem>
+                                <MudListItemText>
+                                    <MudText>@staff.Name</MudText>
+                                    <MudText Typo="Typo.caption" Color="Color.TextSecondary">@staff.Email</MudText>
+                                </MudListItemText>
+                                <MudListItemIcon>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete" Color="Color.Error" Title="Remove" OnClick="() => UnassignAsync(staff.Id)" />
+                                </MudListItemIcon>
+                            </MudListItem>
+                        }
+                    </MudList>
                 }
-            </div>
-
-        </div>
-    </div>
-}
+            </MudStack>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="CloseAsync">Close</MudButton>
+    </DialogActions>
+</MudDialog>
 
 @code {
-    [Parameter] public bool Visible { get; set; }
     [Parameter] public Guid ServicePointId { get; set; }
     [Parameter] public string? ServicePointName { get; set; }
-    [Parameter] public EventCallback OnClose { get; set; }
+
+    [CascadingParameter] MudDialogInstance MudDialog { get; set; } = default!;
 
     [Inject] public IMediator Mediator { get; set; } = default!;
 
     private List<StaffDto> _assigned = new();
     private List<StaffDto> _unassigned = new();
     private Guid? _currentServicePointId;
-    private string? _selectedUserIdString;
+    private Guid? _selectedUserId;
     private string? _errorMessage;
     private List<string>? _errorDetails;
 
     protected override async Task OnParametersSetAsync()
     {
-        if (!Visible) return;
         if (_currentServicePointId != ServicePointId)
         {
             _currentServicePointId = ServicePointId;
-            _selectedUserIdString = null;
+            _selectedUserId = null;
         }
+
         await LoadAsync();
     }
 
     private async Task LoadAsync()
     {
-        if (!Visible) return;
         try
         {
             _errorMessage = null; _errorDetails = null;
@@ -114,12 +101,12 @@
 
     private async Task AssignAsync()
     {
-        if (string.IsNullOrWhiteSpace(_selectedUserIdString)) return;
-        if (!Guid.TryParse(_selectedUserIdString, out var userId)) return;
+        if (_selectedUserId is null) return;
+
         try
         {
-            await Mediator.Send(new AssignStaffCommand(ServicePointId, userId));
-            _selectedUserIdString = null;
+            await Mediator.Send(new AssignStaffCommand(ServicePointId, _selectedUserId.Value));
+            _selectedUserId = null;
             await LoadAsync();
             StateHasChanged();
         }
@@ -143,9 +130,5 @@
         }
     }
 
-    private async Task CloseAsync()
-    {
-        if (OnClose.HasDelegate)
-            await OnClose.InvokeAsync();
-    }
+    private void CloseAsync() => MudDialog.Cancel();
 }
