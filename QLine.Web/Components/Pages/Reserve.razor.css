@@ -1,11 +1,4 @@
-﻿.slots-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-    gap: 8px;
-    margin-top: 8px;
-}
-
-.qr-wrapper {
+﻿.qr-wrapper {
     margin-top: 16px;
     padding: 12px;
     border: 1px solid #ddd;
@@ -22,4 +15,49 @@
 .qr-helper {
     margin-top: 8px;
     margin-bottom: 0;
+}
+
+.reservation-container {
+    padding: 24px 0;
+}
+
+.section {
+    padding: 16px;
+    border-radius: 12px;
+}
+
+.service-grid {
+    margin-top: 8px;
+}
+
+.service-card {
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.service-card:hover {
+    border-color: rgba(25, 118, 210, 0.4);
+}
+
+.service-card--selected {
+    border-color: rgb(25, 118, 210);
+    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12);
+}
+
+.full-width-picker {
+    width: 100%;
+}
+
+.slot-chip {
+    margin: 4px;
+}
+
+.summary {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.success-view {
+    padding: 8px;
 }
