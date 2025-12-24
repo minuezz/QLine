@@ -224,8 +224,8 @@
                         obj[r.Key] = new JsonObject
                         {
                                 ["open"] = r.Open,
-                                ["start"] = r.Opening.ToString(@"hh\\:mm"),
-                                ["end"] = r.Closing.ToString(@"hh\\:mm")
+                                ["start"] = r.Opening.ToString(@"hh\:mm"),
+                                ["end"] = r.Closing.ToString(@"hh\:mm")
                         };
                 }
                 await ValueChanged.InvokeAsync(obj.ToJsonString());

@@ -56,8 +56,10 @@
                 </MudTooltip>
             </MudTd>
         </RowTemplate>
+        <PagerContent>
+            <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
+        </PagerContent>
     </MudTable>
-    <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
 </MudStack>
 
 @code {

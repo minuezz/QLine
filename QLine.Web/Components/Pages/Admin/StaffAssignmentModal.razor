@@ -6,8 +6,6 @@
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
-            <MudText Typo="Typo.h6">Staff for @ServicePointName</MudText>
-
             <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
 
             <MudPaper Class="pa-4" Elevation="1">
@@ -17,7 +15,9 @@
                         <MudSelect T="Guid?" Label="Select Staff" @bind-Value="_selectedUserId" Dense="true" Clearable="true" FullWidth="true">
                             @foreach (var staff in _unassigned)
                             {
-                                <MudSelectItem Value="staff.Id">@staff.Name (@staff.Email)</MudSelectItem>
+                                <MudSelectItem T="Guid?" Value="@((Guid?)staff.Id)">
+                                    @staff.Name (@staff.Email)
+                                </MudSelectItem>
                             }
                         </MudSelect>
                         <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_selectedUserId is null" OnClick="AssignAsync">

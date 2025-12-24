@@ -1,6 +1,7 @@
 @inherits LayoutComponentBase
 @using Microsoft.AspNetCore.Components.Authorization
 @inject NavigationManager NavManager
+@inject IJSRuntime JS
 
 <MudThemeProvider Theme="@CurrentTheme" IsDarkMode="@isDarkMode" />
 <MudDialogProvider />
@@ -13,7 +14,11 @@
         <MudText Typo="Typo.h5" Class="font-weight-bold ml-2">QLine</MudText>
         <MudSpacer />
         <MudTooltip Text="Toggle light/dark mode">
-            <MudToggleIconButton @bind-Toggled="isDarkMode" Color="Color.Inherit" Icon="@Icons.Material.Filled.LightMode" ToggledIcon="@Icons.Material.Filled.DarkMode" />
+            <MudToggleIconButton Toggled="@isDarkMode"
+                                 ToggledChanged="ToggleTheme"
+                                 Color="Color.Inherit"
+                                 Icon="@Icons.Material.Filled.LightMode"
+                                 ToggledIcon="@Icons.Material.Filled.DarkMode" />
         </MudTooltip>
 
         <AuthorizeView>
@@ -102,10 +107,31 @@
 
     private bool isDarkMode;
     private bool drawerOpen = true;
+    private bool _isThemeLoaded = false;
 
     private MudTheme CurrentTheme => isDarkMode ? darkTheme : lightTheme;
 
     private void ToggleDrawer() => drawerOpen = !drawerOpen;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var storedTheme = await JS.InvokeAsync<string>("localStorage.getItem", "theme");
+            if (!string.IsNullOrEmpty(storedTheme))
+            {
+                isDarkMode = storedTheme == "dark";
+                _isThemeLoaded = true;
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task ToggleTheme(bool value)
+    {
+        isDarkMode = value;
+        await JS.InvokeVoidAsync("localStorage.setItem", "theme", isDarkMode ? "dark" : "light");
+    }
 
     private static string GetInitials(string? name)
     {

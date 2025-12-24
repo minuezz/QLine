@@ -58,10 +58,6 @@
                         }
                     </MudSelect>
                     <MudSpacer />
-                    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CallNextAsync" Disabled="_isProcessing">
-                        <MudIcon Icon="@Icons.Material.Filled.NextPlan" Class="mr-1" />
-                        Call Next
-                    </MudButton>
                 </MudStack>
             </MudPaper>
 
@@ -80,7 +76,13 @@
                             }
                             else if (_snapshot.Current is null)
                             {
-                                <MudText Typo="Typo.subtitle1" Color="Color.Secondary">No ticket in service.</MudText>
+                                <MudStack Spacing="2" AlignItems="AlignItems.Center" Class="py-4">
+                                    <MudText Typo="Typo.h6" Color="Color.Secondary">No ticket in service.</MudText>
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="CallNextAsync" Disabled="_isProcessing">
+                                        <MudIcon Icon="@Icons.Material.Filled.NextPlan" Class="mr-1" />
+                                        Call Next Customer
+                                    </MudButton>
+                                </MudStack>
                             }
                             else
                             {
@@ -99,10 +101,6 @@
                                     </MudPaper>
 
                                     <MudStack Row="true" Spacing="2">
-                                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="CallNextAsync" Disabled="_isProcessing">
-                                            <MudIcon Icon="@Icons.Material.Filled.NextPlan" Class="mr-1" />
-                                            Call Next
-                                        </MudButton>
                                         <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large" Disabled="_snapshot.Current is null || _isProcessing" OnClick="() => MarkDoneAsync(_snapshot.Current!.Id)">
                                             <MudIcon Icon="@Icons.Material.Filled.Check" Class="mr-1" />
                                             Done

@@ -7,7 +7,6 @@
 <MudDialog>
     <DialogContent>
         <MudStack Spacing="2">
-            <MudText Typo="Typo.h6">@(_servicePointId is null ? "Create Service Point" : "Edit Service Point")</MudText>
             <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
             <EditForm Model="this" OnValidSubmit="SaveAsync">
                 <MudStack Spacing="2">

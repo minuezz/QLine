@@ -89,8 +89,10 @@
                 <NoRecordsContent>
                     <MudText Typo="Typo.subtitle2" Color="Color.Secondary">No users found.</MudText>
                 </NoRecordsContent>
+                <PagerContent>
+                    <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
+                </PagerContent>
             </MudTable>
-            <MudTablePager PageSizeOptions="new int[] { 5, 10, 20 }" />
         </MudPaper>
     }
 </MudStack>
