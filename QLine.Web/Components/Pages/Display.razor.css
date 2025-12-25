@@ -1,16 +1,13 @@
-﻿/* Глобальный контейнер */
-.display-board {
+﻿.display-board {
     display: grid;
-    /* ИЗМЕНЕНИЕ 1: Отдаем больше места "Now Serving" (72% против 28%) */
     grid-template-columns: 72fr 28fr;
     height: 100vh;
-    gap: 24px; /* Чуть уменьшили gap, чтобы сэкономить место */
-    padding: 24px; /* Чуть уменьшили padding края */
+    gap: 24px;
+    padding: 24px;
     box-sizing: border-box;
     background-color: #212529;
 }
 
-/* Общие стили */
 .now-serving,
 .up-next {
     border-radius: 24px;
@@ -21,16 +18,13 @@
     overflow: hidden;
 }
 
-/* === ЛЕВАЯ ПАНЕЛЬ (NOW SERVING) === */
 .now-serving {
     background: linear-gradient(135deg, #0d6efd, #00387a);
     color: #fff;
     position: relative;
-    /* Центрируем контент */
     justify-content: center;
 }
 
-    /* Хедер левой панели прибиваем к верху абсолютно, чтобы не мешал центру */
     .now-serving .section-header {
         position: absolute;
         top: 32px;
@@ -46,7 +40,7 @@
 .section-label {
     text-transform: uppercase;
     font-weight: 800;
-    font-size: 2.5rem; /* Чуть меньше, чтобы не спорить с номером */
+    font-size: 2.5rem;
     letter-spacing: 4px;
     opacity: 0.9;
     line-height: 1;
@@ -60,24 +54,20 @@
     border-radius: 8px;
 }
 
-/* ИЗМЕНЕНИЕ 2: Номер билета */
 .ticket-number {
-    margin-top: 60px; /* Компенсация хедера */
+    margin-top: 60px;
     text-align: center;
-    /* ГЛАВНОЕ: 13vw идеально вписывает 9 символов (XXXX-YYYY) в 72% экрана */
-    font-size: 13vw;
+    font-size: 10vw;
     font-weight: 900;
-    letter-spacing: -2px; /* Чуть плотнее */
+    letter-spacing: -2px;
     line-height: 1;
     text-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    white-space: nowrap; /* Запрещаем перенос строки */
+    white-space: nowrap;
 }
 
-/* === ПРАВАЯ ПАНЕЛЬ (UP NEXT) === */
 .up-next {
     background: #e9ecef;
     color: #212529;
-    /* ИЗМЕНЕНИЕ 3: Уменьшаем внутренние отступы, так как колонка стала уже */
     padding: 24px;
 }
 
@@ -89,7 +79,7 @@
 
     .up-next .section-label {
         color: #495057;
-        font-size: 2rem; /* Чуть компактнее заголовок */
+        font-size: 2rem;
     }
 
 .up-next-list {
@@ -98,15 +88,14 @@
     margin: 0;
     display: flex;
     flex-direction: column;
-    gap: 12px; /* Чуть плотнее список */
+    gap: 12px;
     flex-grow: 1;
 }
 
 .up-next-item {
     background: #fff;
     border-radius: 12px;
-    padding: 16px 20px; /* Компактнее */
-    /* Размер шрифта списка тоже привязываем к ширине, но мягче */
+    padding: 16px 20px;
     font-size: clamp(1.5rem, 3vw, 3rem);
     font-weight: 800;
     color: #212529;
@@ -116,7 +105,6 @@
     border-left: 8px solid #adb5bd;
 }
 
-/* Плейсхолдеры и прочее */
 .now-serving-placeholder {
     margin: auto;
     display: flex;
@@ -160,7 +148,6 @@
     }
 }
 
-/* Мобильная версия */
 @media (max-width: 992px) {
     .display-board {
         grid-template-columns: 1fr;
@@ -170,7 +157,7 @@
     }
 
     .ticket-number {
-        font-size: 18vw; /* На мобильном можно крупнее */
+        font-size: 18vw;
         margin-top: 0;
     }
 

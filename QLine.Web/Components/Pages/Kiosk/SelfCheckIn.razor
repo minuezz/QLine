@@ -9,12 +9,10 @@
 
 <div class="kiosk-screen">
     <MudFab Class="nav-fab"
-            Variant="Variant.Filled"
             Color="Color.Primary"
             StartIcon="@Icons.Material.Filled.Home"
-            OnClick="NavigateHome">
-        Home
-    </MudFab>
+            Label="Home"
+            OnClick="NavigateHome" />
 
     <div class="kiosk-panel">
         @if (_checkInSuccessful)

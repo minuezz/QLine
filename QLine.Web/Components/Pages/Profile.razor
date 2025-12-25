@@ -38,9 +38,9 @@
 
     @if (_user is null)
     {
-        <MudStack AlignItems="Center" Class="my-6">
+        <MudStack Class="my-6 align-center">
             <MudProgressCircular Indeterminate Color="Color.Primary" />
-            <MudText Color="Color.TextSecondary">Loading profile...</MudText>
+            <MudText Color="Color.Secondary">Loading profile...</MudText>
         </MudStack>
     }
     else
@@ -48,11 +48,13 @@
         <MudTabs Centered="true" Rounded="true" Elevation="1">
             <MudTabPanel Text="My Profile">
                 <MudCard Class="p-4 mb-4">
-                    <MudStack Row="true" Spacing="2" AlignItems="Center" Class="mb-4">
-                        <MudAvatar Color="Color.Primary" Size="Size.Large" Rounded="true" Text="@GetInitials()" />
+                    <MudStack Row="true" Spacing="2" Class="mb-4 align-center">
+                        <MudAvatar Color="Color.Primary" Size="Size.Large" Rounded="true">
+                            @GetInitials()
+                        </MudAvatar>
                         <MudStack>
                             <MudText Typo="Typo.h6">@_user.FullName</MudText>
-                            <MudText Color="Color.TextSecondary">@_user.Email</MudText>
+                            <MudText Color="Color.Secondary">@_user.Email</MudText>
                         </MudStack>
                     </MudStack>
 
@@ -62,13 +64,6 @@
                                           Label="Full Name"
                                           Variant="Variant.Outlined"
                                           Placeholder="Enter your name"
-                                          ReadOnly="true" />
-                        </MudItem>
-                        <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_phoneNumber"
-                                          Label="Phone"
-                                          Variant="Variant.Outlined"
-                                          Placeholder="Add a phone number"
                                           ReadOnly="true" />
                         </MudItem>
                         <MudItem xs="12">
@@ -91,27 +86,43 @@
                     <MudCollapse Expanded="_showChangePassword" Class="mt-3">
                         <form method="post" action="/account/change-password" data-enhance="false">
                             <MudGrid Spacing="2">
+
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField Name="password"
+                                    <MudTextField T="string"
+                                                  @bind-Value="_password"
                                                   Label="Current Password"
                                                   InputType="InputType.Password"
                                                   Variant="Variant.Outlined"
-                                                  Required="true" />
+                                                  Required="true"
+                                                  Immediate="true" />
+
+                                    <input type="hidden" name="password" value="@_password" />
                                 </MudItem>
+
                                 <MudItem xs="12" sm="6">
-                                    <MudTextField Name="newPassword"
+                                    <MudTextField T="string"
+                                                  @bind-Value="_newPassword"
                                                   Label="New Password"
                                                   InputType="InputType.Password"
                                                   Variant="Variant.Outlined"
-                                                  Required="true" />
+                                                  Required="true"
+                                                  Immediate="true" />
+
+                                    <input type="hidden" name="newPassword" value="@_newPassword" />
                                 </MudItem>
+
                                 <MudItem xs="12">
-                                    <MudTextField Name="confirmPassword"
+                                    <MudTextField T="string"
+                                                  @bind-Value="_confirmPassword"
                                                   Label="Confirm New Password"
                                                   InputType="InputType.Password"
                                                   Variant="Variant.Outlined"
-                                                  Required="true" />
+                                                  Required="true"
+                                                  Immediate="true" />
+
+                                    <input type="hidden" name="confirmPassword" value="@_confirmPassword" />
                                 </MudItem>
+
                                 <MudItem xs="12">
                                     <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
                                         Save
@@ -132,7 +143,7 @@
                     }
                     else if (!UpcomingReservations.Any())
                     {
-                        <MudText Color="Color.TextSecondary">No upcoming reservations.</MudText>
+                        <MudText Color="Color.Secondary">No upcoming reservations.</MudText>
                     }
                     else
                     {
@@ -147,11 +158,11 @@
                                                     <UtcDate Value="@reservation.StartTime" />
                                                 </MudChip>
                                                 <MudText Typo="Typo.h6">@reservation.ServiceName</MudText>
-                                                <MudText Color="Color.TextSecondary">@reservation.ServicePointName</MudText>
+                                                <MudText Color="Color.Secondary">@reservation.ServicePointName</MudText>
                                                 <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Class="mt-1">
                                                     Ticket: @(reservation.TicketNo ?? "-")
                                                 </MudChip>
-                                                <MudText Typo="Typo.caption" Color="Color.TextSecondary" Class="text-monospace">
+                                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="text-monospace">
                                                     @reservation.Id
                                                 </MudText>
                                             </MudStack>
@@ -183,7 +194,7 @@
                     <MudText Typo="Typo.subtitle1" Class="mt-4">History</MudText>
                     @if (!PastReservations.Any() && !_loadingReservations)
                     {
-                        <MudText Color="Color.TextSecondary">No past reservations.</MudText>
+                        <MudText Color="Color.Secondary">No past reservations.</MudText>
                     }
                     else
                     {
@@ -219,13 +230,15 @@
 
             <form method="post" action="/account/delete" data-enhance="false">
                 <MudStack Spacing="3">
-                    <MudTextField Name="password"
+                    <MudTextField T="string"
+                                  @bind-Value="_password"
                                   Label="Password"
                                   InputType="InputType.Password"
                                   Variant="Variant.Outlined"
                                   Required="true" />
-                    
-                    <MudStack Row="true" Justify="Justify.End">
+                    <input type="hidden" name="password" value="@_password" />
+
+                    <MudStack Row="true" Class="justify-end">
                         <MudButton OnClick="HideDeleteDialog">Cancel</MudButton>
                         <MudButton ButtonType="ButtonType.Submit" Color="Color.Error" Variant="Variant.Filled">Confirm Removal</MudButton>
                     </MudStack>
@@ -250,12 +263,17 @@
     private DotNetObjectReference<Profile>? _dotNetRef;
     private readonly SemaphoreSlim _refreshGate = new(1, 1);
 
+    private string _password = "";
+    private string _currentPassword = "";
+    private string _newPassword = "";
+    private string _confirmPassword = "";
+
     protected override async Task OnInitializedAsync()
     {
         if (CurrentUser.UserId is Guid userId)
         {
             _user = await Users.GetByIdAsync(userId, CancellationToken.None);
-            _fullName = _user.FullName;
+            _fullName = _user?.FullName ?? string.Empty;
 
             await LoadReservations(userId);
         }

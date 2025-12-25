@@ -28,14 +28,14 @@
     }
     else
     {
-        <MudGrid GutterSize="GutterSize.Small">
+        <MudGrid Spacing="2">
             @foreach (var s in FilteredServices)
             {
                 <MudItem xs="12" sm="6" md="4">
                     <MudCard Class="mud-elevation-1 hover:mud-elevation-4 cursor-pointer" @onclick="() => GoToReserve(ServicePointId, s.Id)">
                         <MudCardContent>
                             <MudText Typo="Typo.h6" Class="font-weight-bold">@s.Name</MudText>
-                            <MudText Color="Color.TextSecondary">Duration: @s.DurationMin min, Buffer: @s.BufferMin min</MudText>
+                            <MudText Color="Color.Secondary">Duration: @s.DurationMin min, Buffer: @s.BufferMin min</MudText>
                         </MudCardContent>
                     </MudCard>
                 </MudItem>

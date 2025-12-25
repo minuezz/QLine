@@ -31,10 +31,10 @@
                 <MudCardContent>
                     <MudText Typo="Typo.h5" GutterBottom="true">Open Display Board</MudText>
                     <MudText Typo="Typo.subtitle1" Class="mb-4">Select a service point to launch its display.</MudText>
-                    <MudSelect T="Guid?" Label="Service Point" @bind-Value="_selectedServicePoint" Dense="false" FullWidth="true" Required="true" DisableUnderline="true">
+                    <MudSelect T="Guid?" Label="Service Point" @bind-Value="_selectedServicePoint" Dense="false" FullWidth="true" Required="true" Underline="false">
                         @foreach (var sp in _servicePoints)
                         {
-                            <MudSelectItem Value="@sp.Id">@sp.Name (@sp.Address)</MudSelectItem>
+                            <MudSelectItem T="Guid?" Value="@sp.Id">@sp.Name (@sp.Address)</MudSelectItem>
                         }
                     </MudSelect>
                 </MudCardContent>
@@ -75,31 +75,3 @@
         }
     }
 }
-
-<style>
-    .display-selection-wrapper {
-        min-height: calc(100vh - 120px);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 32px 16px;
-    }
-
-    .display-selection-card {
-        padding: 12px 12px 4px;
-        border-radius: 16px;
-    }
-
-    .display-selection-actions {
-        padding: 0 16px 16px;
-    }
-
-    .display-selection-loading {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 48px 0;
-        gap: 8px;
-    }
-</style>

@@ -29,14 +29,14 @@
     }
     else
     {
-        <MudGrid GutterSize="GutterSize.Small">
+        <MudGrid Spacing="2">
             @foreach (var sp in FilteredServicePoints)
             {
                 <MudItem xs="12" sm="6" md="4">
                     <MudCard Class="mud-elevation-1 hover:mud-elevation-4 cursor-pointer" @onclick="() => GoToServices(sp.Id)">
                         <MudCardContent>
                             <MudText Typo="Typo.h6" Class="font-weight-bold">@sp.Name</MudText>
-                            <MudText Color="Color.TextSecondary">@sp.Address</MudText>
+                            <MudText Color="Color.Secondary">@sp.Address</MudText>
                         </MudCardContent>
                     </MudCard>
                 </MudItem>

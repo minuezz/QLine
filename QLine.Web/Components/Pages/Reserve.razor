@@ -8,329 +8,364 @@
 @using QRCoder
 @inject IMediator Mediator
 
-<MudContainer MaxWidth="MaxWidth.Small" Class="reservation-container">
-        @if (_created is null)
-        {
-                <MudStack Spacing="3">
-                        <MudText Typo="Typo.h4">Create Reservation</MudText>
+<MudContainer MaxWidth="MaxWidth.Large" Class="reservation-container">
+    @if (_created is null)
+    {
+        <MudText Typo="Typo.h4" Class="mb-4">Create Reservation</MudText>
 
-                        <MudPaper Elevation="1" Class="section">
-                                <MudText Typo="Typo.subtitle1" GutterBottom>Choose a service</MudText>
+        <MudGrid Spacing="4">
+            <MudItem xs="12" md="8">
+                <MudStack Spacing="4">
 
-                                @if (_isLoadingServices)
-                                {
-                                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                                }
-                                else if (_services.Count == 0)
-                                {
-                                        <MudText>No services available for this service point.</MudText>
-                                }
-                                else
-                                {
-                                        <MudGrid Class="service-grid" Spacing="2">
-                                                @foreach (var service in _services)
-                                                {
-                                                        <MudItem xs="12" sm="6">
-                                                                <MudCard Class="@($"service-card {(ReferenceEquals(_selectedService, service) ? "service-card--selected" : string.Empty)}")"
-                                                                            Outlined="true"
-                                                                            @onclick="() => SelectServiceAsync(service)">
-                                                                        <MudCardContent>
-                                                                                <MudText Typo="Typo.subtitle1">@service.Name</MudText>
-                                                                                <MudText Typo="Typo.body2" Color="Color.Secondary">@service.DurationMin min</MudText>
-                                                                        </MudCardContent>
-                                                                </MudCard>
-                                                        </MudItem>
-                                                }
-                                        </MudGrid>
-                                }
-                        </MudPaper>
+                    <MudPaper Elevation="1" Class="section">
+                        <MudText Typo="Typo.subtitle1" GutterBottom>Choose a service</MudText>
 
-                        <MudPaper Elevation="1" Class="section">
-                                <MudText Typo="Typo.subtitle1" GutterBottom>Select a date</MudText>
-                                <MudDatePicker Date="@_selectedDate"
-                                              DateChanged="OnDateChanged"
-                                              PickerVariant="PickerVariant.Static"
-                                              MinDate="@DateTime.Today"
-                                              ShowToolbar="false"
-                                              Class="full-width-picker" />
-                        </MudPaper>
-
-                        <MudPaper Elevation="1" Class="section">
-                                <MudText Typo="Typo.subtitle1" GutterBottom>Available time slots</MudText>
-                                @if (_isLoadingSlots)
-                                {
-                                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                                }
-                                else if (_availableSlots.Count == 0)
-                                {
-                                        <MudText>No available slots for the selected date.</MudText>
-                                }
-                                else
-                                {
-                                        <MudChipSet T="string" SelectionMode="SelectionMode.SingleSelection">
-                                                @foreach (var slot in _availableSlots)
-                                                {
-                                                        <MudChip T="string"
-                                                                 Color="@(ReferenceEquals(_selectedSlot, slot) ? Color.Primary : Color.Default)"
-                                                                 Variant="@(ReferenceEquals(_selectedSlot, slot) ? Variant.Filled : Variant.Outlined)"
-                                                                 Ripple="true"
-                                                                 OnClick="() => SelectSlot(slot)"
-                                                                 Disabled="@(!slot.IsAvailable)"
-                                                                 Class="slot-chip">
-                                                                @slot.Start.ToString("hh\\:mm")
-                                                        </MudChip>
-                                                }
-                                        </MudChipSet>
-                                }
-                        </MudPaper>
-
-                        <MudPaper Elevation="1" Class="section summary">
-    <MudText Typo="Typo.subtitle1" GutterBottom>Reservation summary</MudText>
-    
-    <MudList T="string" Dense="true">
-        
-        <MudListItem T="string">
-            <div class="d-flex align-center">
-                <MudIcon Icon="@Icons.Material.Filled.HomeRepairService" Class="mr-3" Color="Color.Default" />
-                <div>
-                    <MudText Typo="Typo.body2">Service</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        @(_selectedService?.Name ?? "Select a service")
-                    </MudText>
-                </div>
-            </div>
-        </MudListItem>
-
-        <MudListItem T="string">
-            <div class="d-flex align-center">
-                <MudIcon Icon="@Icons.Material.Filled.Today" Class="mr-3" Color="Color.Default" />
-                <div>
-                    <MudText Typo="Typo.body2">Date</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        @_selectedDate.ToString("dddd, MMM d")
-                    </MudText>
-                </div>
-            </div>
-        </MudListItem>
-
-        <MudListItem T="string">
-            <div class="d-flex align-center">
-                <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="mr-3" Color="Color.Default" />
-                <div>
-                    <MudText Typo="Typo.body2">Time</MudText>
-                    <MudText Typo="Typo.body2" Color="Color.Secondary">
-                        @(_selectedSlot is null ? "Select a slot" : _selectedSlot.Start.ToString("hh\\:mm"))
-                    </MudText>
-                </div>
-            </div>
-        </MudListItem>
-
-    </MudList>
-
-    <MudButton Variant="Variant.Filled"
-               Color="Color.Primary"
-               Disabled="@(_selectedSlot is null || _selectedService is null)"
-               OnClick="SubmitAsync"
-               FullWidth="true"
-               Size="Size.Large">
-        Confirm Reservation
-    </MudButton>
-</MudPaper>
-
-                        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                        @if (_isLoadingServices)
                         {
-                                <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+                            <div class="d-flex justify-center pa-4">
+                                <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                            </div>
                         }
-                </MudStack>
-        }
-        else
-        {
-                <MudStack Spacing="2" Class="success-view">
-                        <MudText Typo="Typo.h4">@(_isReschedule ? "Reservation Rescheduled" : "Reservation Created")</MudText>
-                        <MudText><strong>Start:</strong> <UtcDate Value="@_created.StartTime" /></MudText>
-
-                        @if (_isReschedule)
+                        else if (_services.Count == 0)
                         {
-                                <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/profile">Back to profile</MudButton>
-                        }
-
-                        @if (!string.IsNullOrEmpty(_qrCodeBase64))
-                        {
-                                <div class="qr-wrapper">
-                                        <img src="data:image/png;base64,@_qrCodeBase64" alt="Reservation QR Code" class="qr-image" />
-                                        <p class="qr-helper">Please scan this code at the kiosk upon arrival.</p>
-                                        <span class="qr-helper"><strong>Reservation ID for manual entry:</strong>
-                                                <p class="user-select-all"> @_created?.Id</p>
-                                        </span>
-                                </div>
-                        }
-                </MudStack>
-        }
-</MudContainer>
-
-@code {
-        [Parameter] public Guid ServicePointId { get; set; }
-        [Parameter] public Guid ServiceId { get; set; }
-        [Parameter, SupplyParameterFromQuery] public Guid? RescheduleId { get; set; }
-
-        private DateTime _selectedDate = DateTime.Today;
-        private List<ServiceDto> _services = new();
-        private ServiceDto? _selectedService;
-        private List<SlotDto> _availableSlots = new();
-        private SlotDto? _selectedSlot;
-        private bool _isLoadingServices;
-        private bool _isLoadingSlots;
-        private ReservationDto? _created;
-        private string? _errorMessage;
-        private List<string>? _errorDetails;
-        private string? _qrCodeBase64;
-        private bool _isReschedule => RescheduleId.HasValue;
-
-        protected override async Task OnInitializedAsync()
-        {
-                await LoadServicesAsync();
-        }
-
-        private async Task LoadServicesAsync()
-        {
-                _isLoadingServices = true;
-                _errorMessage = null;
-                _errorDetails = null;
-
-                try
-                {
-                        var services = await Mediator.Send(new GetServicesForServicePointQuery(ServicePointId));
-                        _services = services.ToList();
-                        _selectedService = _services.FirstOrDefault(s => s.Id == ServiceId) ?? _services.FirstOrDefault();
-
-                        if (_selectedService is null)
-                        {
-                                _availableSlots.Clear();
-                                _errorMessage = "No services available for this service point.";
-                                return;
-                        }
-
-                        ServiceId = _selectedService.Id;
-                        await LoadSlotsAsync();
-                }
-                catch (Exception ex)
-                {
-                        (_errorMessage, _errorDetails) = ex.ToUserMessage();
-                }
-                finally
-                {
-                        _isLoadingServices = false;
-                }
-        }
-
-        private async Task OnDateChanged(DateTime? date)
-        {
-                if (date is null)
-                        return;
-
-                _selectedDate = date.Value.Date;
-                await LoadSlotsAsync();
-        }
-
-        private async Task SelectServiceAsync(ServiceDto service)
-        {
-                _selectedService = service;
-                ServiceId = service.Id;
-                await LoadSlotsAsync();
-        }
-
-        private async Task LoadSlotsAsync()
-        {
-                if (_selectedService is null)
-                        return;
-
-                _errorMessage = null;
-                _errorDetails = null;
-                _selectedSlot = null;
-                _isLoadingSlots = true;
-
-                try
-                {
-                        var dateOnly = DateOnly.FromDateTime(_selectedDate);
-                        var slots = await Mediator.Send(new GetAvailableSlotsQuery(
-                                ServicePointId: ServicePointId,
-                                ServiceId: _selectedService.Id,
-                                Date: dateOnly));
-
-                        _availableSlots = slots.ToList();
-                }
-                catch (Exception ex)
-                {
-                        _availableSlots.Clear();
-                        (_errorMessage, _errorDetails) = ex.ToUserMessage();
-                }
-                finally
-                {
-                        _isLoadingSlots = false;
-                }
-        }
-
-        private void SelectSlot(SlotDto slot)
-        {
-                if (!slot.IsAvailable)
-                        return;
-
-                _selectedSlot = slot;
-        }
-
-        private async Task SubmitAsync()
-        {
-                try
-                {
-                        _errorMessage = null;
-                        _errorDetails = null;
-                        _qrCodeBase64 = null;
-
-                        if (_selectedService is null)
-                        {
-                                _errorMessage = "Please select a service.";
-                                return;
-                        }
-
-                        if (_selectedSlot is null || !_selectedSlot.IsAvailable)
-                        {
-                                _errorMessage = "Please select an available time slot.";
-                                return;
-                        }
-
-                        var startLocal = DateTime.SpecifyKind(_selectedDate.Date + _selectedSlot.Start, DateTimeKind.Local);
-                        var startTime = new DateTimeOffset(startLocal.ToUniversalTime());
-
-                        if (_isReschedule)
-                        {
-                                _created = await Mediator.Send(new RescheduleReservationCommand(
-                                        ReservationId: RescheduleId!.Value,
-                                        NewStartTime: startTime));
+                            <MudText>No services available for this service point.</MudText>
                         }
                         else
                         {
-                                var dto = await Mediator.Send(new CreateReservationCommand(
-                                        ServicePointId: ServicePointId,
-                                        ServiceId: _selectedService.Id,
-                                        StartTime: startTime
-                                ));
-
-                                _created = dto;
-                                _qrCodeBase64 = GenerateQrCode(dto.Id);
+                            <MudGrid Class="service-grid" Spacing="2">
+                                @foreach (var service in _services)
+                                {
+                                    <MudItem xs="12" sm="6" lg="4">
+                                        <MudCard Class="@($"service-card {(ReferenceEquals(_selectedService, service) ? "service-card--selected" : string.Empty)}")"
+                                                 Outlined="true"
+                                                 @onclick="() => SelectServiceAsync(service)">
+                                            <MudCardContent>
+                                                <MudText Typo="Typo.subtitle1">@service.Name</MudText>
+                                                <MudText Typo="Typo.body2" Color="Color.Secondary">@service.DurationMin min</MudText>
+                                            </MudCardContent>
+                                        </MudCard>
+                                    </MudItem>
+                                }
+                            </MudGrid>
                         }
-                }
-                catch (Exception ex)
-                {
-                        (_errorMessage, _errorDetails) = ex.ToUserMessage();
-                }
-        }
+                    </MudPaper>
 
-        private string GenerateQrCode(Guid reservationId)
+                    <MudGrid Spacing="4">
+                        <MudItem xs="12" lg="6">
+                            <MudPaper Elevation="1" Class="section h-100">
+                                <MudText Typo="Typo.subtitle1" GutterBottom>Select a date</MudText>
+                                <div class="d-flex justify-center">
+                                    <MudDatePicker Date="@_selectedDate"
+                                                   DateChanged="OnDateChanged"
+                                                   PickerVariant="PickerVariant.Static"
+                                                   MinDate="@DateTime.Today"
+                                                   ShowToolbar="false"
+                                                   Elevation="0"
+                                                   Class="rounded-picker" />
+                                </div>
+                            </MudPaper>
+                        </MudItem>
+
+                        <MudItem xs="12" lg="6">
+                            <MudPaper Elevation="1" Class="section h-100">
+                                <MudText Typo="Typo.subtitle1" GutterBottom>Available time slots</MudText>
+                                @if (_isLoadingSlots)
+                                {
+                                    <div class="d-flex justify-center pa-4">
+                                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
+                                    </div>
+                                }
+                                else if (_availableSlots.Count == 0)
+                                {
+                                    <MudText>No available slots for the selected date.</MudText>
+                                }
+                                else
+                                {
+                                    <MudChipSet T="string" SelectionMode="SelectionMode.SingleSelection" Class="slot-chipset">
+                                        @foreach (var slot in _availableSlots)
+                                        {
+                                            <MudChip T="string"
+                                                     Color="@(ReferenceEquals(_selectedSlot, slot) ? Color.Primary : Color.Default)"
+                                                     Variant="@(ReferenceEquals(_selectedSlot, slot) ? Variant.Filled : Variant.Outlined)"
+                                                     Ripple="true"
+                                                     OnClick="() => SelectSlot(slot)"
+                                                     Disabled="@(!slot.IsAvailable)"
+                                                     Class="slot-chip">
+                                                @slot.Start.ToString("hh\\:mm")
+                                            </MudChip>
+                                        }
+                                    </MudChipSet>
+                                }
+                            </MudPaper>
+                        </MudItem>
+                    </MudGrid>
+
+                </MudStack>
+            </MudItem>
+
+            <MudItem xs="12" md="4">
+                <MudPaper Elevation="3" Class="section summary sticky-summary">
+                    <MudText Typo="Typo.h6" GutterBottom>Reservation Summary</MudText>
+
+                    <MudList T="string" Dense="true" Padding="false">
+                        <MudListItem T="string">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Filled.HomeRepairService" Class="mr-3" Color="Color.Primary" />
+                                <div>
+                                    <MudText Typo="Typo.caption">Service</MudText>
+                                    <MudText Typo="Typo.body1" Style="font-weight: 500;">
+                                        @(_selectedService?.Name ?? "-")
+                                    </MudText>
+                                </div>
+                            </div>
+                        </MudListItem>
+                        <MudDivider />
+                        <MudListItem T="string">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-3" Color="Color.Primary" />
+                                <div>
+                                    <MudText Typo="Typo.caption">Date</MudText>
+                                    <MudText Typo="Typo.body1" Style="font-weight: 500;">
+                                        @_selectedDate.ToString("dddd, MMM d")
+                                    </MudText>
+                                </div>
+                            </div>
+                        </MudListItem>
+                        <MudDivider />
+                        <MudListItem T="string">
+                            <div class="d-flex align-center">
+                                <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="mr-3" Color="Color.Primary" />
+                                <div>
+                                    <MudText Typo="Typo.caption">Time</MudText>
+                                    <MudText Typo="Typo.body1" Style="font-weight: 500;">
+                                        @(_selectedSlot is null ? "-" : _selectedSlot.Start.ToString("hh\\:mm"))
+                                    </MudText>
+                                </div>
+                            </div>
+                        </MudListItem>
+                    </MudList>
+
+                    <div class="mt-4">
+                        @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                        {
+                            <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">@_errorMessage</MudAlert>
+                        }
+
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Disabled="@(_selectedSlot is null || _selectedService is null)"
+                                   OnClick="SubmitAsync"
+                                   FullWidth="true"
+                                   Size="Size.Large"
+                                   Class="py-3">
+                            Confirm
+                        </MudButton>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+    else
+    {
+        <MudGrid Justify="Justify.Center">
+            <MudItem xs="12" sm="8" md="6">
+                <MudPaper Class="section pa-8 d-flex flex-column align-center gap-4">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" Style="font-size: 4rem;" />
+
+                    <MudText Typo="Typo.h4" Align="Align.Center">@(_isReschedule ? "Rescheduled!" : "Confirmed!")</MudText>
+
+                    <MudText Typo="Typo.h6">
+                        <UtcDate Value="@_created.StartTime" />
+                    </MudText>
+
+                    @if (!string.IsNullOrEmpty(_qrCodeBase64))
+                    {
+                        <div class="qr-wrapper">
+                            <img src="data:image/png;base64,@_qrCodeBase64" alt="Reservation QR Code" class="qr-image" />
+                        </div>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">Scan at kiosk</MudText>
+
+                        <MudPaper Class="pa-2 mt-2" Outlined="true" Style="background-color: #f5f5f5;">
+                            <MudText Typo="Typo.h6" Class="user-select-all" Style="letter-spacing: 1px;">@_created?.Id</MudText>
+                        </MudPaper>
+                    }
+
+                    <div class="mt-4 d-flex gap-2">
+                        @if (_isReschedule)
+                        {
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="/profile">Back to Profile</MudButton>
+                        }
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/">Go Home</MudButton>
+                    </div>
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+</MudContainer>
+
+@code {
+    [Parameter] public Guid ServicePointId { get; set; }
+    [Parameter] public Guid ServiceId { get; set; }
+    [Parameter, SupplyParameterFromQuery] public Guid? RescheduleId { get; set; }
+
+    private DateTime _selectedDate = DateTime.Today;
+    private List<ServiceDto> _services = new();
+    private ServiceDto? _selectedService;
+    private List<SlotDto> _availableSlots = new();
+    private SlotDto? _selectedSlot;
+    private bool _isLoadingServices;
+    private bool _isLoadingSlots;
+    private ReservationDto? _created;
+    private string? _errorMessage;
+    private List<string>? _errorDetails;
+    private string? _qrCodeBase64;
+    private bool _isReschedule => RescheduleId.HasValue;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadServicesAsync();
+    }
+
+    private async Task LoadServicesAsync()
+    {
+        _isLoadingServices = true;
+        _errorMessage = null;
+        _errorDetails = null;
+
+        try
         {
-                using var generator = new QRCodeGenerator();
-                using var qrCodeData = generator.CreateQrCode(reservationId.ToString(), QRCodeGenerator.ECCLevel.Q);
-                var qrCode = new PngByteQRCode(qrCodeData);
-                var qrCodeBytes = qrCode.GetGraphic(20);
-                return Convert.ToBase64String(qrCodeBytes);
+            var services = await Mediator.Send(new GetServicesForServicePointQuery(ServicePointId));
+            _services = services.ToList();
+            _selectedService = _services.FirstOrDefault(s => s.Id == ServiceId) ?? _services.FirstOrDefault();
+
+            if (_selectedService is null)
+            {
+                _availableSlots.Clear();
+                _errorMessage = "No services available for this service point.";
+                return;
+            }
+
+            ServiceId = _selectedService.Id;
+            await LoadSlotsAsync();
         }
+        catch (Exception ex)
+        {
+            (_errorMessage, _errorDetails) = ex.ToUserMessage();
+        }
+        finally
+        {
+            _isLoadingServices = false;
+        }
+    }
+
+    private async Task OnDateChanged(DateTime? date)
+    {
+        if (date is null)
+            return;
+
+        _selectedDate = date.Value.Date;
+        await LoadSlotsAsync();
+    }
+
+    private async Task SelectServiceAsync(ServiceDto service)
+    {
+        _selectedService = service;
+        ServiceId = service.Id;
+        await LoadSlotsAsync();
+    }
+
+    private async Task LoadSlotsAsync()
+    {
+        if (_selectedService is null)
+            return;
+
+        _errorMessage = null;
+        _errorDetails = null;
+        _selectedSlot = null;
+        _isLoadingSlots = true;
+
+        try
+        {
+            var dateOnly = DateOnly.FromDateTime(_selectedDate);
+            var slots = await Mediator.Send(new GetAvailableSlotsQuery(
+                ServicePointId: ServicePointId,
+                ServiceId: _selectedService.Id,
+                Date: dateOnly));
+
+            _availableSlots = slots.ToList();
+        }
+        catch (Exception ex)
+        {
+            _availableSlots.Clear();
+            (_errorMessage, _errorDetails) = ex.ToUserMessage();
+        }
+        finally
+        {
+            _isLoadingSlots = false;
+        }
+    }
+
+    private void SelectSlot(SlotDto slot)
+    {
+        if (!slot.IsAvailable)
+            return;
+
+        _selectedSlot = slot;
+    }
+
+    private async Task SubmitAsync()
+    {
+        try
+        {
+            _errorMessage = null;
+            _errorDetails = null;
+            _qrCodeBase64 = null;
+
+            if (_selectedService is null)
+            {
+                _errorMessage = "Please select a service.";
+                return;
+            }
+
+            if (_selectedSlot is null || !_selectedSlot.IsAvailable)
+            {
+                _errorMessage = "Please select an available time slot.";
+                return;
+            }
+
+            var startLocal = DateTime.SpecifyKind(_selectedDate.Date + _selectedSlot.Start, DateTimeKind.Local);
+            var startTime = new DateTimeOffset(startLocal.ToUniversalTime());
+
+            if (_isReschedule)
+            {
+                _created = await Mediator.Send(new RescheduleReservationCommand(
+                    ReservationId: RescheduleId!.Value,
+                    NewStartTime: startTime));
+            }
+            else
+            {
+                var dto = await Mediator.Send(new CreateReservationCommand(
+                    ServicePointId: ServicePointId,
+                    ServiceId: _selectedService.Id,
+                    StartTime: startTime
+                ));
+
+                _created = dto;
+                _qrCodeBase64 = GenerateQrCode(dto.Id);
+            }
+        }
+        catch (Exception ex)
+        {
+            (_errorMessage, _errorDetails) = ex.ToUserMessage();
+        }
+    }
+
+    private string GenerateQrCode(Guid reservationId)
+    {
+        using var generator = new QRCodeGenerator();
+        using var qrCodeData = generator.CreateQrCode(reservationId.ToString(), QRCodeGenerator.ECCLevel.Q);
+        var qrCode = new PngByteQRCode(qrCodeData);
+        var qrCodeBytes = qrCode.GetGraphic(20);
+        return Convert.ToBase64String(qrCodeBytes);
+    }
 }

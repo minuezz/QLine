@@ -7,74 +7,82 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 <MudPopoverProvider />
+@if(_isThemeLoaded) 
+{
+    <MudLayout>
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudText Typo="Typo.h5" Class="font-weight-bold ml-2">QLine</MudText>
+            <MudSpacer />
+            <MudTooltip Text="Toggle light/dark mode">
+                <MudToggleIconButton Toggled="@isDarkMode"
+                                     ToggledChanged="ToggleTheme"
+                                     Color="Color.Inherit"
+                                     Icon="@Icons.Material.Filled.LightMode"
+                                     ToggledIcon="@Icons.Material.Filled.DarkMode" />
+            </MudTooltip>
 
-<MudLayout>
-    <MudAppBar Elevation="1">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-        <MudText Typo="Typo.h5" Class="font-weight-bold ml-2">QLine</MudText>
-        <MudSpacer />
-        <MudTooltip Text="Toggle light/dark mode">
-            <MudToggleIconButton Toggled="@isDarkMode"
-                                 ToggledChanged="ToggleTheme"
-                                 Color="Color.Inherit"
-                                 Icon="@Icons.Material.Filled.LightMode"
-                                 ToggledIcon="@Icons.Material.Filled.DarkMode" />
-        </MudTooltip>
-
-        <AuthorizeView>
-            <Authorized Context="authContext">
-                <MudMenu Color="Color.Inherit" Dense="true" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
-                    <ActivatorContent>
-                        <MudStack Row="true" AlignItems="AlignItems.Center" Class="cursor-pointer">
-                            <MudAvatar Size="Size.Medium" Color="Color.Primary">@GetInitials(authContext.User.Identity?.Name)</MudAvatar>
-                            <MudText Class="ml-2 font-weight-semibold">@authContext.User.Identity?.Name</MudText>
-                            <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" />
-                        </MudStack>
-                    </ActivatorContent>
-                    <ChildContent>
-                        <MudMenuItem Href="/profile" Icon="@Icons.Material.Filled.Person">Profile</MudMenuItem>
-                        <MudMenuItem OnClick="Logout" Icon="@Icons.Material.Filled.Logout">Logout</MudMenuItem>
-                    </ChildContent>
-                </MudMenu>
-            </Authorized>
-            <NotAuthorized>
-                <MudStack Row="true" Spacing="2">
-                    <MudButton Href="/login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
-                    <MudButton Href="/register" Variant="Variant.Filled" Color="Color.Secondary">Register</MudButton>
-                </MudStack>
-            </NotAuthorized>
-        </AuthorizeView>
-    </MudAppBar>
-
-    <MudDrawer Variant="DrawerVariant.Responsive" @bind-Open="drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
-        <MudNavMenu>
-            <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
-            <MudNavLink Href="counter" Icon="@Icons.Material.Filled.Calculate">Counter</MudNavLink>
-            <MudNavLink Href="service-points" Icon="@Icons.Material.Filled.Store">Service Points</MudNavLink>
-
-            <AuthorizeView Roles="Staff, Admin">
-                <Authorized>
-                    <MudText Typo="Typo.subtitle2" Color="Color.Default" Class="ml-4 mt-4 mb-2">Staff Zone</MudText>
-                    <MudNavLink Href="display" Icon="@Icons.Material.Filled.Tv">Displays</MudNavLink>
-                    <MudNavLink Href="/staff/queue" Icon="@Icons.Material.Filled.PeopleOutline">Queue</MudNavLink>
+            <AuthorizeView>
+                <Authorized Context="authContext">
+                    <MudMenu Color="Color.Inherit" Dense="true" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+                        <ActivatorContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="cursor-pointer">
+                                <MudAvatar Size="Size.Medium" Color="Color.Primary">@GetInitials(authContext.User.Identity?.Name)</MudAvatar>
+                                <MudText Class="ml-2 font-weight-semibold">@authContext.User.Identity?.Name</MudText>
+                                <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" />
+                            </MudStack>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <MudMenuItem Href="/profile" Icon="@Icons.Material.Filled.Person">Profile</MudMenuItem>
+                            <MudMenuItem OnClick="Logout" Icon="@Icons.Material.Filled.Logout">Logout</MudMenuItem>
+                        </ChildContent>
+                    </MudMenu>
                 </Authorized>
+                <NotAuthorized>
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Href="/login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+                        <MudButton Href="/register" Variant="Variant.Filled" Color="Color.Secondary">Register</MudButton>
+                    </MudStack>
+                </NotAuthorized>
             </AuthorizeView>
+        </MudAppBar>
 
-            <AuthorizeView Roles="Admin">
-                <Authorized>
-                    <MudNavGroup Title="Administration" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
-                        <MudNavLink Href="/admin/servicepoints" Icon="@Icons.Material.Filled.SettingsInputComponent">Service Points Manager</MudNavLink>
-                        <MudNavLink Href="/admin/users" Icon="@Icons.Material.Filled.Group">Users</MudNavLink>
-                    </MudNavGroup>
-                </Authorized>
-            </AuthorizeView>
-        </MudNavMenu>
-    </MudDrawer>
+        <MudDrawer Variant="DrawerVariant.Responsive" @bind-Open="drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+            <MudNavMenu>
+                <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+                <MudNavLink Href="service-points" Icon="@Icons.Material.Filled.Store">Service Points</MudNavLink>
 
-    <MudMainContent Class="pa-4">
-        @Body
-    </MudMainContent>
-</MudLayout>
+                <AuthorizeView Roles="Staff, Admin">
+                    <Authorized>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Default" Class="ml-4 mt-4 mb-2">Staff Zone</MudText>
+                        <MudNavLink Href="display" Icon="@Icons.Material.Filled.Tv">Displays</MudNavLink>
+                        <MudNavLink Href="/staff/queue" Icon="@Icons.Material.Filled.PeopleOutline">Queue</MudNavLink>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Admin">
+                    <Authorized>
+                        <MudNavGroup Title="Administration" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
+                            <MudNavLink Href="/admin/servicepoints" Icon="@Icons.Material.Filled.SettingsInputComponent">Service Points Manager</MudNavLink>
+                            <MudNavLink Href="/admin/users" Icon="@Icons.Material.Filled.Group">Users</MudNavLink>
+                        </MudNavGroup>
+                    </Authorized>
+                </AuthorizeView>
+            </MudNavMenu>
+        </MudDrawer>
+
+        <MudMainContent Class="pt-20">
+            @Body
+        </MudMainContent>
+    </MudLayout>
+} 
+else
+{
+    <div style="height:100vh; display:flex; align-items:center; justify-content:center;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+    </div>
+}
+
 
 @code {
     private readonly MudTheme lightTheme = new()
@@ -121,9 +129,10 @@
             if (!string.IsNullOrEmpty(storedTheme))
             {
                 isDarkMode = storedTheme == "dark";
-                _isThemeLoaded = true;
-                StateHasChanged();
             }
+
+            _isThemeLoaded = true;
+            StateHasChanged();
         }
     }
 

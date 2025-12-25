@@ -1,0 +1,11 @@
+﻿.alert.error {
+    background: #fdeaea;
+    border: 1px solid #f5c2c7;
+    color: #842029;
+    padding: 10px 12px;
+    border-radius: 6px;
+}
+
+    .alert.error ul {
+        margin: 6px 0 0 18px;
+    }
