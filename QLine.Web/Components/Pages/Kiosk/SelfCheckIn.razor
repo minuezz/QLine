@@ -5,73 +5,38 @@
 @using QLine.Application.Features.Reservations.Commands
 @using System.Linq
 @inject IMediator Mediator
-@inject NavigationManager NavigationManager
 
 <div class="kiosk-screen">
-    <MudFab Class="nav-fab"
-            Color="Color.Primary"
-            StartIcon="@Icons.Material.Filled.Home"
-            Label="Home"
-            OnClick="NavigateHome" />
-
     <div class="kiosk-panel">
         @if (_checkInSuccessful)
         {
             <div class="status success">
                 <h1>Welcome!</h1>
                 <p class="ticket">Your Ticket Number: @_ticketNumber</p>
-                <p class="helper">Please take a seat. We will call you shortly.</p>
                 <button class="btn primary" @onclick="Reset">Next Client</button>
             </div>
         }
         else
         {
             <div class="status ready">
-                <div class="headline">
-                    <p class="eyebrow">Self-service kiosk</p>
-                    <h1>Check in with your appointment</h1>
-                    <p class="helper">Use your confirmation code or scan the QR on your ticket.</p>
-                </div>
+                <h1>Self-Service Kiosk</h1>
+                <p class="helper">Please scan or paste your Reservation ID to check in.</p>
 
-                <div class="action-grid">
-                    <div class="appointment-card">
-                        <button type="button" class="appointment-button" @onclick="ShowCheckInForm">
-                            <span class="primary-action">I have an appointment</span>
-                            <span class="action-detail">Tap to start and enter your reservation ID</span>
-                        </button>
+                @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                {
+                    <div class="alert">@_errorMessage</div>
+                }
 
-                        @if (!string.IsNullOrWhiteSpace(_errorMessage))
-                        {
-                            <div class="alert">@_errorMessage</div>
-                        }
-
-                        <form class="scan-form" @onsubmit="HandleSubmit" @onsubmit:preventDefault>
-                            <label class="input-label" for="reservationInput">Reservation ID</label>
-                            <input id="reservationInput"
-                                   type="text"
-                                   placeholder="Enter confirmation or reservation ID"
-                                   @bind="_scanInput"
-                                   class="scan-input"
-                                   autocomplete="off"
-                                   aria-label="Reservation ID"
-                                   @ref="_scanInputRef"
-                                   required />
-                            <button class="btn primary" type="submit" disabled="@_isProcessing">
-                                @_isProcessing ? "Checking in..." : "Check in now"
-                            </button>
-                        </form>
-                    </div>
-
-                    <div class="qr-card">
-                        <h3>Scan your QR code</h3>
-                        <div class="camera-area">
-                            <div class="camera-frame">
-                                <span>Camera view or QR instructions will appear here.</span>
-                            </div>
-                        </div>
-                        <p class="helper subtle">Hold your QR code steady in front of the camera or type your code above.</p>
-                    </div>
-                </div>
+                <form class="scan-form" @onsubmit="HandleSubmit" @onsubmit:preventDefault>
+                    <input type="text"
+                           placeholder="Reservation ID"
+                           @bind="_scanInput"
+                           class="scan-input"
+                           autocomplete="off"
+                           aria-label="Reservation ID"
+                           required />
+                    <button class="btn primary" type="submit" disabled="@_isProcessing">Check In</button>
+                </form>
             </div>
         }
     </div>
@@ -83,7 +48,6 @@
     private bool _checkInSuccessful;
     private string _ticketNumber = "Issued";
     private string? _errorMessage;
-    private ElementReference _scanInputRef;
 
     private async Task HandleSubmit()
     {
@@ -123,16 +87,5 @@
         _scanInput = string.Empty;
         _ticketNumber = "Issued";
         _errorMessage = null;
-    }
-
-    private async Task ShowCheckInForm()
-    {
-        await Task.Yield();
-        await _scanInputRef.FocusAsync();
-    }
-
-    private void NavigateHome()
-    {
-        NavigationManager.NavigateTo("/");
     }
 }
