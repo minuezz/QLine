@@ -29,7 +29,6 @@
             .build();
 
         conn.on("myReservationsUpdated", () => {
-            console.log("[Realtime] Profile update received!");
             dotNetRef.invokeMethodAsync("OnQueueUpdated");
         });
 

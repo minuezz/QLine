@@ -1,7 +1,76 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
 
-<PageTitle>Home</PageTitle>
+<PageTitle>QLine - Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+    <MudPaper Elevation="0" Class="pa-8 mb-8 d-flex flex-column align-center justify-center mud-theme-primary" Style="border-radius: 16px; min-height: 300px;">
+        <MudIcon Icon="@Icons.Material.Filled.AccessTime" Style="font-size: 5rem;" Class="mb-4" />
+        <MudText Typo="Typo.h2" Align="Align.Center" Class="mb-2 font-weight-bold">Welcome to QLine</MudText>
+        <MudText Typo="Typo.h5" Align="Align.Center" Style="opacity: 0.9">Your time is precious. Book your visit online and skip the line.</MudText>
+    </MudPaper>
 
-Welcome to your new app.
+    <MudGrid Spacing="4" Justify="Justify.Center">
+
+        <MudItem xs="12" md="5">
+            <MudCard Elevation="3" Class="h-100 hover-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Primary" Variant="Variant.Filled">
+                            <MudIcon Icon="@Icons.Material.Filled.CalendarToday" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">New Appointment</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Choose a service point, find a convenient time slot, and reserve your spot in the queue from home.
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Href="/service-points" EndIcon="@Icons.Material.Filled.ArrowForward">
+                        Book Now
+                    </MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="12" md="5">
+            <MudCard Elevation="3" Class="h-100 hover-card">
+                <MudCardHeader>
+                    <CardHeaderAvatar>
+                        <MudAvatar Color="Color.Secondary" Variant="Variant.Filled">
+                            <MudIcon Icon="@Icons.Material.Filled.Person" />
+                        </MudAvatar>
+                    </CardHeaderAvatar>
+                    <CardHeaderContent>
+                        <MudText Typo="Typo.h6">My Account</MudText>
+                    </CardHeaderContent>
+                </MudCardHeader>
+                <MudCardContent>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">
+                        Check your active reservations, access your ticket QR code, or view your visit history.
+                    </MudText>
+                </MudCardContent>
+                <MudCardActions>
+                    <AuthorizeView>
+                        <Authorized>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true" Href="/profile">
+                                Go to Profile
+                            </MudButton>
+                        </Authorized>
+                        <NotAuthorized>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Secondary" FullWidth="true" Href="/login">
+                                Log In
+                            </MudButton>
+                        </NotAuthorized>
+                    </AuthorizeView>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+
+    </MudGrid>
+</MudContainer>

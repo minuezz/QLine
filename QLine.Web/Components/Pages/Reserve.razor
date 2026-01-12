@@ -1,3 +1,4 @@
+@page "/reserve/{ServicePointId:guid}/"
 @page "/reserve/{ServicePointId:guid}/{ServiceId:guid}"
 @attribute [Authorize]
 @using Microsoft.AspNetCore.Authorization
@@ -6,19 +7,48 @@
 @using QLine.Application.Features.Reservations.Commands
 @using QLine.Application.Features.Reservations.Queries
 @using QRCoder
+@inject NavigationManager Nav
 @inject IMediator Mediator
 
-<MudContainer MaxWidth="MaxWidth.Large" Class="reservation-container">
+<PageTitle>QLine - Book Appointment</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-16">
+
     @if (_created is null)
     {
-        <MudText Typo="Typo.h4" Class="mb-4">Create Reservation</MudText>
+        <div class="d-flex flex-column align-center mb-8">
+            <MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true" Class="font-weight-bold">
+                Book Your Visit
+            </MudText>
+            <MudText Typo="Typo.subtitle1" Align="Align.Center" Color="Color.Secondary">
+                Complete the steps below to reserve your spot
+            </MudText>
+        </div>
 
         <MudGrid Spacing="4">
             <MudItem xs="12" md="8">
                 <MudStack Spacing="4">
 
-                    <MudPaper Elevation="1" Class="section">
-                        <MudText Typo="Typo.subtitle1" GutterBottom>Choose a service</MudText>
+                    <MudPaper Elevation="0" Class="pa-4 mud-background-gray rounded-xl">
+                        <div class="d-flex justify-space-between align-center mb-4 gap-4">
+                            <div class="d-flex align-center">
+                                <MudAvatar Color="Color.Primary" Size="Size.Small" Class="mr-3">1</MudAvatar>
+                                <MudText Typo="Typo.h6">Select Service</MudText>
+                            </div>
+
+                            @if (_services.Count > 5)
+                            {
+                                <MudTextField @bind-Value="_serviceSearch"
+                                              Placeholder="Search..."
+                                              Adornment="Adornment.Start"
+                                              AdornmentIcon="@Icons.Material.Filled.Search"
+                                              Variant="Variant.Outlined"
+                                              Margin="Margin.Dense"
+                                              Class="my-0"
+                                              Style="max-width: 220px; background-color: var(--mud-palette-surface);"
+                                              Immediate="true" />
+                            }
+                        </div>
 
                         @if (_isLoadingServices)
                         {
@@ -26,22 +56,35 @@
                                 <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
                             </div>
                         }
-                        else if (_services.Count == 0)
+                        else if (!FilteredServices.Any())
                         {
-                            <MudText>No services available for this service point.</MudText>
+                            <MudAlert Severity="Severity.Warning">No services found.</MudAlert>
                         }
                         else
                         {
-                            <MudGrid Class="service-grid" Spacing="2">
-                                @foreach (var service in _services)
+                            <MudGrid Spacing="2">
+                                @foreach (var service in FilteredServices)
                                 {
-                                    <MudItem xs="12" sm="6" lg="4">
-                                        <MudCard Class="@($"service-card {(ReferenceEquals(_selectedService, service) ? "service-card--selected" : string.Empty)}")"
-                                                 Outlined="true"
+                                    var isSelected = ReferenceEquals(_selectedService, service);
+                                    <MudItem xs="12" sm="6">
+                                        <MudCard Elevation="@(isSelected ? 4 : 1)"
+                                                 Class="@($"cursor-pointer transition-all {(isSelected ? "border-primary" : "")}")"
                                                  @onclick="() => SelectServiceAsync(service)">
                                             <MudCardContent>
-                                                <MudText Typo="Typo.subtitle1">@service.Name</MudText>
-                                                <MudText Typo="Typo.body2" Color="Color.Secondary">@service.DurationMin min</MudText>
+                                                <div class="d-flex justify-space-between align-start">
+                                                    <div>
+                                                        <MudText Typo="Typo.subtitle1" Class="font-weight-bold" Color="@(isSelected? Color.Primary: Color.Default)">
+                                                            @service.Name
+                                                        </MudText>
+                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                            @service.DurationMin min
+                                                        </MudText>
+                                                    </div>
+                                                    @if (isSelected)
+                                                    {
+                                                        <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Primary" />
+                                                    }
+                                                </div>
                                             </MudCardContent>
                                         </MudCard>
                                     </MudItem>
@@ -50,157 +93,188 @@
                         }
                     </MudPaper>
 
-                    <MudGrid Spacing="4">
-                        <MudItem xs="12" lg="6">
-                            <MudPaper Elevation="1" Class="section h-100">
-                                <MudText Typo="Typo.subtitle1" GutterBottom>Select a date</MudText>
-                                <div class="d-flex justify-center">
+                    <MudPaper Elevation="0" Class="pa-4 mud-background-gray rounded-xl">
+                        <div class="d-flex align-center mb-4">
+                            <MudAvatar Color="Color.Primary" Size="Size.Small" Class="mr-3">2</MudAvatar>
+                            <MudText Typo="Typo.h6">Date & Time</MudText>
+                        </div>
+
+                        <MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudPaper Elevation="0" Class="d-flex justify-center rounded-lg py-2">
                                     <MudDatePicker Date="@_selectedDate"
                                                    DateChanged="OnDateChanged"
                                                    PickerVariant="PickerVariant.Static"
                                                    MinDate="@DateTime.Today"
                                                    ShowToolbar="false"
-                                                   Elevation="0"
-                                                   Class="rounded-picker" />
-                                </div>
-                            </MudPaper>
-                        </MudItem>
+                                                   Elevation="0" />
+                                </MudPaper>
+                            </MudItem>
 
-                        <MudItem xs="12" lg="6">
-                            <MudPaper Elevation="1" Class="section h-100">
-                                <MudText Typo="Typo.subtitle1" GutterBottom>Available time slots</MudText>
-                                @if (_isLoadingSlots)
-                                {
-                                    <div class="d-flex justify-center pa-4">
-                                        <MudProgressCircular Color="Color.Primary" Indeterminate="true" />
-                                    </div>
-                                }
-                                else if (_availableSlots.Count == 0)
-                                {
-                                    <MudText>No available slots for the selected date.</MudText>
-                                }
-                                else
-                                {
-                                    <MudChipSet T="string" SelectionMode="SelectionMode.SingleSelection" Class="slot-chipset">
-                                        @foreach (var slot in _availableSlots)
-                                        {
-                                            <MudChip T="string"
-                                                     Color="@(ReferenceEquals(_selectedSlot, slot) ? Color.Primary : Color.Default)"
-                                                     Variant="@(ReferenceEquals(_selectedSlot, slot) ? Variant.Filled : Variant.Outlined)"
-                                                     Ripple="true"
-                                                     OnClick="() => SelectSlot(slot)"
-                                                     Disabled="@(!slot.IsAvailable)"
-                                                     Class="slot-chip">
-                                                @slot.Start.ToString("hh\\:mm")
-                                            </MudChip>
-                                        }
-                                    </MudChipSet>
-                                }
-                            </MudPaper>
-                        </MudItem>
-                    </MudGrid>
+                            <MudItem xs="12" md="6">
+                                <MudPaper Elevation="0" Class="pa-3 h-100 rounded-lg">
+                                    <MudText Typo="Typo.subtitle2" Class="mb-3 ml-1">Available Slots</MudText>
+
+                                    @if (_isLoadingSlots)
+                                    {
+                                        <div class="d-flex justify-center mt-8">
+                                            <MudProgressCircular Size="Size.Small" Indeterminate="true" />
+                                        </div>
+                                    }
+                                    else if (_availableSlots.Count == 0)
+                                    {
+                                        <div class="d-flex flex-column align-center justify-center h-75 text-muted">
+                                            <MudIcon Icon="@Icons.Material.Filled.EventBusy" Size="Size.Large" Class="mb-2 opacity-50" />
+                                            <MudText Typo="Typo.caption">No slots available</MudText>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex flex-wrap gap-2">
+                                            @foreach (var slot in _availableSlots)
+                                            {
+                                                var isSelected = ReferenceEquals(_selectedSlot, slot);
+                                                <MudChip T="string"
+                                                         OnClick="() => SelectSlot(slot)"
+                                                         Disabled="@(!slot.IsAvailable)"
+                                                         Variant="@(isSelected ? Variant.Filled : Variant.Outlined)"
+                                                         Color="@(isSelected ? Color.Primary : Color.Default)"
+                                                         SelectedColor="Color.Primary"
+                                                         Class="ma-0"
+                                                         Style="width: 70px; justify-content: center;">
+                                                    @slot.Start.ToString("hh\\:mm")
+                                                </MudChip>
+                                            }
+                                        </div>
+                                    }
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
 
                 </MudStack>
             </MudItem>
 
             <MudItem xs="12" md="4">
-                <MudPaper Elevation="3" Class="section summary sticky-summary">
-                    <MudText Typo="Typo.h6" GutterBottom>Reservation Summary</MudText>
+                <div class="sticky-top" style="top: 20px;">
+                    <MudPaper Elevation="3" Class="pa-4 rounded-xl">
+                        <MudText Typo="Typo.h6" Class="mb-4 font-weight-bold">Summary</MudText>
 
-                    <MudList T="string" Dense="true" Padding="false">
-                        <MudListItem T="string">
+                        <MudStack Spacing="3">
                             <div class="d-flex align-center">
-                                <MudIcon Icon="@Icons.Material.Filled.HomeRepairService" Class="mr-3" Color="Color.Primary" />
+                                <MudAvatar Size="Size.Small" Color="Color.Tertiary" Variant="Variant.Outlined" Class="mr-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.HomeRepairService" Size="Size.Small" />
+                                </MudAvatar>
                                 <div>
-                                    <MudText Typo="Typo.caption">Service</MudText>
-                                    <MudText Typo="Typo.body1" Style="font-weight: 500;">
-                                        @(_selectedService?.Name ?? "-")
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Service</MudText>
+                                    <MudText Typo="Typo.body2" Class="font-weight-bold">
+                                        @(_selectedService?.Name ?? "Select service...")
                                     </MudText>
                                 </div>
                             </div>
-                        </MudListItem>
-                        <MudDivider />
-                        <MudListItem T="string">
+
+                            <MudDivider />
+
                             <div class="d-flex align-center">
-                                <MudIcon Icon="@Icons.Material.Filled.Event" Class="mr-3" Color="Color.Primary" />
+                                <MudAvatar Size="Size.Small" Color="Color.Tertiary" Variant="Variant.Outlined" Class="mr-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.CalendarToday" Size="Size.Small" />
+                                </MudAvatar>
                                 <div>
-                                    <MudText Typo="Typo.caption">Date</MudText>
-                                    <MudText Typo="Typo.body1" Style="font-weight: 500;">
-                                        @_selectedDate.ToString("dddd, MMM d")
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Date</MudText>
+                                    <MudText Typo="Typo.body2" Class="font-weight-bold">
+                                        @_selectedDate.ToString("ddd, MMM d")
                                     </MudText>
                                 </div>
                             </div>
-                        </MudListItem>
-                        <MudDivider />
-                        <MudListItem T="string">
+
+                            <MudDivider />
+
                             <div class="d-flex align-center">
-                                <MudIcon Icon="@Icons.Material.Filled.Schedule" Class="mr-3" Color="Color.Primary" />
+                                <MudAvatar Size="Size.Small" Color="Color.Tertiary" Variant="Variant.Outlined" Class="mr-3">
+                                    <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" />
+                                </MudAvatar>
                                 <div>
-                                    <MudText Typo="Typo.caption">Time</MudText>
-                                    <MudText Typo="Typo.body1" Style="font-weight: 500;">
-                                        @(_selectedSlot is null ? "-" : _selectedSlot.Start.ToString("hh\\:mm"))
+                                    <MudText Typo="Typo.caption" Color="Color.Secondary">Time</MudText>
+                                    <MudText Typo="Typo.body2" Class="font-weight-bold">
+                                        @(_selectedSlot?.Start.ToString("hh\\:mm") ?? "-")
                                     </MudText>
                                 </div>
                             </div>
-                        </MudListItem>
-                    </MudList>
 
-                    <div class="mt-4">
-                        @if (!string.IsNullOrWhiteSpace(_errorMessage))
-                        {
-                            <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">@_errorMessage</MudAlert>
-                        }
+                        </MudStack>
 
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Primary"
-                                   Disabled="@(_selectedSlot is null || _selectedService is null)"
-                                   OnClick="SubmitAsync"
-                                   FullWidth="true"
-                                   Size="Size.Large"
-                                   Class="py-3">
-                            Confirm
-                        </MudButton>
-                    </div>
-                </MudPaper>
+                        <div class="mt-6">
+                            @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                            {
+                                <MudAlert Severity="Severity.Error" Dense="true" Class="mb-3">@_errorMessage</MudAlert>
+                            }
+
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Large"
+                                       FullWidth="true"
+                                       Disabled="@(_selectedSlot is null || _selectedService is null)"
+                                       OnClick="SubmitAsync"
+                                       Class="rounded-lg py-3 shadow-lg">
+                                Confirm Booking
+                            </MudButton>
+                        </div>
+                    </MudPaper>
+                </div>
             </MudItem>
         </MudGrid>
     }
     else
     {
-        <MudGrid Justify="Justify.Center">
-            <MudItem xs="12" sm="8" md="6">
-                <MudPaper Class="section pa-8 d-flex flex-column align-center gap-4">
-                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Large" Style="font-size: 4rem;" />
+        <div class="d-flex justify-center animate-fade-in">
+            <MudPaper Elevation="4" Class="ticket-card rounded-xl overflow-hidden mt-8" Width="100%" MaxWidth="400px">
+                <div class="mud-theme-primary pa-6 d-flex flex-column align-center">
+                    <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Style="font-size: 4rem;" Class="mb-2 text-white" />
+                    <MudText Typo="Typo.h5" Class="font-weight-bold text-white">@(_isReschedule ? "Rescheduled" : "Confirmed")</MudText>
+                    <MudText Typo="Typo.body2" Class="text-white opacity-90">Your ticket is ready</MudText>
+                </div>
 
-                    <MudText Typo="Typo.h4" Align="Align.Center">@(_isReschedule ? "Rescheduled!" : "Confirmed!")</MudText>
+                <div class="pa-6">
+                    <div class="d-flex justify-center mb-6">
+                        @if (!string.IsNullOrEmpty(_qrCodeBase64))
+                        {
+                            <img src="data:image/png;base64,@_qrCodeBase64" class="qr-code-img" alt="QR Code" />
+                        }
+                    </div>
 
-                    <MudText Typo="Typo.h6">
-                        <UtcDate Value="@_created.StartTime" />
-                    </MudText>
+                    <div class="ticket-info">
+                        <MudGrid Spacing="2">
+                            <MudItem xs="6">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">DATE</MudText>
+                                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">
+                                    <UtcDate Value="@_created.StartTime" Format="MMM dd, yyyy" />
+                                </MudText>
+                            </MudItem>
+                            <MudItem xs="6" Class="text-right">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">TIME</MudText>
+                                <MudText Typo="Typo.subtitle2" Class="font-weight-bold">
+                                    <UtcDate Value="@_created.StartTime" Format="HH:mm" />
+                                </MudText>
+                            </MudItem>
+                            <MudItem xs="12" Class="mt-2">
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">TICKET ID</MudText>
+                                <MudText Typo="Typo.body2" Class="font-family-monospace">@_created.Id</MudText>
+                            </MudItem>
+                        </MudGrid>
+                    </div>
 
-                    @if (!string.IsNullOrEmpty(_qrCodeBase64))
-                    {
-                        <div class="qr-wrapper">
-                            <img src="data:image/png;base64,@_qrCodeBase64" alt="Reservation QR Code" class="qr-image" />
-                        </div>
-                        <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">Scan at kiosk</MudText>
-
-                        <MudPaper Class="pa-2 mt-2" Outlined="true" Style="background-color: #f5f5f5;">
-                            <MudText Typo="Typo.h6" Class="user-select-all" Style="letter-spacing: 1px;">@_created?.Id</MudText>
-                        </MudPaper>
-                    }
-
-                    <div class="mt-4 d-flex gap-2">
+                    <div class="d-flex gap-2 mt-8">
                         @if (_isReschedule)
                         {
-                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Href="/profile">Back to Profile</MudButton>
+                            <MudButton Variant="Variant.Outlined" Color="Color.Primary" FullWidth="true" Href="/profile">Profile</MudButton>
                         }
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Href="/">Go Home</MudButton>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Href="/">Finish</MudButton>
                     </div>
-                </MudPaper>
-            </MudItem>
-        </MudGrid>
+                </div>
+            </MudPaper>
+        </div>
     }
+
 </MudContainer>
 
 @code {
@@ -221,6 +295,13 @@
     private string? _qrCodeBase64;
     private bool _isReschedule => RescheduleId.HasValue;
 
+    private string _serviceSearch = string.Empty;
+
+    private IEnumerable<ServiceDto> FilteredServices =>
+        string.IsNullOrWhiteSpace(_serviceSearch)
+            ? _services
+            : _services.Where(s => s.Name.Contains(_serviceSearch, StringComparison.OrdinalIgnoreCase));
+
     protected override async Task OnInitializedAsync()
     {
         await LoadServicesAsync();
@@ -236,21 +317,26 @@
         {
             var services = await Mediator.Send(new GetServicesForServicePointQuery(ServicePointId));
             _services = services.ToList();
-            _selectedService = _services.FirstOrDefault(s => s.Id == ServiceId) ?? _services.FirstOrDefault();
 
-            if (_selectedService is null)
+            if (ServiceId != Guid.Empty)
             {
-                _availableSlots.Clear();
-                _errorMessage = "No services available for this service point.";
-                return;
+                _selectedService = _services.FirstOrDefault(s => s.Id == ServiceId);
             }
 
-            ServiceId = _selectedService.Id;
-            await LoadSlotsAsync();
+            if (_selectedService is null && _services.Count == 1)
+            {
+                _selectedService = _services.First();
+            }
+
+            if (_selectedService is not null)
+            {
+                ServiceId = _selectedService.Id;
+                await LoadSlotsAsync();
+            }
         }
         catch (Exception ex)
         {
-            (_errorMessage, _errorDetails) = ex.ToUserMessage();
+            (_errorMessage, _errorDetails) = QLine.Web.Utils.ExceptionHelper.ToUserMessage(ex);
         }
         finally
         {
@@ -271,6 +357,10 @@
     {
         _selectedService = service;
         ServiceId = service.Id;
+        _selectedSlot = null; 
+
+        Nav.NavigateTo($"/reserve/{ServicePointId}/{service.Id}");
+
         await LoadSlotsAsync();
     }
 

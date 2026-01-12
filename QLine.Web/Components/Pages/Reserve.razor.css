@@ -1,63 +1,56 @@
-﻿.qr-wrapper {
-    margin-top: 16px;
-    padding: 12px;
-    border: 1px solid #ddd;
+﻿/* Улучшаем читаемость карточек выбора */
+.border-primary {
+    border: 2px solid var(--mud-palette-primary) !important;
+    background-color: var(--mud-palette-primary-hover);
+}
+
+.transition-all {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Стили для билета (Ticket) */
+.ticket-card {
+    border: 1px solid #e0e0e0;
+    position: relative;
+}
+
+.qr-code-img {
+    width: 180px;
+    height: 180px;
     border-radius: 8px;
-    max-width: 320px;
+    border: 4px solid white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
-.qr-image {
-    display: block;
-    width: 100%;
-    height: auto;
-}
-
-.qr-helper {
-    margin-top: 8px;
-    margin-bottom: 0;
-}
-
-.reservation-container {
-    padding: 24px 0;
-}
-
-.section {
-    padding: 16px;
-    border-radius: 12px;
-}
-
-.service-grid {
+.ticket-info {
+    border-top: 2px dashed #e0e0e0;
+    padding-top: 16px;
     margin-top: 8px;
 }
 
-.service-card {
-    cursor: pointer;
-    border: 2px solid transparent;
+/* Анимация появления билета */
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
 }
 
-.service-card:hover {
-    border-color: rgba(25, 118, 210, 0.4);
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.service-card--selected {
-    border-color: rgb(25, 118, 210);
-    box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.12);
+/* Утилиты */
+.mud-background-gray {
+    background-color: #f9f9f9;
 }
 
-.full-width-picker {
-    width: 100%;
-}
-
-.slot-chip {
-    margin: 4px;
-}
-
-.summary {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.success-view {
-    padding: 8px;
+.font-family-monospace {
+    font-family: monospace;
+    letter-spacing: 1px;
 }

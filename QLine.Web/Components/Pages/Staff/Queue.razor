@@ -11,148 +11,228 @@
 @inject IMediator Mediator
 @inject IJSRuntime JS
 
-<MudStack Spacing="3">
-    <MudText Typo="Typo.h4" Class="font-weight-bold">Staff Queue</MudText>
+<PageTitle>QLine - Staff Dashboard</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-16">
 
     @if (!string.IsNullOrWhiteSpace(_accessMessage))
     {
-        <MudAlert Severity="Severity.Error" Variant="Variant.Filled">@_accessMessage</MudAlert>
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="rounded-xl">@_accessMessage</MudAlert>
     }
     else
     {
         @if (_points.Count > 1 && !HasSelectedServicePoint)
         {
-            <MudCard Elevation="1">
-                <MudCardHeader>
-                    <CardHeaderContent>
-                        <MudText>Where are you working today?</MudText>
-                    </CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent>
-                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                        <MudSelect @bind-Value="_selectionCandidateId" FullWidth="true" Label="Service Point">
-                            @foreach (var sp in _points)
-                            {
-                                <MudSelectItem Value="@sp.Id.ToString()">@sp.Name</MudSelectItem>
-                            }
-                        </MudSelect>
-                        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ConfirmServicePointAsync">Load Queue</MudButton>
-                    </MudStack>
-                    @if (!string.IsNullOrWhiteSpace(_selectionError))
-                    {
-                        <MudText Color="Color.Error" Typo="Typo.caption">@_selectionError</MudText>
-                    }
-                </MudCardContent>
-            </MudCard>
-        }
+            <div class="d-flex flex-column align-center justify-center" style="min-height: 60vh;">
+                <MudPaper Elevation="3" Class="pa-8 d-flex flex-column align-center gap-6 rounded-xl" Width="100%" MaxWidth="500px">
+                    <MudAvatar Color="Color.Primary" Size="Size.Large" Class="mb-2">
+                        <MudIcon Icon="@Icons.Material.Filled.Store" Size="Size.Large" />
+                    </MudAvatar>
 
-        @if (HasSelectedServicePoint)
-        {
-            <MudPaper Class="pa-3" Elevation="1">
-                <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                    <MudText Typo="Typo.subtitle1">Service Point:</MudText>
-                    <MudSelect @bind-Value="SelectedServicePointIdString" @bind-Value:after="OnServicePointChanged" Label="Select" Immediate="true" Dense="true">
+                    <div class="text-center">
+                        <MudText Typo="Typo.h5" Class="font-weight-bold">Welcome back!</MudText>
+                        <MudText Typo="Typo.body1" Color="Color.Secondary">Where are you working today?</MudText>
+                    </div>
+
+                    <MudSelect @bind-Value="_selectionCandidateId"
+                               Label="Select Service Point"
+                               Variant="Variant.Outlined"
+                               AnchorOrigin="Origin.BottomCenter"
+                               FullWidth="true">
                         @foreach (var sp in _points)
                         {
                             <MudSelectItem Value="@sp.Id.ToString()">@sp.Name</MudSelectItem>
                         }
                     </MudSelect>
-                    <MudSpacer />
-                </MudStack>
+
+                    @if (!string.IsNullOrWhiteSpace(_selectionError))
+                    {
+                        <MudAlert Severity="Severity.Error" Dense="true" Class="width-100">@_selectionError</MudAlert>
+                    }
+
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               Size="Size.Large"
+                               FullWidth="true"
+                               OnClick="ConfirmServicePointAsync"
+                               Class="py-3 rounded-lg">
+                        Start Working
+                    </MudButton>
+                </MudPaper>
+            </div>
+        }
+
+        @if (HasSelectedServicePoint)
+        {
+            <MudPaper Elevation="0" Class="pa-4 mb-6 d-flex flex-wrap justify-space-between align-center rounded-xl mud-background-gray border-dashed">
+                <div class="d-flex align-center gap-3">
+                    <MudAvatar Color="Color.Tertiary" Variant="Variant.Filled" Rounded="true">
+                        <MudIcon Icon="@Icons.Material.Filled.Place" />
+                    </MudAvatar>
+                    <div>
+                        <MudText Typo="Typo.caption" Color="Color.Secondary" style="text-transform: uppercase; letter-spacing: 1px;">Current Location</MudText>
+                        <MudText Typo="Typo.h6" Class="font-weight-bold">
+                            @(_points.FirstOrDefault(p => p.Id.ToString() == SelectedServicePointIdString)?.Name)
+                        </MudText>
+                    </div>
+                </div>
+
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.SwapHoriz" Color="Color.Secondary" />
+                    <MudSelect @bind-Value="SelectedServicePointIdString"
+                               @bind-Value:after="OnServicePointChanged"
+                               Label="Switch Location"
+                               Dense="true"
+                               Margin="Margin.Dense"
+                               Variant="Variant.Outlined"
+                               Style="min-width: 200px; background-color: var(--mud-palette-surface);">
+                        @foreach (var sp in _points)
+                        {
+                            <MudSelectItem Value="@sp.Id.ToString()">@sp.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </div>
             </MudPaper>
 
-            <MudGrid Class="mt-2" Spacing="3">
-                <MudItem xs="12" md="8">
-                    <MudCard Elevation="3" Class="high-emphasis-card">
-                        <MudCardHeader>
-                            <CardHeaderContent>
-                                <MudText>Current Ticket</MudText>
-                            </CardHeaderContent>
-                        </MudCardHeader>
-                        <MudCardContent>
-                            @if (_snapshot is null)
-                            {
-                                <MudProgressCircular Color="Color.Primary" Size="Size.Large" Class="my-4" />
-                            }
-                            else if (_snapshot.Current is null)
-                            {
-                                <MudStack Spacing="2" AlignItems="AlignItems.Center" Class="py-4">
-                                    <MudText Typo="Typo.h6" Color="Color.Secondary">No ticket in service.</MudText>
-                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" Size="Size.Large" OnClick="CallNextAsync" Disabled="_isProcessing">
-                                        <MudIcon Icon="@Icons.Material.Filled.NextPlan" Class="mr-1" />
-                                        Call Next Customer
-                                    </MudButton>
-                                </MudStack>
-                            }
-                            else
-                            {
-                                <MudStack Spacing="2">
-                                    <MudPaper Elevation="0" Class="pa-3 high-emphasis-card">
-                                        <MudText Typo="Typo.subtitle2" Color="Color.Primary">Now Serving</MudText>
-                                        <MudText Typo="Typo.h1" Class="font-weight-bold">@_snapshot.Current.TicketNo</MudText>
-                                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                                            <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">@_snapshot.Current.Status</MudChip>
-                                            <MudChip T="string" Color="Color.Info" Variant="Variant.Outlined">Priority @_snapshot.Current.Priority</MudChip>
+            <MudGrid Spacing="4">
+                <MudItem xs="12" md="7" lg="8">
 
-                                            <MudText Color="@GetDurationColor(_snapshot.Current.CreatedAt)" Typo="Typo.subtitle1" Class="font-weight-bold">
-                                                @FormatDuration(_snapshot.Current.CreatedAt)
-                                            </MudText>
-                                        </MudStack>
-                                    </MudPaper>
+                    @if (_snapshot is null)
+                    {
+                        <MudPaper Class="pa-16 d-flex justify-center rounded-xl" Elevation="2">
+                            <MudProgressCircular Color="Color.Primary" Size="Size.Large" Indeterminate="true" />
+                        </MudPaper>
+                    }
+                    else if (_snapshot.Current is null)
+                    {
+                        <MudPaper Elevation="3" Class="pa-12 d-flex flex-column align-center justify-center gap-6 rounded-xl h-100" Style="min-height: 400px; border: 2px dashed var(--mud-palette-primary-hover);">
+                            <MudIcon Icon="@Icons.Material.Filled.NotificationsActive" Color="Color.Primary" Style="font-size: 6rem; opacity: 0.2;" />
 
-                                    <MudStack Row="true" Spacing="2">
-                                        <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Large" Disabled="_snapshot.Current is null || _isProcessing" OnClick="() => MarkDoneAsync(_snapshot.Current!.Id)">
-                                            <MudIcon Icon="@Icons.Material.Filled.Check" Class="mr-1" />
-                                            Done
-                                        </MudButton>
-                                        <MudButton Variant="Variant.Outlined" Color="Color.Error" Size="Size.Large" Disabled="_snapshot.Current is null || _isProcessing" OnClick="() => MarkNoShowAsync(_snapshot.Current!.Id)">
-                                            <MudIcon Icon="@Icons.Material.Filled.PersonOff" Class="mr-1" />
-                                            No Show
-                                        </MudButton>
-                                    </MudStack>
-                                </MudStack>
-                            }
-                        </MudCardContent>
-                    </MudCard>
+                            <div class="text-center">
+                                <MudText Typo="Typo.h4" Class="font-weight-bold">Ready for the next customer?</MudText>
+                                <MudText Typo="Typo.body1" Color="Color.Secondary">The counter is currently empty.</MudText>
+                            </div>
+
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Primary"
+                                       Size="Size.Large"
+                                       OnClick="CallNextAsync"
+                                       Disabled="_isProcessing"
+                                       StartIcon="@Icons.Material.Filled.Campaign"
+                                       Class="px-12 py-4 rounded-pill shadow-lg"
+                                       Style="font-size: 1.2rem;">
+                                Call Next Ticket
+                            </MudButton>
+                        </MudPaper>
+                    }
+                    else
+                    {
+                        <MudCard Elevation="4" Class="rounded-xl overflow-hidden h-100 animate-fade-in">
+                            <div class="mud-theme-primary pa-4 d-flex justify-space-between align-center">
+                                <div class="d-flex align-center gap-2">
+                                    <MudIcon Icon="@Icons.Material.Filled.RecordVoiceOver" />
+                                    <MudText Typo="Typo.subtitle1" Class="font-weight-bold">NOW SERVING</MudText>
+                                </div>
+                                <MudChip T="string" Color="Color.Surface" Variant="Variant.Filled" Size="Size.Small" Class="text-primary font-weight-bold">
+                                    Priority @_snapshot.Current.Priority
+                                </MudChip>
+                            </div>
+
+                            <MudCardContent Class="d-flex flex-column align-center py-12 gap-4">
+                                <MudText Typo="Typo.h1" Class="font-weight-bold" Style="font-size: 6rem; line-height: 1;">
+                                    @_snapshot.Current.TicketNo
+                                </MudText>
+
+                                <div class="d-flex align-center gap-2 pa-3 rounded-lg" style="background-color: #f5f5f5;">
+                                    <MudIcon Icon="@Icons.Material.Filled.Timer" Size="Size.Medium" Color="@GetDurationColor(_snapshot.Current.CreatedAt)" />
+                                    <MudText Typo="Typo.h4" Class="font-weight-bold" Color="@GetDurationColor(_snapshot.Current.CreatedAt)">
+                                        @FormatDuration(_snapshot.Current.CreatedAt)
+                                    </MudText>
+                                </div>
+                            </MudCardContent>
+
+                            <MudDivider />
+
+                            <MudCardActions Class="pa-6 d-flex gap-4">
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Error"
+                                           Size="Size.Large"
+                                           FullWidth="true"
+                                           Disabled="_isProcessing"
+                                           OnClick="() => MarkNoShowAsync(_snapshot.Current!.Id)"
+                                           StartIcon="@Icons.Material.Filled.PersonOff"
+                                           Class="py-4 rounded-lg border-2">
+                                    No Show
+                                </MudButton>
+
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Success"
+                                           Size="Size.Large"
+                                           FullWidth="true"
+                                           Disabled="_isProcessing"
+                                           OnClick="() => MarkDoneAsync(_snapshot.Current!.Id)"
+                                           StartIcon="@Icons.Material.Filled.CheckCircle"
+                                           Class="py-4 rounded-lg shadow-md">
+                                    Complete
+                                </MudButton>
+                            </MudCardActions>
+                        </MudCard>
+                    }
                 </MudItem>
-                <MudItem xs="12" md="4">
-                    <MudCard Elevation="2" Class="fade-in">
-                        <MudCardHeader>
+
+                <MudItem xs="12" md="5" lg="4">
+                    <MudCard Elevation="2" Class="rounded-xl h-100 d-flex flex-column">
+                        <MudCardHeader Class="border-b pb-4">
                             <CardHeaderContent>
-                                <MudText Typo="Typo.h6">Waiting Queue</MudText>
+                                <MudText Typo="Typo.h6" Class="font-weight-bold">Waiting Queue</MudText>
+                                <MudText Typo="Typo.caption" Color="Color.Secondary">Next in line</MudText>
                             </CardHeaderContent>
                             <CardHeaderActions>
-                                <MudBadge Color="Color.Primary" Content="@(_snapshot?.Waiting.Count ?? 0)" Overlap="true" />
+                                <MudChip T="string" Color="Color.Primary" Size="Size.Small" Variant="Variant.Filled">
+                                    @(_snapshot?.Waiting.Count ?? 0)
+                                </MudChip>
                             </CardHeaderActions>
                         </MudCardHeader>
-                        <MudCardContent>
+
+                        <MudCardContent Class="pa-0 flex-grow-1 overflow-auto" Style="max-height: 600px;">
                             @if (_snapshot is null)
                             {
-                                <MudSkeleton Height="40px" />
+                                <div class="pa-4">
+                                    <MudSkeleton Height="50px" Class="mb-2" />
+                                    <MudSkeleton Height="50px" Class="mb-2" />
+                                </div>
                             }
                             else if (_snapshot.Waiting.Count == 0)
                             {
-                                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">No one waiting.</MudText>
+                                <div class="d-flex flex-column align-center justify-center py-12 text-muted">
+                                    <MudIcon Icon="@Icons.Material.Filled.Coffee" Size="Size.Large" Class="mb-2 opacity-50" />
+                                    <MudText>No one is waiting.</MudText>
+                                </div>
                             }
                             else
                             {
-                                <MudList T="string" Class="fade-in">
+                                <MudList T="string" Class="pa-0">
                                     @foreach (var w in _snapshot.Waiting)
                                     {
-                                        <MudListItem T="string" Class="fade-in">
-                                            <div class="d-flex align-center justify-space-between">
-
-                                                <div class="d-flex align-center">
-                                                    <MudIcon Icon="@Icons.Material.Filled.Schedule" Color="Color.Secondary" Class="mr-3" />
+                                        <MudListItem T="string" Class="border-b pa-4 hover:mud-theme-primary-hover transition-all">
+                                            <div class="d-flex align-center justify-space-between w-100">
+                                                <div class="d-flex align-center gap-3">
+                                                    <MudAvatar Color="Color.Secondary" Size="Size.Medium" Variant="Variant.Outlined">
+                                                        <MudText Typo="Typo.subtitle2">@w.Priority</MudText>
+                                                    </MudAvatar>
                                                     <div>
                                                         <MudText Typo="Typo.subtitle1" Class="font-weight-bold">@w.TicketNo</MudText>
-                                                        <MudText Typo="Typo.caption" Color="Color.Secondary">Waiting @FormatDuration(w.CreatedAt)</MudText>
+                                                        <div class="d-flex align-center gap-1">
+                                                            <MudIcon Icon="@Icons.Material.Filled.AccessTime" Size="Size.Small" Color="Color.Secondary" style="font-size: 0.8rem;" />
+                                                            <MudText Typo="Typo.caption" Color="Color.Secondary">@FormatDuration(w.CreatedAt)</MudText>
+                                                        </div>
                                                     </div>
                                                 </div>
 
-                                                <MudTooltip Text="Skip this customer">
+                                                <MudTooltip Text="Skip Customer">
                                                     <MudIconButton Icon="@Icons.Material.Filled.SkipNext"
-                                                                   Color="Color.Secondary"
+                                                                   Color="Color.Default"
+                                                                   Size="Size.Small"
                                                                    Disabled="_isProcessing"
                                                                    OnClick="() => SkipAsync(w.Id)" />
                                                 </MudTooltip>
@@ -167,7 +247,7 @@
             </MudGrid>
         }
     }
-</MudStack>
+</MudContainer>
 
 @code {
     private List<ServicePointDto> _points = new();

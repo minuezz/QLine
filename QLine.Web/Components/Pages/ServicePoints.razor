@@ -6,44 +6,102 @@
 @inject IMediator Mediator
 @inject NavigationManager Nav
 
-<MudStack Spacing="3">
-    <MudText Typo="Typo.h4" Class="font-weight-bold">Service Points</MudText>
+<PageTitle>QLine - Locations</PageTitle>
 
-    <MudTextField @bind-Value="_searchTerm"
-                  Placeholder="Search service points"
-                  Adornment="Adornment.Start"
-                  AdornmentIcon="@Icons.Material.Filled.Search"
-                  Immediate="true" />
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8">
+
+    <div class="d-flex flex-column align-center mb-8">
+        <MudText Typo="Typo.h3" Align="Align.Center" GutterBottom="true" Class="font-weight-bold">
+            Select a Location
+        </MudText>
+        <MudText Typo="Typo.subtitle1" Align="Align.Center" Color="Color.Secondary">
+            Find the nearest service point to book your appointment
+        </MudText>
+    </div>
+
+    <MudGrid Justify="Justify.Center" Class="mb-6">
+        <MudItem xs="12" md="8" lg="6">
+            <MudPaper Elevation="2" Class="pa-2 pl-4 pr-2 d-flex align-center rounded-pill">
+                <MudIcon Icon="@Icons.Material.Filled.Search" Color="Color.Secondary" Class="mr-2" />
+                <MudTextField @bind-Value="_searchTerm"
+                              Placeholder="Search by name or address..."
+                              DisableUnderline="true"
+                              Immediate="true"
+                              Class="flex-grow-1" />
+                @if (!string.IsNullOrEmpty(_searchTerm))
+                {
+                    <MudIconButton Icon="@Icons.Material.Filled.Clear"
+                                   Size="Size.Small"
+                                   OnClick="@(() => _searchTerm = string.Empty)"
+                                   Color="Color.Secondary" />
+                }
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
 
     @if (_loading)
     {
-        <p>Loading...</p>
+        <div class="d-flex justify-center my-16">
+            <MudProgressCircular Color="Color.Primary" Indeterminate="true" Size="Size.Large" />
+        </div>
     }
     else if (!string.IsNullOrWhiteSpace(_errorMessage))
     {
-        <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+        <MudContainer MaxWidth="MaxWidth.Small">
+            <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+        </MudContainer>
     }
     else if (!FilteredServicePoints.Any())
     {
-        <p>No service points.</p>
+        <MudPaper Class="pa-16 d-flex flex-column align-center justify-center mud-background-gray" Elevation="0">
+            <MudIcon Icon="@Icons.Material.Filled.LocationOff" Size="Size.Large" Color="Color.Secondary" Style="font-size: 4rem;" />
+            <MudText Typo="Typo.h6" Color="Color.Secondary" Class="mt-4">No service points found</MudText>
+            <MudText Typo="Typo.body2" Color="Color.Secondary">Try adjusting your search terms</MudText>
+        </MudPaper>
     }
     else
     {
-        <MudGrid Spacing="2">
+        <MudGrid Spacing="4">
             @foreach (var sp in FilteredServicePoints)
             {
                 <MudItem xs="12" sm="6" md="4">
-                    <MudCard Class="mud-elevation-1 hover:mud-elevation-4 cursor-pointer" @onclick="() => GoToServices(sp.Id)">
-                        <MudCardContent>
-                            <MudText Typo="Typo.h6" Class="font-weight-bold">@sp.Name</MudText>
-                            <MudText Color="Color.Secondary">@sp.Address</MudText>
+                    <MudCard Elevation="3" Class="h-100 d-flex flex-column hover-card cursor-pointer" @onclick="() => GoToReservation(sp.Id)">
+                        <MudCardHeader>
+                            <CardHeaderAvatar>
+                                <MudAvatar Color="Color.Primary" Variant="Variant.Filled">
+                                    <MudIcon Icon="@Icons.Material.Filled.Place" />
+                                </MudAvatar>
+                            </CardHeaderAvatar>
+                            <CardHeaderContent>
+                                <MudText Typo="Typo.h6" Class="font-weight-bold">@sp.Name</MudText>
+                            </CardHeaderContent>
+                        </MudCardHeader>
+
+                        <MudCardContent Class="flex-grow-1">
+                            <div class="d-flex align-start">
+                                <MudIcon Icon="@Icons.Material.Filled.Map" Size="Size.Small" Color="Color.Secondary" Class="mr-2 mt-1" />
+                                <MudText Color="Color.Secondary" Typo="Typo.body2">
+                                    @(!string.IsNullOrWhiteSpace(sp.Address) ? sp.Address : "No address provided")
+                                </MudText>
+                            </div>
                         </MudCardContent>
+
+                        <MudCardActions Class="pb-3 px-4">
+                            <MudSpacer />
+                            <MudButton Variant="Variant.Text"
+                                       Color="Color.Primary"
+                                       EndIcon="@Icons.Material.Filled.ArrowForward"
+                                       OnClick="() => GoToReservation(sp.Id)">
+                                View Services
+                            </MudButton>
+                        </MudCardActions>
                     </MudCard>
                 </MudItem>
             }
         </MudGrid>
     }
-</MudStack>
+</MudContainer>
+
 @code {
     private bool _loading = true;
     private string? _errorMessage;
@@ -55,7 +113,7 @@
         _points.Where(sp =>
             string.IsNullOrWhiteSpace(_searchTerm) ||
             sp.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase) ||
-            sp.Address.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+            (sp.Address != null && sp.Address.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)));
 
     protected override async Task OnInitializedAsync()
     {
@@ -64,15 +122,22 @@
 
         try
         {
-            _points = (await Mediator.Send(new GetServicePointsQuery())).ToList();
+            var result = await Mediator.Send(new GetServicePointsQuery());
+            _points = result.ToList();
         }
         catch (Exception ex)
         {
-            (_errorMessage, _errorDetails) = ex.ToUserMessage();
+            (_errorMessage, _errorDetails) = ExceptionHelper.ToUserMessage(ex);
         }
-        finally { _loading = false; }
+        finally
+        {
+            _loading = false;
+        }
     }
 
-    private void GoToServices(Guid servicePointId)
-        => Nav.NavigateTo($"/services/{servicePointId}");
+    private void GoToReservation(Guid servicePointId)
+    {
+        Nav.NavigateTo($"/reserve/{servicePointId}");
+    }
 }
+    
