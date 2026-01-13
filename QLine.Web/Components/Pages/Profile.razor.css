@@ -1,0 +1,22 @@
+.mud-background-gray {
+    background-color: #f9f9f9;
+}
+
+.border-dashed {
+    border: 1px dashed #e0e0e0;
+}
+
+.font-family-monospace {
+    font-family: monospace;
+    letter-spacing: 1px;
+}
+
+.active-ticket-card {
+    border: 1px solid #e0e0e0;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+    .active-ticket-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }

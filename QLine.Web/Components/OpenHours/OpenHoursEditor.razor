@@ -1,0 +1,233 @@
+@using System.Text.Json
+@using System.Text.Json.Nodes
+
+<MudPaper Class="oh-card" Elevation="1">
+    <MudText Typo="Typo.h6" Class="font-weight-bold mb-2">Opening Hours</MudText>
+
+    <MudGrid Class="oh-grid" Spacing="2">
+        @foreach (var row in Rows)
+        {
+            <MudItem xs="12">
+                <MudGrid Class="oh-row align-center" Spacing="2">
+                    <MudItem xs="12" sm="3">
+                        <MudText Typo="Typo.subtitle2" Class="oh-day">@row.Label</MudText>
+                    </MudItem>
+                    <MudItem xs="12" sm="3">
+                        <MudSwitch T="bool" 
+                                   Color="Color.Primary"
+                                   Value="row.Open"
+                                   ValueChanged="value => OnOpenChanged(row, value)"
+                                   Class="oh-open"
+                                   Ripple="false"
+                                   Label="Open" />
+                    </MudItem>
+                    <MudItem xs="12" sm="3">
+                        <MudTimePicker Class="oh-picker"
+                                       AmPm="false"
+                                       Time="row.Opening"
+                                       TimeChanged="time => OnTimeChanged(row, time, true)"
+                                       Disabled="@(!row.Open)"
+                                       MinuteSelectionStep="5"
+                                       Label="Start" />
+                    </MudItem>
+                    <MudItem xs="12" sm="3">
+                        <MudTimePicker Class="oh-picker"
+                                       AmPm="false"
+                                       Time="row.Closing"
+                                       TimeChanged="time => OnTimeChanged(row, time, false)"
+                                       Disabled="@(!row.Open)"
+                                       MinuteSelectionStep="5"
+                                       Label="End" />
+                        @if (!string.IsNullOrEmpty(row.Error))
+                        {
+                            <MudText Color="Color.Error" Typo="Typo.caption" Class="oh-error">@row.Error</MudText>
+                        }
+                    </MudItem>
+                </MudGrid>
+            </MudItem>
+        }
+    </MudGrid>
+</MudPaper>
+
+@code {
+        [Parameter] public string? Value { get; set; }
+        [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+        [Parameter] public bool Valid { get; set; }
+        [Parameter] public EventCallback<bool> ValidChanged { get; set; }
+
+        private readonly (string key, string label)[] DayOrder =
+        [
+                ("monday", "Monday"),
+                ("tuesday", "Tuesday"),
+                ("wednesday", "Wednesday"),
+                ("thursday", "Thursday"),
+                ("friday", "Friday"),
+                ("saturday", "Saturday"),
+                ("sunday", "Sunday")
+        ];
+
+        private List<Row> Rows = new();
+
+        private sealed class Row
+        {
+                public string Key { get; init; } = default!;
+                public string Label { get; init; } = default!;
+                public bool Open { get; set; }
+                public TimeSpan Opening { get; set; } = new(7, 30, 0);
+                public TimeSpan Closing { get; set; } = new(16, 0, 0);
+                public string? Error { get; set; }
+        }
+
+        protected override void OnInitialized()
+        {
+                Rows = DayOrder.Select(d => new Row
+                {
+                        Key = d.key,
+                        Label = d.label,
+                        Open = d.key is "saturday" or "sunday" ? false : true,
+                        Opening = new TimeSpan(7, 30, 0),
+                        Closing = new TimeSpan(16, 0, 0)
+                }).ToList();
+
+                TryLoadJson(Value);
+                ValidateAll();
+        }
+
+        protected override void OnParametersSet()
+        {
+                if (!string.IsNullOrWhiteSpace(Value))
+                {
+                        TryLoadJson(Value);
+                        ValidateAll();
+                }
+        }
+
+        private void TryLoadJson(string? json)
+        {
+                if (string.IsNullOrWhiteSpace(json)) return;
+
+                try
+                {
+                        var root = JsonNode.Parse(json)?.AsObject();
+                        if (root is null) return;
+
+                        foreach (var r in Rows)
+                        {
+                                if (!root.TryGetPropertyValue(r.Key, out var node) || node is null)
+                                        continue;
+
+                                if (node is JsonObject obj)
+                                {
+                                        r.Open = obj["open"]?.GetValue<bool?>() ?? false;
+                                        r.Opening = ParseTime(obj["start"]?.GetValue<string>());
+                                        r.Closing = ParseTime(obj["end"]?.GetValue<string>());
+                                }
+                                else if (node is JsonArray arr && arr.Count > 0 && arr[0] is JsonObject first)
+                                {
+                                        r.Open = true;
+                                        r.Opening = ParseTime(first["start"]?.GetValue<string>());
+                                        r.Closing = ParseTime(first["end"]?.GetValue<string>());
+                                }
+                        }
+                }
+                catch
+                {
+
+                }
+        }
+
+        private static TimeSpan RoundToNearestFiveMinutes(TimeSpan time)
+        {
+                var totalMinutes = (int)Math.Round(time.TotalMinutes);
+                var roundedMinutes = ((totalMinutes + 2) / 5) * 5;
+
+                var hours = roundedMinutes / 60;
+                var minutes = roundedMinutes % 60;
+
+                if (hours >= 24)
+                {
+                        hours = 23;
+                        minutes = 55;
+                }
+
+                return new TimeSpan(hours, minutes, 0);
+        }
+
+        private static TimeSpan ParseTime(string? s)
+        {
+                if (string.IsNullOrWhiteSpace(s)) return new TimeSpan(7, 30, 0);
+
+                if (TimeSpan.TryParse(s, out var time))
+                {
+                        return RoundToNearestFiveMinutes(time);
+                }
+
+                if (s?.Length == 4 && int.TryParse(s, out _) &&
+                        TimeSpan.TryParseExact(s.Insert(2, ":"), "hh\\:mm", null, out time))
+                {
+                        return RoundToNearestFiveMinutes(time);
+                }
+
+                return new TimeSpan(7, 30, 0);
+        }
+
+        private Task OnOpenChanged(Row row, bool value)
+        {
+                row.Open = value;
+                return OnRowChanged(row);
+        }
+
+        private Task OnTimeChanged(Row row, TimeSpan? time, bool isOpening)
+        {
+                if (time.HasValue)
+                {
+                        if (isOpening)
+                                row.Opening = time.Value;
+                        else
+                                row.Closing = time.Value;
+                }
+                return OnRowChanged(row);
+        }
+
+        private async Task OnRowChanged(Row row)
+        {
+                row.Opening = RoundToNearestFiveMinutes(row.Opening);
+                row.Closing = RoundToNearestFiveMinutes(row.Closing);
+
+                ValidateRow(row);
+                ValidateAll();
+                await EmitAsync();
+                StateHasChanged();
+        }
+
+        private void ValidateRow(Row r)
+        {
+                r.Error = null;
+                if (!r.Open) return;
+                if (r.Opening >= r.Closing)
+                        r.Error = "Opening must be earlier than closing.";
+        }
+
+        private void ValidateAll()
+        {
+                foreach (var r in Rows) ValidateRow(r);
+                var ok = Rows.All(r => string.IsNullOrEmpty(r.Error));
+                if (ok != Valid) ValidChanged.InvokeAsync(ok);
+                Valid = ok;
+        }
+
+        private async Task EmitAsync()
+        {
+                var obj = new JsonObject();
+                foreach (var r in Rows)
+                {
+                        obj[r.Key] = new JsonObject
+                        {
+                                ["open"] = r.Open,
+                                ["start"] = r.Opening.ToString(@"hh\:mm"),
+                                ["end"] = r.Closing.ToString(@"hh\:mm")
+                        };
+                }
+                await ValueChanged.InvokeAsync(obj.ToJsonString());
+        }
+}

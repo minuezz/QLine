@@ -11,9 +11,13 @@ namespace QLine.Domain.Abstractions
     {
         Task AddAsync(QueueEntry entry, CancellationToken ct);
         Task<QueueEntry?> GetByIdAsync(Guid id, CancellationToken ct);
+        Task<QueueEntry?> GetByReservationAsync(Guid reservationId, CancellationToken ct);
         Task<IReadOnlyList<QueueEntry>> GetWaitingByServicePointAsync(Guid servicePointId, CancellationToken ct);
         Task<QueueEntry?> GetCurrentInServiceByServicePointAsync(Guid servicePointId, CancellationToken ct);
         Task<QueueEntry?> GetFirstWaitingByServicePointAsync(Guid servicePointId, CancellationToken ct);
+        Task<QueueEntry?> TryStartNextInServiceAsync(Guid servicePointId, CancellationToken ct);
+        Task<int> GetDailyCountForServicePointAsync(Guid servicePointId, DateTime date, CancellationToken ct);
         Task UpdateAsync(QueueEntry entry, CancellationToken ct);
+        Task DeleteAsync(QueueEntry entry, CancellationToken ct);
     }
 }

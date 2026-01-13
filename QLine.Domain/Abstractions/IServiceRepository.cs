@@ -11,5 +11,8 @@ namespace QLine.Domain.Abstractions
     {
         Task<IReadOnlyList<Service>> GetByServicePointAsync(Guid servicePointId, CancellationToken ct);
         Task<Service?> GetByIdAsync(Guid id,  CancellationToken ct);
+        Task AddAsync(Service svc, CancellationToken ct);
+        Task UpdateAsync(Service svc, CancellationToken ct);
+        Task DeleteAsync(Guid id, CancellationToken ct);
     }
 }

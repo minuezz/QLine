@@ -1,25 +1,72 @@
-﻿@page "/login"
+@page "/login"
 @inject NavigationManager Nav
 
-<h3>Login</h3>
+<MudGrid Class="auth-grid justify-center align-center">
+    <MudItem xs="12" sm="8" md="5" lg="4">
+        <MudCard Class="auth-card" Elevation="3">
+            <MudCardContent>
+                <MudText Typo="Typo.h5" GutterBottom="true">Login</MudText>
 
-@if (ErrorCode is not null)
-{
-	<p class="text-danger">@(@ErrorCode == "notfound" ? "User not found" : "Sign-in failed")</p>
-}
+                @if (ErrorCode is not null)
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Filled" Class="mb-2">@ErrorMessage</MudAlert>
+                }
 
-<form method="post" action="/auth/login">
-	<input type="hidden" name="returnUrl" value="@ReturnUrl" />
-	<input type="email" name="email" value="@_email" placeholder="email (e.g. staff@qline.local)" />
-	<button type="submit" style="margin-left:8px;">Sign in</button>
-</form>
+                <form method="post" action="/auth/login" class="auth-form">
+                    <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+                    <MudStack Spacing="2">
+                        <MudTextField @bind-Value="_email"
+                                      Label="Email"
+                                      InputType="InputType.Email"
+                                      Required="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Email"
+                                      FullWidth="true"
+                                      Placeholder="email (e.g. staff@qline.local)" />
+                        <input type="hidden" name="email" value="@_email" />
+
+                        <MudTextField @bind-Value="_password"
+                                      Label="Password"
+                                      InputType="InputType.Password"
+                                      Required="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                                      FullWidth="true"
+                                      Placeholder="password (e.g. Pass@word1)" />
+                        <input type="hidden" name="password" value="@_password" />
+
+                        <MudButton ButtonType="ButtonType.Submit"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   FullWidth="true">
+                            Sign in
+                        </MudButton>
+
+                        <MudText Typo="Typo.body2" Align="Align.Center">
+                            New here? <MudLink Href="/register">Create an account</MudLink>
+                        </MudText>
+                    </MudStack>
+                </form>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
 
 @code {
-	private string _email = "staff@qline.local";
-	private string? ErrorCode => new Uri(Nav.Uri).Query.Contains("error=")
-		? System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("error")
-		: null;
+        private string _email = "staff@qline.local";
+        private string _password = "Pass@word1";
+        private string? ErrorCode => new Uri(Nav.Uri).Query.Contains("error=")
+                ? System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("error")
+                : null;
 
-	private string ReturnUrl =>
-		System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("returnUrl") ?? "/staff/queue";
+        private string ErrorMessage => ErrorCode switch
+        {
+                "notfound" => "User not found",
+                "invalid" => "Invalid credentials",
+                _ => "Sign-in failed"
+        };
+
+        private string ReturnUrl =>
+                System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("returnUrl") ?? "/";
 }

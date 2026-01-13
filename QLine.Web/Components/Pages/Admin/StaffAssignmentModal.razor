@@ -1,0 +1,139 @@
+@using MediatR
+@using QLine.Application.DTO
+@using QLine.Application.Features.Admin.ServicePoints.Commands
+@using QLine.Application.Features.Admin.ServicePoints.Queries
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+
+            <MudPaper Class="pa-4" Elevation="1">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.subtitle1">Add Staff</MudText>
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudSelect T="Guid?" Label="Select Staff" @bind-Value="_selectedUserId" Dense="true" Clearable="true" FullWidth="true">
+                            @foreach (var staff in _unassigned)
+                            {
+                                <MudSelectItem T="Guid?" Value="@((Guid?)staff.Id)">
+                                    @staff.Name (@staff.Email)
+                                </MudSelectItem>
+                            }
+                        </MudSelect>
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="_selectedUserId is null" OnClick="AssignAsync">
+                            Assign
+                        </MudButton>
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+
+            <MudStack Spacing="1">
+                <MudText Typo="Typo.subtitle1">Assigned Staff</MudText>
+
+                @if (_assigned.Count == 0)
+                {
+                    <MudText Color="Color.Secondary">(none)</MudText>
+                }
+                else
+                {
+                    <MudList T="string" Dense="true">
+                        @foreach (var staff in _assigned)
+                        {
+                            <MudListItem T="string">
+                                <div class="d-flex justify-space-between align-center w-100">
+                                    <div>
+                                        <MudText>@staff.Name</MudText>
+                                        <MudText Typo="Typo.caption" Color="Color.Secondary">@staff.Email</MudText>
+                                    </div>
+                                    <MudTooltip Text="Remove">
+                                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                       Color="Color.Error"
+                                                       Size="Size.Small"
+                                                       OnClick="() => UnassignAsync(staff.Id)" />
+                                    </MudTooltip>
+                                </div>
+                            </MudListItem>
+                        }
+                    </MudList>
+                }
+            </MudStack>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="CloseAsync">Close</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public Guid ServicePointId { get; set; }
+    [Parameter] public string? ServicePointName { get; set; }
+
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    [Inject] public IMediator Mediator { get; set; } = default!;
+
+    private List<StaffDto> _assigned = new();
+    private List<StaffDto> _unassigned = new();
+    private Guid? _currentServicePointId;
+    private Guid? _selectedUserId;
+    private string? _errorMessage;
+    private List<string>? _errorDetails;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_currentServicePointId != ServicePointId)
+        {
+            _currentServicePointId = ServicePointId;
+            _selectedUserId = null;
+        }
+
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            _errorMessage = null; _errorDetails = null;
+            _assigned = (await Mediator.Send(new GetAssignedStaffQuery(ServicePointId))).ToList();
+            _unassigned = (await Mediator.Send(new GetUnassignedStaffQuery(ServicePointId))).ToList();
+        }
+        catch (Exception ex)
+        {
+            (_errorMessage, _errorDetails) = ex.ToUserMessage();
+        }
+    }
+
+    private async Task AssignAsync()
+    {
+        if (_selectedUserId is null) return;
+
+        try
+        {
+            await Mediator.Send(new AssignStaffCommand(ServicePointId, _selectedUserId.Value));
+            _selectedUserId = null;
+            await LoadAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            (_errorMessage, _errorDetails) = ex.ToUserMessage();
+        }
+    }
+
+    private async Task UnassignAsync(Guid userId)
+    {
+        try
+        {
+            await Mediator.Send(new UnassignStaffCommand(ServicePointId, userId));
+            await LoadAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            (_errorMessage, _errorDetails) = ex.ToUserMessage();
+        }
+    }
+
+    private void CloseAsync() => MudDialog.Cancel();
+}

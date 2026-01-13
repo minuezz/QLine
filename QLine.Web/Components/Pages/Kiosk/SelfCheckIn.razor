@@ -1,0 +1,91 @@
+@page "/kiosk"
+@layout Layout.EmptyLayout
+@using MediatR
+@using QLine.Application.DTO
+@using QLine.Application.Features.Reservations.Commands
+@using System.Linq
+@inject IMediator Mediator
+
+<div class="kiosk-screen">
+    <div class="kiosk-panel">
+        @if (_checkInSuccessful)
+        {
+            <div class="status success">
+                <h1>Welcome!</h1>
+                <p class="ticket">Your Ticket Number: @_ticketNumber</p>
+                <button class="btn primary" @onclick="Reset">Next Client</button>
+            </div>
+        }
+        else
+        {
+            <div class="status ready">
+                <h1>Self-Service Kiosk</h1>
+                <p class="helper">Please scan or paste your Reservation ID to check in.</p>
+
+                @if (!string.IsNullOrWhiteSpace(_errorMessage))
+                {
+                    <div class="alert">@_errorMessage</div>
+                }
+
+                <form class="scan-form" @onsubmit="HandleSubmit" @onsubmit:preventDefault>
+                    <input type="text"
+                           placeholder="Reservation ID"
+                           @bind="_scanInput"
+                           class="scan-input"
+                           autocomplete="off"
+                           aria-label="Reservation ID"
+                           required />
+                    <button class="btn primary" type="submit" disabled="@_isProcessing">Check In</button>
+                </form>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private string _scanInput = string.Empty;
+    private bool _isProcessing;
+    private bool _checkInSuccessful;
+    private string _ticketNumber = "Issued";
+    private string? _errorMessage;
+
+    private async Task HandleSubmit()
+    {
+        _errorMessage = null;
+
+        if (!Guid.TryParse(_scanInput, out var reservationId))
+        {
+            _errorMessage = "Invalid code. Please enter a valid Reservation ID.";
+            return;
+        }
+
+        _isProcessing = true;
+
+        try
+        {
+            var snapshot = await Mediator.Send(new CheckInByQrCommand(reservationId));
+            var ticket = snapshot.Waiting
+                .OrderByDescending(w => w.CreatedAt)
+                .FirstOrDefault() ?? snapshot.Current;
+
+            _ticketNumber = ticket?.TicketNo ?? "Issued";
+            _checkInSuccessful = true;
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+        }
+        finally
+        {
+            _isProcessing = false;
+        }
+    }
+
+    private void Reset()
+    {
+        _checkInSuccessful = false;
+        _scanInput = string.Empty;
+        _ticketNumber = "Issued";
+        _errorMessage = null;
+    }
+}

@@ -43,15 +43,17 @@ namespace QLine.Infrastructure.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "Email")
+                    b.HasIndex("Email")
                         .IsUnique();
 
                     b.ToTable("AppUsers");
@@ -78,9 +80,6 @@ namespace QLine.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("TicketNo")
                         .IsRequired()
                         .HasMaxLength(32)
@@ -88,12 +87,11 @@ namespace QLine.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("TicketNo")
+                        .HasDatabaseName("IX_QueueEntry_TicketNo");
+
                     b.HasIndex("ServicePointId", "Status")
                         .HasDatabaseName("IX_QueueEntry_Point_Status");
-
-                    b.HasIndex("TenantId", "TicketNo")
-                        .IsUnique()
-                        .HasDatabaseName("UX_QueueEntry_Tenant_TicketNo");
 
                     b.ToTable("QueueEntries");
                 });
@@ -119,15 +117,14 @@ namespace QLine.Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "ServicePointId", "StartTime")
+                    b.HasIndex("ServiceId");
+
+                    b.HasIndex("ServicePointId", "StartTime")
                         .IsUnique()
                         .HasDatabaseName("UX_Reservation_ActiveSlot")
                         .HasFilter("\"Status\" = 0");
@@ -147,18 +144,12 @@ namespace QLine.Infrastructure.Migrations
                     b.Property<int>("DurationMin")
                         .HasColumnType("integer");
 
-                    b.Property<int>("MaxPerDay")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
 
                     b.Property<Guid>("ServicePointId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TenantId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -188,48 +179,52 @@ namespace QLine.Infrastructure.Migrations
                         .IsRequired()
                         .HasColumnType("jsonb");
 
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("uuid");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("TenantId", "Name");
+                    b.HasIndex("Name");
 
                     b.ToTable("ServicePoints");
                 });
 
-            modelBuilder.Entity("QLine.Domain.Entities.Tenant", b =>
+            modelBuilder.Entity("QLine.Domain.Entities.StaffAssignment", b =>
                 {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("ServicePointId")
                         .HasColumnType("uuid");
 
-                    b.Property<string>("Language")
-                        .IsRequired()
-                        .HasMaxLength(10)
-                        .HasColumnType("character varying(10)");
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                    b.HasKey("ServicePointId", "UserId");
 
-                    b.Property<string>("Slug")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.HasIndex("UserId");
 
-                    b.Property<string>("Timezone")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
+                    b.ToTable("StaffAssignments");
+                });
 
-                    b.HasKey("Id");
+            modelBuilder.Entity("QLine.Domain.Entities.Reservation", b =>
+                {
+                    b.HasOne("QLine.Domain.Entities.Service", "Service")
+                        .WithMany()
+                        .HasForeignKey("ServiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasIndex("Slug")
-                        .IsUnique();
+                    b.Navigation("Service");
+                });
 
-                    b.ToTable("Tenants");
+            modelBuilder.Entity("QLine.Domain.Entities.StaffAssignment", b =>
+                {
+                    b.HasOne("QLine.Domain.Entities.ServicePoint", null)
+                        .WithMany()
+                        .HasForeignKey("ServicePointId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("QLine.Domain.Entities.AppUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

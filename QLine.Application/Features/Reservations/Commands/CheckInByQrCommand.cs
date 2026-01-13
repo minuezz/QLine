@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System;
+using MediatR;
+using QLine.Application.DTO;
 
 namespace QLine.Application.Features.Reservations.Commands
 {
-    public class CheckInByQrCommand
-    {
-    }
+    public sealed record CheckInByQrCommand(Guid ReservationId) : IRequest<QueueSnapshotDto>;
 }

@@ -1,5 +1,168 @@
-﻿<h3>Users</h3>
+﻿@page "/admin/users"
+@attribute [Authorize(Roles = "Admin")]
+@using Microsoft.AspNetCore.Authorization
+@using MediatR
+@using QLine.Application.Abstractions
+@using QLine.Application.DTO
+@using QLine.Application.Features.Admin.Commands
+@using QLine.Application.Features.Admin.Queries
+@using QLine.Domain.Enums
+@inject IMediator Mediator
+@inject ICurrentUser CurrentUser
+
+<PageTitle>QLine Admin - Users</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-16">
+
+    <div class="mb-8">
+        <MudText Typo="Typo.h4" Class="font-weight-bold">User Management</MudText>
+        <MudText Typo="Typo.subtitle1" Color="Color.Secondary">Manage system users and access roles</MudText>
+    </div>
+
+    <MudPaper Elevation="2" Class="rounded-xl overflow-hidden">
+        <MudToolBar Class="pa-4">
+            <MudIcon Icon="@Icons.Material.Filled.Search" Color="Color.Secondary" Class="mr-4" />
+            <MudTextField @bind-Value="_searchTerm"
+                          Placeholder="Search users by name, email or role..."
+                          Adornment="Adornment.None"
+                          Variant="Variant.Text"
+                          Immediate="true"
+                          Class="mt-0"
+                          Underline="false"
+                          Style="font-size: 1.1rem;" />
+            <MudSpacer />
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Text">Total: @_users.Count</MudChip>
+        </MudToolBar>
+
+        <MudDivider />
+
+        <MudTable Items="FilteredUsers"
+                  Hover="true"
+                  Breakpoint="Breakpoint.Sm"
+                  Loading="_loading"
+                  LoadingProgressColor="Color.Primary"
+                  Elevation="0">
+            <HeaderContent>
+                <MudTh>User</MudTh>
+                <MudTh>Email</MudTh>
+                <MudTh>Role</MudTh>
+                <MudTh Style="text-align:right">Actions</MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd DataLabel="User">
+                    <div class="d-flex align-center">
+                        <MudAvatar Color="@GetColorForUser(context.Name)" Variant="Variant.Filled" Size="Size.Small" Class="mr-3">
+                            @(context.Name.Length > 0 ? context.Name[0].ToString().ToUpper() : "?")
+                        </MudAvatar>
+                        <div>
+                            <MudText Typo="Typo.body1" Class="font-weight-bold">@context.Name</MudText>
+                            @if (IsCurrentUser(context.Id))
+                            {
+                                <MudText Typo="Typo.caption" Color="Color.Success">(You)</MudText>
+                            }
+                        </div>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Email">@context.Email</MudTd>
+                <MudTd DataLabel="Role">
+                    @switch (context.Role)
+                    {
+                        case nameof(UserRole.Admin):
+                            <MudChip T="string" Color="Color.Error" Size="Size.Small" Variant="Variant.Outlined">ADMIN</MudChip>
+                            break;
+                        case nameof(UserRole.Staff):
+                            <MudChip T="string" Color="Color.Info" Size="Size.Small" Variant="Variant.Outlined">STAFF</MudChip>
+                            break;
+                        default:
+                            <MudChip T="string" Color="Color.Default" Size="Size.Small" Variant="Variant.Outlined">USER</MudChip>
+                            break;
+                    }
+                </MudTd>
+                <MudTd DataLabel="Actions" Style="text-align:right">
+                    @if (!IsCurrentUser(context.Id))
+                    {
+                        @if (context.Role == nameof(UserRole.Client))
+                        {
+                            <MudTooltip Text="Promote to Staff">
+                                <MudIconButton Icon="@Icons.Material.Filled.ArrowUpward"
+                                               Color="Color.Success"
+                                               Size="Size.Small"
+                                               OnClick="() => UpdateRole(context.Id, UserRole.Staff)" />
+                            </MudTooltip>
+                        }
+                        else if (context.Role == nameof(UserRole.Staff))
+                        {
+                            <MudTooltip Text="Demote to Client">
+                                <MudIconButton Icon="@Icons.Material.Filled.ArrowDownward"
+                                               Color="Color.Warning"
+                                               Size="Size.Small"
+                                               OnClick="() => UpdateRole(context.Id, UserRole.Client)" />
+                            </MudTooltip>
+                        }
+                    }
+                    else
+                    {
+                        <MudIcon Icon="@Icons.Material.Filled.Lock" Color="Color.Default" Size="Size.Small" />
+                    }
+                </MudTd>
+            </RowTemplate>
+
+            <NoRecordsContent>
+                <div class="d-flex flex-column align-center justify-center pa-8">
+                    <MudIcon Icon="@Icons.Material.Filled.PeopleOutline" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
+                    <MudText Typo="Typo.h6" Color="Color.Secondary">No users found</MudText>
+                </div>
+            </NoRecordsContent>
+
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
 
 @code {
+    private readonly List<UserDto> _users = new();
+    private string _searchTerm = string.Empty;
+    private bool _loading = true;
+    private Guid? _currentUserId;
 
+    protected override async Task OnInitializedAsync()
+    {
+        _currentUserId = CurrentUser.UserId;
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        _users.Clear();
+        _users.AddRange(await Mediator.Send(new GetAllUsersQuery()));
+        _loading = false;
+    }
+
+    private IEnumerable<UserDto> FilteredUsers =>
+        _users.Where(u => string.IsNullOrWhiteSpace(_searchTerm)
+            || u.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+            || u.Email.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase)
+            || u.Role.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    private async Task UpdateRole(Guid userId, UserRole newRole)
+    {
+        await Mediator.Send(new UpdateUserRoleCommand(userId, newRole));
+        await LoadAsync();
+    }
+
+    private bool IsCurrentUser(Guid userId) => _currentUserId.HasValue && _currentUserId.Value == userId;
+
+    private Color GetColorForUser(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return Color.Default;
+        var firstChar = char.ToUpper(name[0]);
+        if (firstChar >= 'A' && firstChar <= 'G') return Color.Primary;
+        if (firstChar >= 'H' && firstChar <= 'N') return Color.Secondary;
+        if (firstChar >= 'O' && firstChar <= 'T') return Color.Tertiary;
+        return Color.Info;
+    }
 }

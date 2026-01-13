@@ -22,5 +22,25 @@ namespace QLine.Infrastructure.Persistence.Repositories
 
         public Task<Service?> GetByIdAsync(Guid id, CancellationToken ct) =>
             _db.Services.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+
+        public async Task AddAsync(Service svc, CancellationToken ct)
+        {
+            await _db.Services.AddAsync(svc, ct);
+            await _db.SaveChangesAsync(ct);
+        }
+
+        public async Task UpdateAsync(Service svc, CancellationToken ct)
+        {
+            _db.Services.Update(svc);
+            await _db.SaveChangesAsync(ct);
+        }
+
+        public async Task DeleteAsync(Guid id, CancellationToken ct)
+        {
+            var entity = await _db.Services.FindAsync(new object?[] { id }, ct);
+            if (entity is null) return;
+            _db.Services.Remove(entity);
+            await _db.SaveChangesAsync(ct);
+        }
     }
 }

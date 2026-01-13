@@ -11,5 +11,6 @@ namespace QLine.Application.DTO
         public Guid Id { get; init; }
         public string Name { get; init; } = default!;
         public string Address { get; init; } = default!;
+        public string? OpenHoursJson { get; init; }
     }
 }

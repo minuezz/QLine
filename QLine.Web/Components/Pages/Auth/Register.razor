@@ -1,0 +1,84 @@
+@page "/register"
+@inject NavigationManager Nav
+
+<MudGrid Class="auth-grid justify-center align-center">
+    <MudItem xs="12" sm="8" md="5" lg="4">
+        <MudCard Class="auth-card" Elevation="3">
+            <MudCardContent>
+                <MudText Typo="Typo.h5" GutterBottom="true">Register</MudText>
+
+                @if (ErrorCode is not null)
+                {
+                    <MudAlert Severity="Severity.Error" Dense="true" Variant="Variant.Filled" Class="mb-2">@ErrorMessage</MudAlert>
+                }
+
+                <form method="post" action="/auth/register" class="auth-form">
+                    <MudStack Spacing="2">
+                        <MudTextField @bind-Value="_firstName"
+                                      Label="First name"
+                                      Required="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Person"
+                                      FullWidth="true" />
+                        <input type="hidden" name="firstName" value="@_firstName" />
+
+                        <MudTextField @bind-Value="_lastName"
+                                      Label="Last name"
+                                      Required="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Person"
+                                      FullWidth="true" />
+                        <input type="hidden" name="lastName" value="@_lastName" />
+
+                        <MudTextField @bind-Value="_email"
+                                      Label="Email"
+                                      InputType="InputType.Email"
+                                      Required="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Email"
+                                      FullWidth="true" />
+                        <input type="hidden" name="email" value="@_email" />
+
+                        <MudTextField @bind-Value="_password"
+                                      Label="Password"
+                                      InputType="InputType.Password"
+                                      Required="true"
+                                      Adornment="Adornment.Start"
+                                      AdornmentIcon="@Icons.Material.Filled.Lock"
+                                      FullWidth="true" />
+                        <input type="hidden" name="password" value="@_password" />
+
+                        <MudButton ButtonType="ButtonType.Submit"
+                                   Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   FullWidth="true">
+                            Create account
+                        </MudButton>
+
+                        <MudText Typo="Typo.body2" Align="Align.Center">
+                            Already have an account? <MudLink Href="/login">Sign in</MudLink>
+                        </MudText>
+                    </MudStack>
+                </form>
+            </MudCardContent>
+        </MudCard>
+    </MudItem>
+</MudGrid>
+
+@code {
+        private string _firstName = "";
+        private string _lastName = "";
+        private string _email = "";
+        private string _password = "";
+
+        private string? ErrorCode => new Uri(Nav.Uri).Query.Contains("error=")
+                ? System.Web.HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query).Get("error")
+                : null;
+
+        private string ErrorMessage => ErrorCode switch
+        {
+                "exists" => "A user with this email already exists",
+                "invalid" => "Please complete all fields",
+                _ => "Registration failed"
+        };
+}

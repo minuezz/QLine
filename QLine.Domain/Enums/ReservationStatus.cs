@@ -9,7 +9,10 @@ namespace QLine.Domain.Enums
     public enum ReservationStatus
     {
         Active = 0,
-        Cancelled = 1,
-        Completed = 2
+        Waiting = 1,
+        InService = 2, 
+        Completed = 3,
+        Cancelled = 4,
+        NoShow = 5
     }
 }

@@ -1,0 +1,76 @@
+.kiosk-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f5f7fa;
+    padding: 24px;
+}
+
+.kiosk-panel {
+    width: 100%;
+    max-width: 520px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+    padding: 32px;
+    text-align: center;
+}
+
+.status h1 {
+    margin-bottom: 12px;
+}
+
+.helper {
+    color: #555;
+    margin-bottom: 20px;
+}
+
+.scan-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.scan-input {
+    font-size: 1.2rem;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.btn {
+    padding: 12px 16px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+    .btn.primary {
+        background-color: #2d8fdd;
+        color: #fff;
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+.alert {
+    background: #ffe5e5;
+    color: #b20000;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.status.success {
+    color: #0a7a2c;
+}
+
+.ticket {
+    font-size: 1.5rem;
+    margin: 16px 0;
+    font-weight: bold;
+}

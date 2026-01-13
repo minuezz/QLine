@@ -1,0 +1,84 @@
+@using MediatR
+@using QLine.Application.Features.Admin.ServicePoints.Commands
+@using QLine.Application.DTO
+@inject IMediator Mediator
+@using QLine.Web.Components.OpenHours
+
+<MudDialog>
+    <DialogContent>
+        <MudStack Spacing="2">
+            <ErrorAlert Message="@_errorMessage" Details="@_errorDetails" />
+            <EditForm Model="this" OnValidSubmit="SaveAsync">
+                <MudStack Spacing="2">
+                    <MudTextField @bind-Value="_name" Label="Name" Required="true" />
+                    <MudTextField @bind-Value="_address" Label="Address" Required="true" />
+                    <OpenHoursEditor @bind-Value="_openHoursJson" @bind-Valid="_openHoursValid" />
+                </MudStack>
+            </EditForm>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Secondary" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Disabled="IsSaveDisabled" OnClick="SaveAsync">Save</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [Parameter] public Guid? ServicePointId { get; set; }
+    [Parameter] public string? Name { get; set; }
+    [Parameter] public string? Address { get; set; }
+    [Parameter] public string? OpenHoursJson { get; set; }
+
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+
+    private Guid? _servicePointId;
+    private string _name = string.Empty;
+    private string _address = string.Empty;
+    private string? _openHoursJson;
+    private bool _openHoursValid = true;
+
+    private string? _errorMessage;
+    private List<string>? _errorDetails;
+
+    protected override void OnInitialized()
+    {
+        _servicePointId = ServicePointId;
+        _name = Name ?? string.Empty;
+        _address = Address ?? string.Empty;
+        _openHoursJson = string.IsNullOrWhiteSpace(OpenHoursJson) ? DefaultOpenHoursJson() : OpenHoursJson;
+    }
+
+    private bool IsSaveDisabled =>
+        string.IsNullOrWhiteSpace(_name) ||
+        string.IsNullOrWhiteSpace(_address) ||
+        string.IsNullOrWhiteSpace(_openHoursJson) ||
+        !_openHoursValid;
+
+    private async Task SaveAsync()
+    {
+        if (IsSaveDisabled) return;
+
+        try
+        {
+            _errorMessage = null; _errorDetails = null;
+
+            await Mediator.Send(new UpsertServicePointCommand(
+                Id: _servicePointId,
+                Name: _name.Trim(),
+                Address: _address.Trim(),
+                OpenHoursJson: _openHoursJson ?? DefaultOpenHoursJson()
+            ));
+
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            (_errorMessage, _errorDetails) = ex.ToUserMessage();
+        }
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    private static string DefaultOpenHoursJson() =>
+        """{ "monday":{"open":true, "start":"07:30","end":"16:00"}, "tuesday":{"open":true, "start":"07:30","end":"16:00"}, "wednesday":{"open":true, "start":"07:30","end":"16:00"}, "thursday":{"open":true, "start":"07:30","end":"16:00"}, "friday":{"open":true, "start":"07:30","end":"16:00"}, "saturday":{"open":false, "start":"07:30","end":"16:00"}, "sunday":{"open":false,"start":"07:30","end":"16:00"} }""";
+}

@@ -16,7 +16,6 @@ namespace QLine.Infrastructure.Persistence.Configurations
         {
             b.HasKey(x => x.Id);
 
-            b.Property(x => x.TenantId).IsRequired();
             b.Property(x => x.ServicePointId).IsRequired();
             b.Property(x => x.ReservationId).IsRequired();
 
@@ -28,9 +27,8 @@ namespace QLine.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasConversion<int>();
 
-            b.HasIndex(x => new { x.TenantId, x.TicketNo })
-                .IsUnique()
-                .HasDatabaseName("UX_QueueEntry_Tenant_TicketNo");
+            b.HasIndex(x => x.TicketNo)
+                .HasDatabaseName("IX_QueueEntry_TicketNo");
 
             b.HasIndex(x => new { x.ServicePointId, x.Status })
                 .HasDatabaseName("IX_QueueEntry_Point_Status");

@@ -15,12 +15,10 @@ namespace QLine.Infrastructure.Persistence.Configurations
         {
             b.HasKey(x => x.Id);
 
-            b.Property(x => x.TenantId).IsRequired();
             b.Property(x => x.ServicePointId).IsRequired();
             b.Property(x => x.Name).IsRequired().HasMaxLength(200);
             b.Property(x => x.DurationMin).IsRequired();
             b.Property(x => x.BufferMin).IsRequired();
-            b.Property(x => x.MaxPerDay).IsRequired();
 
             b.HasIndex(x => new { x.ServicePointId, x.Name });
         }

@@ -15,12 +15,11 @@ namespace QLine.Infrastructure.Persistence.Configurations
         {
             b.HasKey(x => x.Id);
 
-            b.Property(x => x.TenantId).IsRequired();
             b.Property(x => x.Name).IsRequired().HasMaxLength(200);
             b.Property(x => x.Address).IsRequired().HasMaxLength(500);
             b.Property(x => x.OpenHoursJson).IsRequired().HasColumnType("jsonb");
 
-            b.HasIndex(x => new { x.TenantId, x.Name });
+            b.HasIndex(x => x.Name);
         }
     }
 }

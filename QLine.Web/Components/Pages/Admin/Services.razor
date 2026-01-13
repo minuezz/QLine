@@ -1,5 +1,214 @@
-﻿<h3>Services</h3>
+﻿@page "/admin/services/{ServicePointId:guid}"
+@attribute [Authorize(Roles = "Admin")]
+@using MediatR
+@using Microsoft.AspNetCore.Authorization
+@using QLine.Application.DTO
+@using QLine.Application.Features.Admin.Queries
+@using QLine.Application.Features.Admin.Services.Commands
+@inject IMediator Mediator
+@inject IDialogService DialogService
+
+<PageTitle>QLine Admin - Services</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-16">
+
+    <div class="mb-8">
+        <MudButton Variant="Variant.Text"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   Href="/admin/servicepoints"
+                   Color="Color.Secondary"
+                   Class="mb-2">
+            Back to Locations
+        </MudButton>
+
+        <div class="d-flex justify-space-between align-center">
+            <div>
+                <MudText Typo="Typo.h4" Class="font-weight-bold">Manage Services</MudText>
+                <MudText Typo="Typo.subtitle1" Color="Color.Secondary">Configure available services and durations</MudText>
+            </div>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.Add"
+                       OnClick="OpenCreateDialog"
+                       Class="rounded-lg py-2 px-4 shadow-sm">
+                Add Service
+            </MudButton>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_errorMessage))
+    {
+        <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-6 rounded-lg" ShowCloseIcon="true" CloseIconClicked="() => _errorMessage = null">
+            @_errorMessage
+        </MudAlert>
+    }
+
+    <MudPaper Elevation="2" Class="rounded-xl overflow-hidden">
+        <MudToolBar Class="pa-4">
+            <MudIcon Icon="@Icons.Material.Filled.Search" Color="Color.Secondary" Class="mr-4" />
+            <MudTextField @bind-Value="_searchTerm"
+                          Placeholder="Search services..."
+                          Adornment="Adornment.None"
+                          Variant="Variant.Text"
+                          Immediate="true"
+                          Class="mt-0"
+                          Underline="false"
+                          Style="font-size: 1.1rem;" />
+            <MudSpacer />
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Text">Total: @_list.Count</MudChip>
+        </MudToolBar>
+
+        <MudDivider />
+
+        <MudTable Items="FilteredServices"
+                  Hover="true"
+                  Breakpoint="Breakpoint.Sm"
+                  Loading="_loading"
+                  LoadingProgressColor="Color.Primary"
+                  Elevation="0">
+            <HeaderContent>
+                <MudTh>Service Name</MudTh>
+                <MudTh>Duration</MudTh>
+                <MudTh>Buffer Time</MudTh>
+                <MudTh Style="text-align:right">Actions</MudTh>
+            </HeaderContent>
+
+            <RowTemplate>
+                <MudTd DataLabel="Name">
+                    <div class="d-flex align-center">
+                        <MudAvatar Color="Color.Secondary" Variant="Variant.Outlined" Size="Size.Small" Class="mr-3">
+                            <MudIcon Icon="@Icons.Material.Filled.DesignServices" Size="Size.Small" />
+                        </MudAvatar>
+                        <MudText Typo="Typo.body1" Class="font-weight-bold">@context.Name</MudText>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Duration">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.Schedule" Size="Size.Small" Color="Color.Default" Class="mr-2" />
+                        <MudText>@context.DurationMin min</MudText>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Buffer">
+                    <div class="d-flex align-center">
+                        <MudIcon Icon="@Icons.Material.Filled.HourglassEmpty" Size="Size.Small" Color="Color.Secondary" Class="mr-2" />
+                        <MudText Color="Color.Secondary">@context.BufferMin min</MudText>
+                    </div>
+                </MudTd>
+                <MudTd DataLabel="Actions" Style="text-align:right">
+                    <MudTooltip Text="Edit">
+                        <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       OnClick="() => OpenEditDialog(context)" />
+                    </MudTooltip>
+                    <MudTooltip Text="Delete">
+                        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                       Color="Color.Error"
+                                       Size="Size.Small"
+                                       OnClick="() => DeleteWithConfirmationAsync(context)" />
+                    </MudTooltip>
+                </MudTd>
+            </RowTemplate>
+
+            <NoRecordsContent>
+                <div class="d-flex flex-column align-center justify-center pa-8">
+                    <MudIcon Icon="@Icons.Material.Filled.PlaylistRemove" Size="Size.Large" Color="Color.Secondary" Class="mb-4" />
+                    <MudText Typo="Typo.h6" Color="Color.Secondary">No services found</MudText>
+                    <MudText Typo="Typo.body2" Color="Color.Secondary">Create a service to get started.</MudText>
+                </div>
+            </NoRecordsContent>
+
+            <PagerContent>
+                <MudTablePager />
+            </PagerContent>
+        </MudTable>
+    </MudPaper>
+</MudContainer>
 
 @code {
+    [Parameter] public Guid ServicePointId { get; set; }
 
+    private List<ServiceDto> _list = new();
+    private string _searchTerm = string.Empty;
+    private bool _loading = true;
+    private string? _errorMessage;
+    private List<string>? _errorDetails;
+
+    private IEnumerable<ServiceDto> FilteredServices =>
+        _list.Where(s => string.IsNullOrWhiteSpace(_searchTerm)
+            || s.Name.Contains(_searchTerm, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        _loading = true;
+        try
+        {
+            _list = (await Mediator.Send(new GetServicesForServicePointQuery(ServicePointId))).ToList();
+            _errorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            (_errorMessage, _errorDetails) = ExceptionHelper.ToUserMessage(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task OpenCreateDialog() => await OpenDialogAsync(null);
+
+    private async Task OpenEditDialog(ServiceDto s) => await OpenDialogAsync(s);
+
+    private async Task OpenDialogAsync(ServiceDto? service)
+    {
+        var parameters = new DialogParameters
+        {
+            { nameof(ServiceFormDialog.ServiceId), service?.Id },
+            { nameof(ServiceFormDialog.ServicePointId), ServicePointId },
+            { nameof(ServiceFormDialog.Name), service?.Name },
+            { nameof(ServiceFormDialog.Duration), service?.DurationMin },
+            { nameof(ServiceFormDialog.Buffer), service?.BufferMin }
+        };
+
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true };
+        var title = service is null ? "Create Service" : "Edit Service";
+
+        var dialog = await DialogService.ShowAsync<ServiceFormDialog>(title, parameters, options);
+        var result = await dialog.Result;
+
+        if (result != null && !result.Canceled)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private async Task DeleteWithConfirmationAsync(ServiceDto service)
+    {
+        var confirmed = await DialogService.ShowMessageBox(
+            "Delete Service",
+            $"Are you sure you want to delete '{service.Name}'?",
+            yesText: "Delete", cancelText: "Cancel", noText: null,
+            options: new DialogOptions { MaxWidth = MaxWidth.ExtraSmall });
+
+        if (confirmed == true)
+        {
+            await DeleteAsync(service.Id);
+        }
+    }
+
+    private async Task DeleteAsync(Guid id)
+    {
+        try
+        {
+            await Mediator.Send(new DeleteServiceCommand(id));
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            (_errorMessage, _errorDetails) = QLine.Web.Utils.ExceptionHelper.ToUserMessage(ex);
+        }
+    }
 }

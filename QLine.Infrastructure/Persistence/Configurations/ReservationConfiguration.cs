@@ -16,7 +16,6 @@ namespace QLine.Infrastructure.Persistence.Configurations
         {
             b.HasKey(x => x.Id);
 
-            b.Property(x => x.TenantId).IsRequired();
             b.Property(x => x.ServicePointId).IsRequired();
             b.Property(x => x.ServiceId).IsRequired();
             b.Property(x => x.UserId).IsRequired();
@@ -27,7 +26,7 @@ namespace QLine.Infrastructure.Persistence.Configurations
                 .IsRequired()
                 .HasConversion<int>();
 
-            b.HasIndex(x => new { x.TenantId, x.ServicePointId, x.StartTime })
+            b.HasIndex(x => new { x.ServicePointId, x.StartTime })
                 .IsUnique()
                 .HasFilter("\"Status\" = 0")
                 .HasDatabaseName("UX_Reservation_ActiveSlot");

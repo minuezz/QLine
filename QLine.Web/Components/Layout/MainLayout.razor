@@ -1,23 +1,156 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
+<MudThemeProvider Theme="@CurrentTheme" IsDarkMode="@isDarkMode" />
+<MudDialogProvider />
+<MudSnackbarProvider />
+<MudPopoverProvider />
+@if(_isThemeLoaded) 
+{
+    <MudLayout>
+        <MudAppBar Elevation="1">
+            <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+            <MudText Typo="Typo.h5" Class="font-weight-bold ml-2">QLine</MudText>
+            <MudSpacer />
+            <MudTooltip Text="Toggle light/dark mode">
+                <MudToggleIconButton Toggled="@isDarkMode"
+                                     ToggledChanged="ToggleTheme"
+                                     Color="Color.Inherit"
+                                     Icon="@Icons.Material.Filled.LightMode"
+                                     ToggledIcon="@Icons.Material.Filled.DarkMode" />
+            </MudTooltip>
 
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
-        </div>
+            <AuthorizeView>
+                <Authorized Context="authContext">
+                    <MudMenu Color="Color.Inherit" Dense="true" AnchorOrigin="Origin.TopRight" TransformOrigin="Origin.TopRight">
+                        <ActivatorContent>
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Class="cursor-pointer">
+                                <MudAvatar Size="Size.Medium" Color="Color.Primary">@GetInitials(authContext.User.Identity?.Name)</MudAvatar>
+                                <MudText Class="ml-2 font-weight-semibold">@authContext.User.Identity?.Name</MudText>
+                                <MudIcon Icon="@Icons.Material.Filled.ArrowDropDown" />
+                            </MudStack>
+                        </ActivatorContent>
+                        <ChildContent>
+                            <MudMenuItem Href="/profile" Icon="@Icons.Material.Filled.Person">Profile</MudMenuItem>
+                            <MudMenuItem OnClick="Logout" Icon="@Icons.Material.Filled.Logout">Logout</MudMenuItem>
+                        </ChildContent>
+                    </MudMenu>
+                </Authorized>
+                <NotAuthorized>
+                    <MudStack Row="true" Spacing="2">
+                        <MudButton Href="/login" Variant="Variant.Text" Color="Color.Inherit">Login</MudButton>
+                        <MudButton Href="/register" Variant="Variant.Filled" Color="Color.Secondary">Register</MudButton>
+                    </MudStack>
+                </NotAuthorized>
+            </AuthorizeView>
+        </MudAppBar>
 
-        <article class="content px-4">
+        <MudDrawer Variant="DrawerVariant.Responsive" @bind-Open="drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="2">
+            <MudNavMenu>
+                <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
+                <MudNavLink Href="service-points" Icon="@Icons.Material.Filled.Store">Service Points</MudNavLink>
+
+                <AuthorizeView Roles="Staff, Admin">
+                    <Authorized>
+                        <MudText Typo="Typo.subtitle2" Color="Color.Default" Class="ml-4 mt-4 mb-2">Staff Zone</MudText>
+                        <MudNavLink Href="display" Icon="@Icons.Material.Filled.Tv">Displays</MudNavLink>
+                        <MudNavLink Href="/staff/queue" Icon="@Icons.Material.Filled.PeopleOutline">Queue</MudNavLink>
+                    </Authorized>
+                </AuthorizeView>
+
+                <AuthorizeView Roles="Admin">
+                    <Authorized>
+                        <MudNavGroup Title="Administration" Icon="@Icons.Material.Filled.AdminPanelSettings" Expanded="true">
+                            <MudNavLink Href="/admin/servicepoints" Icon="@Icons.Material.Filled.SettingsInputComponent">Service Points Manager</MudNavLink>
+                            <MudNavLink Href="/admin/users" Icon="@Icons.Material.Filled.Group">Users</MudNavLink>
+                        </MudNavGroup>
+                    </Authorized>
+                </AuthorizeView>
+            </MudNavMenu>
+        </MudDrawer>
+
+        <MudMainContent Class="pt-20">
             @Body
-        </article>
-    </main>
-
-    <div id="blazor-error-ui">
-        An unhandled error has occurred.
-        <a href="" class="reload">Reload</a>
-        <a class="dismiss">🗙</a>
+        </MudMainContent>
+    </MudLayout>
+} 
+else
+{
+    <div style="height:100vh; display:flex; align-items:center; justify-content:center;">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
     </div>
-</div>
+}
+
+
+@code {
+    private readonly MudTheme lightTheme = new()
+    {
+        PaletteLight = new PaletteLight
+        {
+            Primary = "#0d6efd"
+        }
+    };
+
+    private readonly MudTheme darkTheme = new()
+    {
+        PaletteDark = new PaletteDark
+        {
+            Primary = "#0d6efd",
+            Background = "#121212",
+            Surface = "#1e1e1e",
+            DrawerBackground = "#1f1f1f",
+            AppbarBackground = "#1f1f1f",
+            AppbarText = "#ffffff",
+            DrawerText = "#ffffff",
+            TextPrimary = "#ffffff"
+        }
+    };
+
+    private void Logout()
+    {
+        NavManager.NavigateTo("/logout", forceLoad: true);
+    }
+
+    private bool isDarkMode;
+    private bool drawerOpen = true;
+    private bool _isThemeLoaded = false;
+
+    private MudTheme CurrentTheme => isDarkMode ? darkTheme : lightTheme;
+
+    private void ToggleDrawer() => drawerOpen = !drawerOpen;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var storedTheme = await JS.InvokeAsync<string>("localStorage.getItem", "theme");
+            if (!string.IsNullOrEmpty(storedTheme))
+            {
+                isDarkMode = storedTheme == "dark";
+            }
+
+            _isThemeLoaded = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleTheme(bool value)
+    {
+        isDarkMode = value;
+        await JS.InvokeVoidAsync("localStorage.setItem", "theme", isDarkMode ? "dark" : "light");
+    }
+
+    private static string GetInitials(string? name)
+    {
+        if (string.IsNullOrWhiteSpace(name)) return "U";
+        var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        return parts.Length switch
+        {
+            0 => "U",
+            1 => parts[0][0].ToString().ToUpperInvariant(),
+            _ => string.Concat(parts[0][0], parts[^1][0]).ToUpperInvariant()
+        };
+    }
+}

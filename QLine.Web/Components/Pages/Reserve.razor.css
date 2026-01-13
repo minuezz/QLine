@@ -1,0 +1,56 @@
+﻿/* Улучшаем читаемость карточек выбора */
+.border-primary {
+    border: 2px solid var(--mud-palette-primary) !important;
+    background-color: var(--mud-palette-primary-hover);
+}
+
+.transition-all {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Стили для билета (Ticket) */
+.ticket-card {
+    border: 1px solid #e0e0e0;
+    position: relative;
+}
+
+.qr-code-img {
+    width: 180px;
+    height: 180px;
+    border-radius: 8px;
+    border: 4px solid white;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.ticket-info {
+    border-top: 2px dashed #e0e0e0;
+    padding-top: 16px;
+    margin-top: 8px;
+}
+
+/* Анимация появления билета */
+.animate-fade-in {
+    animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Утилиты */
+.mud-background-gray {
+    background-color: #f9f9f9;
+}
+
+.font-family-monospace {
+    font-family: monospace;
+    letter-spacing: 1px;
+}

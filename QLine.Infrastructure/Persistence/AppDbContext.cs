@@ -12,17 +12,22 @@ namespace QLine.Infrastructure.Persistence
     {
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-        public DbSet<Tenant> Tenants => Set<Tenant>();
         public DbSet<ServicePoint> ServicePoints => Set<ServicePoint>();
         public DbSet<Service> Services => Set<Service>();
         public DbSet<Reservation> Reservations => Set<Reservation>();
         public DbSet<QueueEntry> QueueEntries => Set<QueueEntry>();
         public DbSet<AppUser> AppUsers => Set<AppUser>();
+        public DbSet<StaffAssignment> StaffAssignments => Set<StaffAssignment>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
             base.OnModelCreating(modelBuilder);
+        }
+
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+        {
+            configurationBuilder.Properties<DateTime>().HaveColumnType("timestamptz");
         }
     }
 }

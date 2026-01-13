@@ -1,0 +1,593 @@
+@page "/profile"
+@attribute [Authorize]
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.JSInterop
+@implements IAsyncDisposable
+@using QLine.Domain.Abstractions
+@using QLine.Domain.Entities
+@using QLine.Application.Features.Admin.Queries
+@using QLine.Application.Features.Reservations.Commands
+@using QLine.Application.Features.Reservations.Queries
+@using MediatR
+@using QRCoder
+@using System.Web
+@using System.Threading
+@using System.Threading.Tasks
+@using QLine.Application.Abstractions
+@inject IAppUserRepository Users
+@inject ICurrentUser CurrentUser
+@inject NavigationManager Nav
+@inject IMediator Mediator
+@inject IJSRuntime Js
+
+<PageTitle>QLine - My Profile</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-16">
+
+    <div class="mb-6">
+        <MudText Typo="Typo.h4" Class="font-weight-bold">My Account</MudText>
+        <MudText Typo="Typo.subtitle1" Color="Color.Secondary">Manage your personal details and reservations</MudText>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(_successMessage))
+    {
+        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-4 rounded-lg" ShowCloseIcon="true">@_successMessage</MudAlert>
+    }
+
+    @if (_errorMessages.Count > 0)
+    {
+        @foreach (var message in _errorMessages)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4 rounded-lg" ShowCloseIcon="true">@message</MudAlert>
+        }
+    }
+
+    @if (_user is null)
+    {
+        <div class="d-flex flex-column align-center justify-center my-16">
+            <MudProgressCircular Indeterminate Color="Color.Primary" Size="Size.Large" />
+            <MudText Color="Color.Secondary" Class="mt-4">Loading your profile...</MudText>
+        </div>
+    }
+    else
+    {
+        <MudTabs Elevation="0"
+                 Rounded="true"
+                 ApplyEffectsToContainer="true"
+                 PanelClass="mt-6"
+                 Color="Color.Transparent"
+                 SliderColor="Color.Primary"
+                 TabHeaderClass="mud-background-gray rounded-pill px-2">
+
+            <MudTabPanel Text="Personal Details" Icon="@Icons.Material.Filled.Person">
+                <MudGrid Spacing="4">
+                    <MudItem xs="12" md="5">
+                        <MudCard Elevation="2" Class="rounded-xl h-100">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6" Class="font-weight-bold">Identity</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent Class="d-flex flex-column align-center py-8">
+                                <MudAvatar Color="Color.Primary" Style="height:100px; width:100px; font-size: 2.5rem;" Class="mb-4 shadow-lg">
+                                    @GetInitials()
+                                </MudAvatar>
+                                <MudText Typo="Typo.h5" Class="font-weight-bold">@_user.FullName</MudText>
+                                <MudText Color="Color.Secondary">@_user.Email</MudText>
+                                <MudChip T="string" Color="Color.Surface" Class="mt-4" Variant="Variant.Outlined">Client Account</MudChip>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+
+                    <MudItem xs="12" md="7">
+                        <MudCard Elevation="2" Class="rounded-xl h-100">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6" Class="font-weight-bold">Security Settings</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudStack Spacing="3">
+                                    <MudTextField Value="@_user.Email"
+                                                  Label="Email Address"
+                                                  Variant="Variant.Outlined"
+                                                  ReadOnly="true"
+                                                  Adornment="Adornment.End"
+                                                  AdornmentIcon="@Icons.Material.Filled.Lock" />
+
+                                    <div class="d-flex gap-4 mt-2">
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="Color.Primary"
+                                                   OnClick="ToggleChangePassword"
+                                                   StartIcon="@Icons.Material.Filled.Key"
+                                                   FullWidth="true">
+                                            Change Password
+                                        </MudButton>
+
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="Color.Error"
+                                                   OnClick="ShowDeleteDialog"
+                                                   StartIcon="@Icons.Material.Filled.DeleteForever"
+                                                   FullWidth="true">
+                                            Delete Account
+                                        </MudButton>
+                                    </div>
+
+                                    <MudCollapse Expanded="_showChangePassword">
+                                        <MudPaper Elevation="0" Class="pa-4 mt-4 mud-background-gray rounded-lg border-dashed">
+                                            <form method="post" action="/account/change-password" data-enhance="false">
+                                                <MudStack Spacing="2">
+                                                    <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Update Password</MudText>
+                                                    <MudTextField T="string" @bind-Value="_password" Label="Current Password" InputType="InputType.Password" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
+                                                    <input type="hidden" name="password" value="@_password" />
+
+                                                    <MudGrid Spacing="2">
+                                                        <MudItem xs="12" sm="6">
+                                                            <MudTextField T="string" @bind-Value="_newPassword" Label="New Password" InputType="InputType.Password" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
+                                                            <input type="hidden" name="newPassword" value="@_newPassword" />
+                                                        </MudItem>
+                                                        <MudItem xs="12" sm="6">
+                                                            <MudTextField T="string" @bind-Value="_confirmPassword" Label="Confirm Password" InputType="InputType.Password" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
+                                                            <input type="hidden" name="confirmPassword" value="@_confirmPassword" />
+                                                        </MudItem>
+                                                    </MudGrid>
+                                                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2">Update Password</MudButton>
+                                                </MudStack>
+                                            </form>
+                                        </MudPaper>
+                                    </MudCollapse>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="My Reservations" Icon="@Icons.Material.Filled.ConfirmationNumber">
+
+                <div class="mb-8">
+                    <MudText Typo="Typo.h6" Class="mb-4 font-weight-bold">Upcoming Visits</MudText>
+
+                    @if (_loadingReservations)
+                    {
+                        <MudGrid>
+                            <MudItem xs="12" md="6"><MudSkeleton Height="200px" /></MudItem>
+                            <MudItem xs="12" md="6"><MudSkeleton Height="200px" /></MudItem>
+                        </MudGrid>
+                    }
+                    else if (!UpcomingReservations.Any())
+                    {
+                        <MudPaper Class="pa-8 d-flex flex-column align-center justify-center mud-background-gray rounded-xl" Elevation="0">
+                            <MudIcon Icon="@Icons.Material.Filled.EventAvailable" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+                            <MudText Color="Color.Secondary">You have no upcoming reservations.</MudText>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/service-points" Class="mt-2">Book a visit</MudButton>
+                        </MudPaper>
+                    }
+                    else
+                    {
+                        <MudGrid Spacing="3">
+                            @foreach (var r in UpcomingReservations)
+                            {
+                                <MudItem xs="12" lg="6">
+                                    <MudCard Elevation="3" Class="rounded-xl overflow-hidden active-ticket-card h-100">
+                                        <div class="@($"pa-2 {GetStatusClass(r.Status)} text-white font-weight-bold d-flex justify-space-between px-4")">
+                                            <MudText Typo="Typo.caption" Style="color: white !important;">STATUS</MudText>
+                                            <MudText Typo="Typo.caption" Style="text-transform: uppercase; color: white !important;">@r.Status</MudText>
+                                        </div>
+
+                                        <MudCardContent>
+                                            <div class="d-flex justify-space-between align-start">
+                                                <div>
+                                                    <MudText Typo="Typo.h5" Class="font-weight-bold text-primary mb-1">@r.ServiceName</MudText>
+                                                    <div class="d-flex align-center gap-2 mb-1">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Place" Size="Size.Small" Color="Color.Secondary" />
+                                                        <MudText Typo="Typo.body2" Color="Color.Secondary">@r.ServicePointName</MudText>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <MudText Typo="Typo.h6" Class="font-weight-bold">
+                                                        <UtcDate Value="@r.StartTime" Format="HH:mm" />
+                                                    </MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                        <UtcDate Value="@r.StartTime" Format="MMM dd, yyyy" />
+                                                    </MudText>
+                                                </div>
+                                            </div>
+
+                                            <MudDivider Class="my-4" />
+
+                                            <div class="d-flex justify-space-between align-center">
+                                                <div class="d-flex flex-column">
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">TICKET NUMBER</MudText>
+                                                    <MudText Typo="Typo.h4" Class="font-family-monospace text-primary">@(r.TicketNo ?? "---")</MudText>
+                                                </div>
+
+                                                <div class="d-flex gap-2">
+                                                    @if (CanCancel(r.Status))
+                                                    {
+                                                        <MudTooltip Text="Cancel Reservation">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" OnClick="() => Cancel(r.Id)" />
+                                                        </MudTooltip>
+                                                        <MudTooltip Text="Reschedule">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.EditCalendar" Color="Color.Info" OnClick="() => Reschedule(r)" />
+                                                        </MudTooltip>
+                                                    }
+                                                    <MudButton Variant="Variant.Filled"
+                                                               Color="Color.Primary"
+                                                               StartIcon="@(_qrReservationId == r.Id ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.QrCode)"
+                                                               OnClick="() => ToggleQrCode(r.Id)">
+                                                        @(_qrReservationId == r.Id ? "Close" : "Ticket")
+                                                    </MudButton>
+                                                </div>
+                                            </div>
+
+                                            <MudCollapse Expanded="_qrReservationId == r.Id && _qrImageSource is not null">
+                                                <div class="mt-4 pa-4 mud-background-gray rounded-lg d-flex flex-column align-center border-dashed">
+                                                    <MudText Typo="Typo.caption" Class="mb-2">SCAN THIS CODE AT THE KIOSK</MudText>
+                                                    <img src="@_qrImageSource" alt="QR" style="width: 150px; height: 150px; border-radius: 8px; mix-blend-mode: multiply;" />
+                                                    <MudText Typo="Typo.caption" Class="mt-2 text-monospace">ID: @r.Id</MudText>
+                                                </div>
+                                            </MudCollapse>
+
+                                        </MudCardContent>
+                                    </MudCard>
+                                </MudItem>
+                            }
+                        </MudGrid>
+                    }
+                </div>
+
+                <MudDivider Class="mb-8" />
+
+                <div>
+                    <MudText Typo="Typo.h6" Class="mb-4 font-weight-bold" Color="Color.Secondary">Visit History</MudText>
+                    @if (!PastReservations.Any())
+                    {
+                        <MudText Color="Color.Secondary" Typo="Typo.body2">No past visits recorded.</MudText>
+                    }
+                    else
+                    {
+                        <MudTable Items="PastReservations" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Dense="true" Class="rounded-lg border">
+                            <HeaderContent>
+                                <MudTh>Date</MudTh>
+                                <MudTh>Service</MudTh>
+                                <MudTh>Location</MudTh>
+                                <MudTh>Status</MudTh>
+                            </HeaderContent>
+                            <RowTemplate>
+                                <MudTd DataLabel="Date">@context.StartTime.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</MudTd>
+                                <MudTd DataLabel="Service" Class="font-weight-bold">@context.ServiceName</MudTd>
+                                <MudTd DataLabel="Location">@context.ServicePointName</MudTd>
+                                <MudTd DataLabel="Status">
+                                    @switch (context.Status)
+                                    {
+                                        case "Completed":
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text">Completed</MudChip>
+                                            break;
+                                        case "Cancelled":
+
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Text">Cancelled</MudChip>
+                                            break;
+                                        case "NoShow":
+
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">No Show</MudChip>
+                                            break;
+                                        default:
+
+                                            <MudChip T="string" Size="Size.Small">@context.Status</MudChip>
+                                            break;
+                                    }
+                                </MudTd>
+                            </RowTemplate>
+                            <PagerContent>
+                                <MudTablePager />
+                            </PagerContent>
+                        </MudTable>
+                    }
+                </div>
+
+            </MudTabPanel>
+        </MudTabs>
+    }
+</MudContainer>
+
+@if (_showDeleteDialog)
+{
+    <MudOverlay Visible="true" DarkBackground="true" Absolute="true" ZIndex="9999">
+        <MudPaper Class="pa-6 rounded-xl" Style="width: 400px; max-width: 90vw;">
+            <div class="d-flex flex-column align-center mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Large" Class="mb-2" />
+                <MudText Typo="Typo.h5" Align="Align.Center" Class="font-weight-bold">Delete Account?</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">This action is permanent and cannot be undone.</MudText>
+            </div>
+
+            <form method="post" action="/account/delete" data-enhance="false">
+                <MudStack Spacing="3">
+                    <MudTextField T="string"
+                                  @bind-Value="_password"
+                                  Label="Confirm with Password"
+                                  InputType="InputType.Password"
+                                  Variant="Variant.Outlined"
+                                  Required="true" />
+                    <input type="hidden" name="password" value="@_password" />
+
+                    <div class="d-flex gap-2">
+                        <MudButton OnClick="HideDeleteDialog" Variant="Variant.Outlined" FullWidth="true">Cancel</MudButton>
+                        <MudButton ButtonType="ButtonType.Submit" Color="Color.Error" Variant="Variant.Filled" FullWidth="true">Delete</MudButton>
+                    </div>
+                </MudStack>
+            </form>
+        </MudPaper>
+    </MudOverlay>
+}
+
+@code {
+    private AppUser? _user;
+    private bool _showChangePassword;
+    private bool _showDeleteDialog;
+    private string? _successMessage;
+    private List<string> _errorMessages = new();
+    private List<ReservationViewModel> _reservations = new();
+    private bool _loadingReservations;
+    private Guid? _qrReservationId;
+    private string _fullName = string.Empty;
+    private string _phoneNumber = string.Empty;
+    private IJSObjectReference? _realtimeHandle;
+    private DotNetObjectReference<Profile>? _dotNetRef;
+    private readonly SemaphoreSlim _refreshGate = new(1, 1);
+
+    private string _password = "";
+    private string _newPassword = "";
+    private string _confirmPassword = "";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (CurrentUser.UserId is Guid userId)
+        {
+            _user = await Users.GetByIdAsync(userId, CancellationToken.None);
+            _fullName = _user?.FullName ?? string.Empty;
+
+            await LoadReservations(userId);
+        }
+
+        ParseMessages();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && CurrentUser.UserId.HasValue)
+        {
+            _dotNetRef ??= DotNetObjectReference.Create(this);
+            _realtimeHandle = await Js.InvokeAsync<IJSObjectReference>(
+                "qlineRealtime.connectUserProfile",
+                _dotNetRef);
+        }
+    }
+
+    protected override void OnParametersSet()
+    {
+        ParseMessages();
+    }
+
+    private void ParseMessages()
+    {
+        var query = HttpUtility.ParseQueryString(new Uri(Nav.Uri).Query);
+
+        _successMessage = query.Get("pwdChanged") == "true"
+            ? "Password updated successfully."
+            : null;
+
+        _errorMessages = query.GetValues("pwdError") switch
+        {
+            null => new List<string>(),
+            var errors => errors
+                .Select(error => error switch
+                {
+                    "invalidCurrent" => "Current password is incorrect.",
+                    "invalid" => "Unable to change password. Please provide current, new, and confirmation passwords.",
+                    "confirmMismatch" => "New password and confirmation do not match.",
+                    _ => null
+                })
+                .Where(message => message is not null)
+                .Select(message => message!)
+                .ToList()
+        };
+
+        var deleteError = query.Get("deleteError") switch
+        {
+            "invalidPassword" => "Password is incorrect. Account not removed.",
+            "missingPassword" => "Please confirm removal by entering your password.",
+            _ => null
+        };
+
+        if (!string.IsNullOrWhiteSpace(deleteError))
+        {
+            _errorMessages.Add(deleteError);
+        }
+    }
+
+    private void ToggleChangePassword()
+    {
+        _showChangePassword = !_showChangePassword;
+    }
+
+    private void ShowDeleteDialog() => _showDeleteDialog = true;
+
+    private void HideDeleteDialog() => _showDeleteDialog = false;
+
+    private async Task RefreshReservationsAsync()
+    {
+        if (CurrentUser.UserId is not Guid userId)
+        {
+            return;
+        }
+
+        await _refreshGate.WaitAsync();
+        try
+        {
+            await LoadReservations(userId);
+        }
+        finally
+        {
+            _refreshGate.Release();
+        }
+    }
+
+    private async Task LoadReservations(Guid userId)
+    {
+        _loadingReservations = true;
+
+        var reservations = await Mediator.Send(new GetMyReservationsQuery(userId));
+        var servicePoints = await Mediator.Send(new GetServicePointsQuery());
+        var servicePointLookup = servicePoints.ToDictionary(sp => sp.Id, sp => sp.Name);
+
+        var servicesLookup = new Dictionary<Guid, Dictionary<Guid, string>>();
+
+        foreach (var servicePointId in reservations.Select(r => r.ServicePointId).Distinct())
+        {
+            var services = await Mediator.Send(new GetServicesForServicePointQuery(servicePointId));
+            servicesLookup[servicePointId] = services.ToDictionary(svc => svc.Id, svc => svc.Name);
+        }
+
+        _reservations = reservations
+            .Select(r => new ReservationViewModel
+            {
+                Id = r.Id,
+                ServicePointId = r.ServicePointId,
+                ServiceId = r.ServiceId,
+                StartTime = r.StartTime,
+                Status = r.Status,
+                TicketNo = r.TicketNo,
+                ServiceName = servicesLookup.TryGetValue(r.ServicePointId, out var svc)
+                    && svc.TryGetValue(r.ServiceId, out var name)
+                        ? name
+                        : "Service",
+                ServicePointName = servicePointLookup.TryGetValue(r.ServicePointId, out var spName)
+                    ? spName
+                    : "Service point"
+            })
+            .ToList();
+
+        _loadingReservations = false;
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private IEnumerable<ReservationViewModel> UpcomingReservations => _reservations
+        .Where(r => r.Status is "Active" or "Waiting" or "InService")
+        .OrderBy(r => r.StartTime);
+
+    private IEnumerable<ReservationViewModel> PastReservations => _reservations
+        .Where(r => r.Status is "Completed" or "Cancelled" or "NoShow")
+        .OrderByDescending(r => r.StartTime);
+
+    private string? _qrImageSource;
+
+    private async Task Cancel(Guid reservationId)
+    {
+        var confirmed = await Js.InvokeAsync<bool>("confirm", "Cancel this reservation?");
+        if (!confirmed)
+            return;
+
+        await _refreshGate.WaitAsync();
+        try
+        {
+            await Mediator.Send(new CancelReservationCommand(reservationId));
+
+            var target = _reservations.FirstOrDefault(r => r.Id == reservationId);
+            if (target is not null)
+            {
+                target.Status = "Cancelled";
+            }
+
+            if (_qrReservationId == reservationId)
+            {
+                _qrReservationId = null;
+                _qrImageSource = null;
+            }
+        }
+        finally
+        {
+            _refreshGate.Release();
+        }
+    }
+
+    private void Reschedule(ReservationViewModel reservation)
+    {
+        Nav.NavigateTo($"/reserve/{reservation.ServicePointId}/{reservation.ServiceId}?rescheduleId={reservation.Id}");
+    }
+
+    private void ToggleQrCode(Guid reservationId)
+    {
+        if (_qrReservationId == reservationId)
+        {
+            _qrReservationId = null;
+            _qrImageSource = null;
+            return;
+        }
+
+        _qrReservationId = reservationId;
+        _qrImageSource = GenerateQrCode(reservationId);
+    }
+
+    private static bool CanCancel(string status) => status is "Active" or "Waiting";
+
+    private string GetInitials()
+    {
+        if (_user is null)
+        {
+            return string.Empty;
+        }
+
+        var initials = string.Concat(
+            _user.FirstName.FirstOrDefault(),
+            _user.LastName.FirstOrDefault());
+
+        return initials.ToUpperInvariant();
+    }
+
+    private static string GetStatusClass(string status) => status switch
+    {
+        "Active" => "bg-success",
+        "Waiting" => "bg-warning text-dark",
+        "InService" => "bg-primary",
+        "Cancelled" => "bg-danger",
+        "Completed" => "bg-secondary",
+        _ => "bg-info"
+    };
+
+    private static string GenerateQrCode(Guid reservationId)
+    {
+        using var generator = new QRCodeGenerator();
+        using var qrCodeData = generator.CreateQrCode(reservationId.ToString(), QRCodeGenerator.ECCLevel.Q);
+        using var qrCode = new PngByteQRCode(qrCodeData);
+        var bytes = qrCode.GetGraphic(20);
+        return $"data:image/png;base64,{Convert.ToBase64String(bytes)}";
+    }
+
+    [JSInvokable]
+    public Task OnQueueUpdated() => RefreshReservationsAsync();
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_realtimeHandle is not null)
+        {
+            await _realtimeHandle.InvokeVoidAsync("dispose");
+        }
+
+        _dotNetRef?.Dispose();
+        _refreshGate.Dispose();
+    }
+
+    private sealed class ReservationViewModel
+    {
+        public Guid Id { get; init; }
+        public Guid ServicePointId { get; init; }
+        public Guid ServiceId { get; init; }
+        public DateTimeOffset StartTime { get; init; }
+        public string Status { get; set; } = string.Empty;
+        public string? TicketNo { get; init; }
+        public string ServiceName { get; init; } = string.Empty;
+        public string ServicePointName { get; init; } = string.Empty;
+    }
+}

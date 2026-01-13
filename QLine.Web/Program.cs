@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QLine.Domain.Entities;
@@ -19,6 +19,8 @@ using MudBlazor.Services;
 using MediatR;
 using QLine.Web.Services;
 using QLine.Web.Endpoints;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -42,20 +44,38 @@ services.AddScoped<BrowserTimeService>();
 services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+services.AddSignalR();
+services.AddScoped<IRealtimeNotifier, SignalRRealtimeNotifier>();
+
 services.AddServerSideBlazor().AddCircuitOptions(options =>
 {
     options.DetailedErrors = true;
 });
 
-//builder.Services.AddMudServices();
+services.AddMudServices();
 
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await DbInitializer.InitializeAsync(db);
+    var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>();
+    await DbInitializer.InitializeAsync(db, passwordHasher);
 }
+
+var supportedCultures = new[]
+{
+    new CultureInfo("en-US"),
+    new CultureInfo("pl-PL"),
+    new CultureInfo("ru-RU"),
+};
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("en-US"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 // Configure pipeline
 if (!app.Environment.IsDevelopment())
@@ -72,6 +92,9 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapAuthEndpoints();
+app.MapAccountEndpoints();
+
+app.MapHub<QueueHub>("/hubs/queue");
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

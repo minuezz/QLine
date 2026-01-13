@@ -12,7 +12,6 @@ namespace QLine.Domain.Entities
     public class QueueEntry
     {
         public Guid Id {  get; private set; }
-        public Guid TenantId { get; private set; }
         public Guid ServicePointId { get; private set; }
         public Guid ReservationId { get; private set; }
 
@@ -23,10 +22,9 @@ namespace QLine.Domain.Entities
 
         private QueueEntry() { }
 
-        private QueueEntry(Guid id, Guid tenantId, Guid servicePointId, Guid reservationId, string ticketNo, int priority, DateTimeOffset createdAt)
+        private QueueEntry(Guid id, Guid servicePointId, Guid reservationId, string ticketNo, int priority, DateTimeOffset createdAt)
         {
             if (id == Guid.Empty) throw new DomainException("QueueEntry Id cannot be empty.");
-            if (tenantId == Guid.Empty) throw new DomainException("QueueEntry TenantId cannot be empty.");
             if (servicePointId == Guid.Empty) throw new DomainException("QueueEntry ServicePointId cannot be empty.");
             if (reservationId == Guid.Empty) throw new DomainException("QueueEntry ReservationId cannot be empty.");
             if (string.IsNullOrWhiteSpace(ticketNo)) throw new DomainException("QueueEntry TicketNo is required.");
@@ -34,7 +32,6 @@ namespace QLine.Domain.Entities
             if (createdAt == default) throw new DomainException("QueueEntry CreatedAt is required.");
 
             Id = id;
-            TenantId = tenantId;
             ServicePointId = servicePointId;
             ReservationId = reservationId;
             TicketNo = ticketNo.Trim();
@@ -43,8 +40,8 @@ namespace QLine.Domain.Entities
             CreatedAt = createdAt;
         }
 
-        public static QueueEntry Create(Guid id, Guid tenantId, Guid servicePointId, Guid reservationId, string ticketNo, int priority, DateTimeOffset createdAt) 
-            => new(id, tenantId, servicePointId, reservationId, ticketNo, priority, createdAt);
+        public static QueueEntry Create(Guid id, Guid servicePointId, Guid reservationId, string ticketNo, int priority, DateTimeOffset createdAt)
+            => new(id, servicePointId, reservationId, ticketNo, priority, createdAt);
 
         public void MarkInService()
         {
@@ -62,8 +59,11 @@ namespace QLine.Domain.Entities
 
         public void MarkNoShow()
         {
-            if (Status != QueueStatus.InService)
-                throw new DomainException("Only entries InService can be marked as NoShow.");
+            if (Status != QueueStatus.InService && Status != QueueStatus.Waiting)
+            {
+                throw new DomainException($"Only entries InService or Waiting can be marked as NoShow. Current: {Status}");
+            }
+
             Status = QueueStatus.NoShow;
         }
 
