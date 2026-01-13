@@ -54,7 +54,7 @@ namespace QLine.Application.Features.Reservations.Commands
                 throw new DomainException("Reservation is already checked in.");
             }
 
-            var ticketNo = GenerateTicketNumber(reservation);
+            var ticketNo = await GenerateSmartTicketNumberAsync(reservation, ct);
 
             var entry = QueueEntry.Create(
                 Guid.NewGuid(),
@@ -97,15 +97,18 @@ namespace QLine.Application.Features.Reservations.Commands
             };
         }
 
-        private string GenerateTicketNumber(Reservation reservation)
+        private async Task<string> GenerateSmartTicketNumberAsync(Reservation reservation, CancellationToken ct)
         {
-            var prefix = reservation.ServicePointId
-                .ToString("N")
-                .Substring(0, 4)
-                .ToUpperInvariant();
+            var letterCode = Math.Abs(reservation.ServiceId.GetHashCode()) % 26;
+            var letter = (char)('A' + letterCode);
 
-            var randomNumber = RandomNumberGenerator.GetInt32(100, 10000);
-            return $"{prefix}-{randomNumber:0000}";
+            var todayCount = await _queueEntries.GetDailyCountForServicePointAsync(reservation.ServicePointId, _clock.UtcNow.UtcDateTime, ct);
+
+            var sequenceNumber = todayCount + 1;
+
+            if (sequenceNumber > 999) sequenceNumber = 1;
+
+            return $"{letter}-{sequenceNumber:000}";
         }
     }
 }

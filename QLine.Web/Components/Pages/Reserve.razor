@@ -9,7 +9,7 @@
 @using QRCoder
 @inject NavigationManager Nav
 @inject IMediator Mediator
-
+@using System.Globalization 
 <PageTitle>QLine - Book Appointment</PageTitle>
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-16">
@@ -106,6 +106,8 @@
                                                    DateChanged="OnDateChanged"
                                                    PickerVariant="PickerVariant.Static"
                                                    MinDate="@DateTime.Today"
+                                                   Culture="@CultureInfo.GetCultureInfo("en-US")"
+                                                   DateFormat="ddd, MMM dd"
                                                    ShowToolbar="false"
                                                    Elevation="0" />
                                 </MudPaper>

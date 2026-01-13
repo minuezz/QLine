@@ -20,202 +20,272 @@
 @inject IMediator Mediator
 @inject IJSRuntime Js
 
-<MudContainer MaxWidth="MaxWidth.Medium" Class="mx-auto my-6">
-    <MudText Typo="Typo.h4" Class="mb-2">Profile</MudText>
+<PageTitle>QLine - My Profile</PageTitle>
+
+<MudContainer MaxWidth="MaxWidth.Large" Class="mt-8 mb-16">
+
+    <div class="mb-6">
+        <MudText Typo="Typo.h4" Class="font-weight-bold">My Account</MudText>
+        <MudText Typo="Typo.subtitle1" Color="Color.Secondary">Manage your personal details and reservations</MudText>
+    </div>
 
     @if (!string.IsNullOrWhiteSpace(_successMessage))
     {
-        <MudAlert Severity="Severity.Success" Dense="true" Elevation="0" Class="mb-2">@_successMessage</MudAlert>
+        <MudAlert Severity="Severity.Success" Variant="Variant.Filled" Class="mb-4 rounded-lg" ShowCloseIcon="true">@_successMessage</MudAlert>
     }
 
     @if (_errorMessages.Count > 0)
     {
         @foreach (var message in _errorMessages)
         {
-            <MudAlert Severity="Severity.Error" Dense="true" Elevation="0" Class="mb-2">@message</MudAlert>
+            <MudAlert Severity="Severity.Error" Variant="Variant.Filled" Class="mb-4 rounded-lg" ShowCloseIcon="true">@message</MudAlert>
         }
     }
 
     @if (_user is null)
     {
-        <MudStack Class="my-6 align-center">
-            <MudProgressCircular Indeterminate Color="Color.Primary" />
-            <MudText Color="Color.Secondary">Loading profile...</MudText>
-        </MudStack>
+        <div class="d-flex flex-column align-center justify-center my-16">
+            <MudProgressCircular Indeterminate Color="Color.Primary" Size="Size.Large" />
+            <MudText Color="Color.Secondary" Class="mt-4">Loading your profile...</MudText>
+        </div>
     }
     else
     {
-        <MudTabs Centered="true" Rounded="true" Elevation="1">
-            <MudTabPanel Text="My Profile">
-                <MudCard Class="p-4 mb-4">
-                    <MudStack Row="true" Spacing="2" Class="mb-4 align-center">
-                        <MudAvatar Color="Color.Primary" Size="Size.Large" Rounded="true">
-                            @GetInitials()
-                        </MudAvatar>
-                        <MudStack>
-                            <MudText Typo="Typo.h6">@_user.FullName</MudText>
-                            <MudText Color="Color.Secondary">@_user.Email</MudText>
-                        </MudStack>
-                    </MudStack>
+        <MudTabs Elevation="0"
+                 Rounded="true"
+                 ApplyEffectsToContainer="true"
+                 PanelClass="mt-6"
+                 Color="Color.Transparent"
+                 SliderColor="Color.Primary"
+                 TabHeaderClass="mud-background-gray rounded-pill px-2">
 
-                    <MudGrid Class="mb-2" Spacing="2">
-                        <MudItem xs="12" sm="6">
-                            <MudTextField @bind-Value="_fullName"
-                                          Label="Full Name"
-                                          Variant="Variant.Outlined"
-                                          Placeholder="Enter your name"
-                                          ReadOnly="true" />
-                        </MudItem>
-                        <MudItem xs="12">
-                            <MudTextField Value="@_user.Email"
-                                          Label="Email"
-                                          Variant="Variant.Outlined"
-                                          ReadOnly="true" />
-                        </MudItem>
-                    </MudGrid>
+            <MudTabPanel Text="Personal Details" Icon="@Icons.Material.Filled.Person">
+                <MudGrid Spacing="4">
+                    <MudItem xs="12" md="5">
+                        <MudCard Elevation="2" Class="rounded-xl h-100">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6" Class="font-weight-bold">Identity</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent Class="d-flex flex-column align-center py-8">
+                                <MudAvatar Color="Color.Primary" Style="height:100px; width:100px; font-size: 2.5rem;" Class="mb-4 shadow-lg">
+                                    @GetInitials()
+                                </MudAvatar>
+                                <MudText Typo="Typo.h5" Class="font-weight-bold">@_user.FullName</MudText>
+                                <MudText Color="Color.Secondary">@_user.Email</MudText>
+                                <MudChip T="string" Color="Color.Surface" Class="mt-4" Variant="Variant.Outlined">Client Account</MudChip>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
 
-                    <MudStack Row="true" Spacing="1">
-                        <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="ToggleChangePassword">
-                            Change Password
-                        </MudButton>
-                        <MudButton Variant="Variant.Text" Color="Color.Error" OnClick="ShowDeleteDialog">
-                            Remove Account
-                        </MudButton>
-                    </MudStack>
-
-                    <MudCollapse Expanded="_showChangePassword" Class="mt-3">
-                        <form method="post" action="/account/change-password" data-enhance="false">
-                            <MudGrid Spacing="2">
-
-                                <MudItem xs="12" sm="6">
-                                    <MudTextField T="string"
-                                                  @bind-Value="_password"
-                                                  Label="Current Password"
-                                                  InputType="InputType.Password"
+                    <MudItem xs="12" md="7">
+                        <MudCard Elevation="2" Class="rounded-xl h-100">
+                            <MudCardHeader>
+                                <CardHeaderContent>
+                                    <MudText Typo="Typo.h6" Class="font-weight-bold">Security Settings</MudText>
+                                </CardHeaderContent>
+                            </MudCardHeader>
+                            <MudCardContent>
+                                <MudStack Spacing="3">
+                                    <MudTextField Value="@_user.Email"
+                                                  Label="Email Address"
                                                   Variant="Variant.Outlined"
-                                                  Required="true"
-                                                  Immediate="true" />
+                                                  ReadOnly="true"
+                                                  Adornment="Adornment.End"
+                                                  AdornmentIcon="@Icons.Material.Filled.Lock" />
 
-                                    <input type="hidden" name="password" value="@_password" />
-                                </MudItem>
+                                    <div class="d-flex gap-4 mt-2">
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="Color.Primary"
+                                                   OnClick="ToggleChangePassword"
+                                                   StartIcon="@Icons.Material.Filled.Key"
+                                                   FullWidth="true">
+                                            Change Password
+                                        </MudButton>
 
-                                <MudItem xs="12" sm="6">
-                                    <MudTextField T="string"
-                                                  @bind-Value="_newPassword"
-                                                  Label="New Password"
-                                                  InputType="InputType.Password"
-                                                  Variant="Variant.Outlined"
-                                                  Required="true"
-                                                  Immediate="true" />
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="Color.Error"
+                                                   OnClick="ShowDeleteDialog"
+                                                   StartIcon="@Icons.Material.Filled.DeleteForever"
+                                                   FullWidth="true">
+                                            Delete Account
+                                        </MudButton>
+                                    </div>
 
-                                    <input type="hidden" name="newPassword" value="@_newPassword" />
-                                </MudItem>
+                                    <MudCollapse Expanded="_showChangePassword">
+                                        <MudPaper Elevation="0" Class="pa-4 mt-4 mud-background-gray rounded-lg border-dashed">
+                                            <form method="post" action="/account/change-password" data-enhance="false">
+                                                <MudStack Spacing="2">
+                                                    <MudText Typo="Typo.subtitle2" Class="font-weight-bold">Update Password</MudText>
+                                                    <MudTextField T="string" @bind-Value="_password" Label="Current Password" InputType="InputType.Password" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
+                                                    <input type="hidden" name="password" value="@_password" />
 
-                                <MudItem xs="12">
-                                    <MudTextField T="string"
-                                                  @bind-Value="_confirmPassword"
-                                                  Label="Confirm New Password"
-                                                  InputType="InputType.Password"
-                                                  Variant="Variant.Outlined"
-                                                  Required="true"
-                                                  Immediate="true" />
-
-                                    <input type="hidden" name="confirmPassword" value="@_confirmPassword" />
-                                </MudItem>
-
-                                <MudItem xs="12">
-                                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary">
-                                        Save
-                                    </MudButton>
-                                </MudItem>
-                            </MudGrid>
-                        </form>
-                    </MudCollapse>
-                </MudCard>
+                                                    <MudGrid Spacing="2">
+                                                        <MudItem xs="12" sm="6">
+                                                            <MudTextField T="string" @bind-Value="_newPassword" Label="New Password" InputType="InputType.Password" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
+                                                            <input type="hidden" name="newPassword" value="@_newPassword" />
+                                                        </MudItem>
+                                                        <MudItem xs="12" sm="6">
+                                                            <MudTextField T="string" @bind-Value="_confirmPassword" Label="Confirm Password" InputType="InputType.Password" Variant="Variant.Outlined" Required="true" Margin="Margin.Dense" />
+                                                            <input type="hidden" name="confirmPassword" value="@_confirmPassword" />
+                                                        </MudItem>
+                                                    </MudGrid>
+                                                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="mt-2">Update Password</MudButton>
+                                                </MudStack>
+                                            </form>
+                                        </MudPaper>
+                                    </MudCollapse>
+                                </MudStack>
+                            </MudCardContent>
+                        </MudCard>
+                    </MudItem>
+                </MudGrid>
             </MudTabPanel>
 
-            <MudTabPanel Text="My Reservations">
-                <MudStack Spacing="2">
-                    <MudText Typo="Typo.subtitle1">Active Reservations</MudText>
+            <MudTabPanel Text="My Reservations" Icon="@Icons.Material.Filled.ConfirmationNumber">
+
+                <div class="mb-8">
+                    <MudText Typo="Typo.h6" Class="mb-4 font-weight-bold">Upcoming Visits</MudText>
+
                     @if (_loadingReservations)
                     {
-                        <MudProgressLinear Indeterminate Color="Color.Primary" />
+                        <MudGrid>
+                            <MudItem xs="12" md="6"><MudSkeleton Height="200px" /></MudItem>
+                            <MudItem xs="12" md="6"><MudSkeleton Height="200px" /></MudItem>
+                        </MudGrid>
                     }
                     else if (!UpcomingReservations.Any())
                     {
-                        <MudText Color="Color.Secondary">No upcoming reservations.</MudText>
+                        <MudPaper Class="pa-8 d-flex flex-column align-center justify-center mud-background-gray rounded-xl" Elevation="0">
+                            <MudIcon Icon="@Icons.Material.Filled.EventAvailable" Size="Size.Large" Color="Color.Secondary" Class="mb-2" />
+                            <MudText Color="Color.Secondary">You have no upcoming reservations.</MudText>
+                            <MudButton Variant="Variant.Text" Color="Color.Primary" Href="/service-points" Class="mt-2">Book a visit</MudButton>
+                        </MudPaper>
                     }
                     else
                     {
-                        <MudGrid Spacing="2">
-                            @foreach (var reservation in UpcomingReservations)
+                        <MudGrid Spacing="3">
+                            @foreach (var r in UpcomingReservations)
                             {
-                                <MudItem xs="12" sm="6">
-                                    <MudCard Class="h-100">
+                                <MudItem xs="12" lg="6">
+                                    <MudCard Elevation="3" Class="rounded-xl overflow-hidden active-ticket-card h-100">
+                                        <div class="@($"pa-2 {GetStatusClass(r.Status)} text-white font-weight-bold d-flex justify-space-between px-4")">
+                                            <MudText Typo="Typo.caption" Style="color: white !important;">STATUS</MudText>
+                                            <MudText Typo="Typo.caption" Style="text-transform: uppercase; color: white !important;">@r.Status</MudText>
+                                        </div>
+
                                         <MudCardContent>
-                                            <MudStack Spacing="1">
-                                                <MudChip T="string" Color="Color.Info" Variant="Variant.Filled" Class="mb-1">
-                                                    <UtcDate Value="@reservation.StartTime" />
-                                                </MudChip>
-                                                <MudText Typo="Typo.h6">@reservation.ServiceName</MudText>
-                                                <MudText Color="Color.Secondary">@reservation.ServicePointName</MudText>
-                                                <MudChip T="string" Color="Color.Primary" Variant="Variant.Outlined" Class="mt-1">
-                                                    Ticket: @(reservation.TicketNo ?? "-")
-                                                </MudChip>
-                                                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="text-monospace">
-                                                    @reservation.Id
-                                                </MudText>
-                                            </MudStack>
+                                            <div class="d-flex justify-space-between align-start">
+                                                <div>
+                                                    <MudText Typo="Typo.h5" Class="font-weight-bold text-primary mb-1">@r.ServiceName</MudText>
+                                                    <div class="d-flex align-center gap-2 mb-1">
+                                                        <MudIcon Icon="@Icons.Material.Filled.Place" Size="Size.Small" Color="Color.Secondary" />
+                                                        <MudText Typo="Typo.body2" Color="Color.Secondary">@r.ServicePointName</MudText>
+                                                    </div>
+                                                </div>
+                                                <div class="text-right">
+                                                    <MudText Typo="Typo.h6" Class="font-weight-bold">
+                                                        <UtcDate Value="@r.StartTime" Format="HH:mm" />
+                                                    </MudText>
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                                        <UtcDate Value="@r.StartTime" Format="MMM dd, yyyy" />
+                                                    </MudText>
+                                                </div>
+                                            </div>
 
-                                            <MudStack Row="true" Justify="Justify.SpaceBetween" Class="mt-3">
-                                                <MudButton Variant="Variant.Outlined" Color="Color.Primary" OnClick="() => ToggleQrCode(reservation.Id)">
-                                                    @(_qrReservationId == reservation.Id ? "Hide QR" : "Show QR")
-                                                </MudButton>
-                                                <MudButton Variant="Variant.Filled" Color="Color.Error" Disabled="@(!CanCancel(reservation.Status))" OnClick="() => Cancel(reservation.Id)">
-                                                    Cancel
-                                                </MudButton>
-                                                <MudButton Variant="Variant.Text" Color="Color.Info" OnClick="() => Reschedule(reservation)">
-                                                    Reschedule
-                                                </MudButton>
-                                            </MudStack>
+                                            <MudDivider Class="my-4" />
 
-                                            <MudCollapse Expanded="_qrReservationId == reservation.Id && _qrImageSource is not null" Class="mt-3">
-                                                <MudPaper Class="p-3 d-flex justify-center">
-                                                    <img src="@_qrImageSource" alt="QR Code" style="max-width: 180px;" />
-                                                </MudPaper>
+                                            <div class="d-flex justify-space-between align-center">
+                                                <div class="d-flex flex-column">
+                                                    <MudText Typo="Typo.caption" Color="Color.Secondary">TICKET NUMBER</MudText>
+                                                    <MudText Typo="Typo.h4" Class="font-family-monospace text-primary">@(r.TicketNo ?? "---")</MudText>
+                                                </div>
+
+                                                <div class="d-flex gap-2">
+                                                    @if (CanCancel(r.Status))
+                                                    {
+                                                        <MudTooltip Text="Cancel Reservation">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.Cancel" Color="Color.Error" OnClick="() => Cancel(r.Id)" />
+                                                        </MudTooltip>
+                                                        <MudTooltip Text="Reschedule">
+                                                            <MudIconButton Icon="@Icons.Material.Filled.EditCalendar" Color="Color.Info" OnClick="() => Reschedule(r)" />
+                                                        </MudTooltip>
+                                                    }
+                                                    <MudButton Variant="Variant.Filled"
+                                                               Color="Color.Primary"
+                                                               StartIcon="@(_qrReservationId == r.Id ? Icons.Material.Filled.VisibilityOff : Icons.Material.Filled.QrCode)"
+                                                               OnClick="() => ToggleQrCode(r.Id)">
+                                                        @(_qrReservationId == r.Id ? "Close" : "Ticket")
+                                                    </MudButton>
+                                                </div>
+                                            </div>
+
+                                            <MudCollapse Expanded="_qrReservationId == r.Id && _qrImageSource is not null">
+                                                <div class="mt-4 pa-4 mud-background-gray rounded-lg d-flex flex-column align-center border-dashed">
+                                                    <MudText Typo="Typo.caption" Class="mb-2">SCAN THIS CODE AT THE KIOSK</MudText>
+                                                    <img src="@_qrImageSource" alt="QR" style="width: 150px; height: 150px; border-radius: 8px; mix-blend-mode: multiply;" />
+                                                    <MudText Typo="Typo.caption" Class="mt-2 text-monospace">ID: @r.Id</MudText>
+                                                </div>
                                             </MudCollapse>
+
                                         </MudCardContent>
                                     </MudCard>
                                 </MudItem>
                             }
                         </MudGrid>
                     }
+                </div>
 
-                    <MudText Typo="Typo.subtitle1" Class="mt-4">History</MudText>
-                    @if (!PastReservations.Any() && !_loadingReservations)
+                <MudDivider Class="mb-8" />
+
+                <div>
+                    <MudText Typo="Typo.h6" Class="mb-4 font-weight-bold" Color="Color.Secondary">Visit History</MudText>
+                    @if (!PastReservations.Any())
                     {
-                        <MudText Color="Color.Secondary">No past reservations.</MudText>
+                        <MudText Color="Color.Secondary" Typo="Typo.body2">No past visits recorded.</MudText>
                     }
                     else
                     {
-                        <MudTable T="ReservationViewModel" Items="PastReservations" Dense="true" Hover="true">
+                        <MudTable Items="PastReservations" Hover="true" Breakpoint="Breakpoint.Sm" Elevation="0" Dense="true" Class="rounded-lg border">
                             <HeaderContent>
+                                <MudTh>Date</MudTh>
                                 <MudTh>Service</MudTh>
                                 <MudTh>Location</MudTh>
-                                <MudTh>When</MudTh>
                                 <MudTh>Status</MudTh>
                             </HeaderContent>
                             <RowTemplate>
-                                <MudTd DataLabel="Service">@context.ServiceName</MudTd>
+                                <MudTd DataLabel="Date">@context.StartTime.ToLocalTime().ToString("MMM dd, yyyy HH:mm")</MudTd>
+                                <MudTd DataLabel="Service" Class="font-weight-bold">@context.ServiceName</MudTd>
                                 <MudTd DataLabel="Location">@context.ServicePointName</MudTd>
-                                <MudTd DataLabel="When">@context.StartTime.ToLocalTime().ToString("g")</MudTd>
                                 <MudTd DataLabel="Status">
-                                    <MudChip T="string" Color="Color.Secondary" Variant="Variant.Outlined">@context.Status</MudChip>
+                                    @switch (context.Status)
+                                    {
+                                        case "Completed":
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Variant="Variant.Text">Completed</MudChip>
+                                            break;
+                                        case "Cancelled":
+
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Text">Cancelled</MudChip>
+                                            break;
+                                        case "NoShow":
+
+                                            <MudChip T="string" Size="Size.Small" Color="Color.Error" Variant="Variant.Outlined">No Show</MudChip>
+                                            break;
+                                        default:
+
+                                            <MudChip T="string" Size="Size.Small">@context.Status</MudChip>
+                                            break;
+                                    }
                                 </MudTd>
                             </RowTemplate>
+                            <PagerContent>
+                                <MudTablePager />
+                            </PagerContent>
                         </MudTable>
                     }
-                </MudStack>
+                </div>
+
             </MudTabPanel>
         </MudTabs>
     }
@@ -224,24 +294,27 @@
 @if (_showDeleteDialog)
 {
     <MudOverlay Visible="true" DarkBackground="true" Absolute="true" ZIndex="9999">
-        <MudPaper Class="pa-4" Style="width: 400px; max-width: 90vw;">
-            <MudText Typo="Typo.h6" GutterBottom="true">Remove Account</MudText>
-            <MudText Color="Color.Error" Class="mb-4">This action is irreversible.</MudText>
+        <MudPaper Class="pa-6 rounded-xl" Style="width: 400px; max-width: 90vw;">
+            <div class="d-flex flex-column align-center mb-4">
+                <MudIcon Icon="@Icons.Material.Filled.Warning" Color="Color.Error" Size="Size.Large" Class="mb-2" />
+                <MudText Typo="Typo.h5" Align="Align.Center" Class="font-weight-bold">Delete Account?</MudText>
+                <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">This action is permanent and cannot be undone.</MudText>
+            </div>
 
             <form method="post" action="/account/delete" data-enhance="false">
                 <MudStack Spacing="3">
                     <MudTextField T="string"
                                   @bind-Value="_password"
-                                  Label="Password"
+                                  Label="Confirm with Password"
                                   InputType="InputType.Password"
                                   Variant="Variant.Outlined"
                                   Required="true" />
                     <input type="hidden" name="password" value="@_password" />
 
-                    <MudStack Row="true" Class="justify-end">
-                        <MudButton OnClick="HideDeleteDialog">Cancel</MudButton>
-                        <MudButton ButtonType="ButtonType.Submit" Color="Color.Error" Variant="Variant.Filled">Confirm Removal</MudButton>
-                    </MudStack>
+                    <div class="d-flex gap-2">
+                        <MudButton OnClick="HideDeleteDialog" Variant="Variant.Outlined" FullWidth="true">Cancel</MudButton>
+                        <MudButton ButtonType="ButtonType.Submit" Color="Color.Error" Variant="Variant.Filled" FullWidth="true">Delete</MudButton>
+                    </div>
                 </MudStack>
             </form>
         </MudPaper>

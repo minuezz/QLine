@@ -1,148 +1,22 @@
-.profile-card {
-    display: grid;
-    gap: 12px;
-    max-width: 360px;
-    margin-bottom: 16px;
+.mud-background-gray {
+    background-color: #f9f9f9;
 }
 
-.profile-field {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+.border-dashed {
+    border: 1px dashed #e0e0e0;
 }
 
-.password-form {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-width: 320px;
-    margin-top: 8px;
+.font-family-monospace {
+    font-family: monospace;
+    letter-spacing: 1px;
 }
 
-.profile-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.danger {
-    background: #dc3545;
-    color: white;
-    border: none;
-    padding: 8px 12px;
-}
-
-.modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.4);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal {
-    background: white;
-    padding: 16px;
-    border-radius: 8px;
-    max-width: 400px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.delete-form {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.modal-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-}
-
-.reservations-section {
-    margin-top: 32px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.reservation-list {
-    display: grid;
-    gap: 12px;
-}
-
-.reservation-card {
+.active-ticket-card {
     border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.reservation-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.reservation-title {
-    font-weight: 600;
-    font-size: 1rem;
-}
-
-.reservation-meta {
-    color: #555;
-    font-size: 0.95rem;
-}
-
-.reservation-actions {
-    display: flex;
-    gap: 8px;
-}
-
-.status-badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 0.85rem;
-    color: #fff;
-}
-
-.status-success {
-    background-color: #28a745;
-}
-
-.status-danger {
-    background-color: #dc3545;
-}
-
-.status-muted {
-    background-color: #6c757d;
-}
-
-.status-neutral {
-    background-color: #007bff;
-}
-
-.secondary {
-    background: #f4f4f4;
-    border: 1px solid #ccc;
-    padding: 6px 10px;
-}
-
-.danger-outline {
-    background: transparent;
-    color: #dc3545;
-    border: 1px solid #dc3545;
-    padding: 6px 10px;
-}
-
-.qr-wrapper {
-    display: inline-flex;
-    justify-content: center;
-    padding-top: 8px;
-}
+    .active-ticket-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+    }

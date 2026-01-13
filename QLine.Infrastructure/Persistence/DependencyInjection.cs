@@ -1,17 +1,18 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using QLine.Application.Abstractions;
+using QLine.Domain.Abstractions;
+using QLine.Domain.Entities;
+using QLine.Infrastructure.Persistence.Notifications;
+using QLine.Infrastructure.Persistence.Repositories;
+using QLine.Infrastructure.Time;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Identity;
-using QLine.Application.Abstractions;
-using QLine.Domain.Abstractions;
-using QLine.Domain.Entities;
-using QLine.Infrastructure.Persistence.Repositories;
-using QLine.Infrastructure.Time;
 
 namespace QLine.Infrastructure.Persistence
 {
@@ -33,6 +34,8 @@ namespace QLine.Infrastructure.Persistence
             services.AddSingleton<IDateTimeProvider, SystemDateTimeProvider>();
 
             services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
+
+            services.AddTransient<IEmailSender, EmailSender>();
 
             services.AddScoped<IServicePointRepository, ServicePointRepository>();
             services.AddScoped<IServiceRepository, ServiceRepository>();

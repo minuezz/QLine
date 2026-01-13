@@ -25,7 +25,7 @@
                 <MudIcon Icon="@Icons.Material.Filled.Search" Color="Color.Secondary" Class="mr-2" />
                 <MudTextField @bind-Value="_searchTerm"
                               Placeholder="Search by name or address..."
-                              DisableUnderline="true"
+                              Underline="false"
                               Immediate="true"
                               Class="flex-grow-1" />
                 @if (!string.IsNullOrEmpty(_searchTerm))

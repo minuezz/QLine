@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace QLine.Application.Abstractions
 {
-    public interface INotificationSender
+    public interface IEmailSender
     {
+        Task SendEmailAsync(string to, string subject, string body);
     }
 }

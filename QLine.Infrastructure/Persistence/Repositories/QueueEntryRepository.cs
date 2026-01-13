@@ -72,6 +72,19 @@ namespace QLine.Infrastructure.Persistence.Repositories
             return next;
         }
 
+        public Task<int> GetDailyCountForServicePointAsync(Guid servicePointId, DateTime date, CancellationToken ct)
+        {
+            var startOfDay = date.Date;
+            var endOfDay = startOfDay.AddDays(1);
+
+            return _db.QueueEntries
+                .CountAsync(q =>
+                    q.ServicePointId == servicePointId &&
+                    q.CreatedAt >= startOfDay &&
+                    q.CreatedAt < endOfDay,
+                    ct);
+        }
+
         public async Task UpdateAsync(QueueEntry entry, CancellationToken ct)
         {
             _db.QueueEntries.Update(entry);

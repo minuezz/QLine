@@ -28,8 +28,7 @@ namespace QLine.Infrastructure.Persistence.Configurations
                 .HasConversion<int>();
 
             b.HasIndex(x => x.TicketNo)
-                .IsUnique()
-                .HasDatabaseName("UX_QueueEntry_TicketNo");
+                .HasDatabaseName("IX_QueueEntry_TicketNo");
 
             b.HasIndex(x => new { x.ServicePointId, x.Status })
                 .HasDatabaseName("IX_QueueEntry_Point_Status");

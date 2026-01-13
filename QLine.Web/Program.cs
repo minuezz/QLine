@@ -19,6 +19,8 @@ using MudBlazor.Services;
 using MediatR;
 using QLine.Web.Services;
 using QLine.Web.Endpoints;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
 
 var builder = WebApplication.CreateBuilder(args);
 var services = builder.Services;
@@ -60,6 +62,20 @@ using (var scope = app.Services.CreateScope())
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>();
     await DbInitializer.InitializeAsync(db, passwordHasher);
 }
+
+var supportedCultures = new[]
+{
+    new CultureInfo("en-US"),
+    new CultureInfo("pl-PL"),
+    new CultureInfo("ru-RU"),
+};
+
+app.UseRequestLocalization(new RequestLocalizationOptions
+{
+    DefaultRequestCulture = new RequestCulture("en-US"),
+    SupportedCultures = supportedCultures,
+    SupportedUICultures = supportedCultures
+});
 
 // Configure pipeline
 if (!app.Environment.IsDevelopment())
