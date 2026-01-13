@@ -67,7 +67,7 @@ Bash
 
 dotnet run
 
-# The application will be available at https://localhost:7001 (or similar port).
+The application will be available at https://localhost:7001 (or similar port).
 
 ### 5. Email Testing
 To view emails sent by the system (e.g., booking confirmations), open your browser and go to: http://localhost:1080
